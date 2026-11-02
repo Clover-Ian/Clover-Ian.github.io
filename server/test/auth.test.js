@@ -113,6 +113,159 @@ test('注销后会话立即失效', async (t) => {
   assert.equal((await client.request('/api/auth/me')).status, 401);
 });
 
+test('修改邮箱：需要当前密码、拒绝重复邮箱，并更新当前用户', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+  const client = createClient(server.baseUrl);
+  await register(client);
+
+  const other = createClient(server.baseUrl);
+  await register(other, { email: 'other@example.com' });
+  server.db.prepare('UPDATE users SET email_verified = 1 WHERE email = ?').run(EMAIL);
+
+  const wrongPassword = await client.request('/api/auth/change-email', {
+    method: 'POST',
+    body: { email: 'new@example.com', currentPassword: 'wrong-password' },
+  });
+  assert.equal(wrongPassword.status, 400);
+  assert.equal(wrongPassword.data.error.code, 'invalid_current_password');
+
+  const duplicateEmail = await client.request('/api/auth/change-email', {
+    method: 'POST',
+    body: { email: 'other@example.com', currentPassword: VALID_PASSWORD },
+  });
+  assert.equal(duplicateEmail.status, 409);
+  assert.equal(duplicateEmail.data.error.code, 'email_taken');
+
+  const unchangedEmail = await client.request('/api/auth/change-email', {
+    method: 'POST',
+    body: { email: EMAIL, currentPassword: VALID_PASSWORD },
+  });
+  assert.equal(unchangedEmail.data.user.emailVerified, true);
+
+  const changed = await client.request('/api/auth/change-email', {
+    method: 'POST',
+    body: { email: 'NEW@Example.COM', currentPassword: VALID_PASSWORD },
+  });
+  assert.equal(changed.status, 200);
+  assert.equal(changed.data.user.email, 'new@example.com');
+  assert.equal(changed.data.user.emailVerified, false);
+
+  const me = await client.request('/api/auth/me');
+  assert.equal(me.data.user.email, 'new@example.com');
+});
+
+test('未登录不能修改邮箱', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+  const res = await createClient(server.baseUrl).request('/api/auth/change-email', {
+    method: 'POST',
+    body: { email: 'new@example.com', currentPassword: VALID_PASSWORD },
+  });
+  assert.equal(res.status, 401);
+  assert.equal(res.data.error.code, 'not_authenticated');
+});
+
+test('修改用户名：规范化名称并更新当前用户', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+  const client = createClient(server.baseUrl);
+  await register(client);
+
+  const blankName = await client.request('/api/auth/change-username', {
+    method: 'POST',
+    body: { displayName: '   ' },
+  });
+  assert.equal(blankName.status, 400);
+  assert.equal(blankName.data.error.code, 'invalid_display_name');
+
+  const tooLongName = await client.request('/api/auth/change-username', {
+    method: 'POST',
+    body: { displayName: 'a'.repeat(51) },
+  });
+  assert.equal(tooLongName.status, 400);
+  assert.equal(tooLongName.data.error.code, 'invalid_display_name');
+
+  const changed = await client.request('/api/auth/change-username', {
+    method: 'POST',
+    body: { displayName: '  New   Name  ' },
+  });
+  assert.equal(changed.status, 200);
+  assert.equal(changed.data.user.displayName, 'New Name');
+
+  const me = await client.request('/api/auth/me');
+  assert.equal(me.data.user.displayName, 'New Name');
+});
+
+test('未登录不能修改用户名', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+  const res = await createClient(server.baseUrl).request('/api/auth/change-username', {
+    method: 'POST',
+    body: { displayName: 'New Name' },
+  });
+  assert.equal(res.status, 401);
+  assert.equal(res.data.error.code, 'not_authenticated');
+});
+
+test('删除账户：需要确认和当前密码，并删除所有会话', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+
+  const client = createClient(server.baseUrl);
+  const registered = await register(client);
+  const userId = registered.data.user.id;
+
+  const otherDevice = createClient(server.baseUrl);
+  await otherDevice.request('/api/auth/login', {
+    method: 'POST',
+    body: { email: EMAIL, password: VALID_PASSWORD },
+  });
+
+  const unconfirmed = await client.request('/api/auth/delete-account', {
+    method: 'POST',
+    body: { currentPassword: VALID_PASSWORD, confirmation: false },
+  });
+  assert.equal(unconfirmed.status, 400);
+  assert.equal(unconfirmed.data.error.code, 'confirmation_required');
+
+  const wrongPassword = await client.request('/api/auth/delete-account', {
+    method: 'POST',
+    body: { currentPassword: 'wrong-password', confirmation: true },
+  });
+  assert.equal(wrongPassword.status, 400);
+  assert.equal(wrongPassword.data.error.code, 'invalid_current_password');
+  assert.equal(server.db.prepare('SELECT id FROM users WHERE id = ?').get(userId).id, userId);
+
+  const deleted = await client.request('/api/auth/delete-account', {
+    method: 'POST',
+    body: { currentPassword: VALID_PASSWORD, confirmation: true },
+  });
+  assert.equal(deleted.status, 204);
+  assert.match(deleted.headers.getSetCookie()[0], /Expires=Thu, 01 Jan 1970/);
+  assert.equal(server.db.prepare('SELECT id FROM users WHERE id = ?').get(userId), undefined);
+  assert.equal(server.db.prepare('SELECT COUNT(*) AS count FROM sessions WHERE user_id = ?').get(userId).count, 0);
+  assert.equal((await client.request('/api/auth/me')).status, 401);
+  assert.equal((await otherDevice.request('/api/auth/me')).status, 401);
+
+  const login = await createClient(server.baseUrl).request('/api/auth/login', {
+    method: 'POST',
+    body: { email: EMAIL, password: VALID_PASSWORD },
+  });
+  assert.equal(login.status, 401);
+});
+
+test('未登录不能删除账户', async (t) => {
+  const server = await startTestServer();
+  t.after(() => server.close());
+  const res = await createClient(server.baseUrl).request('/api/auth/delete-account', {
+    method: 'POST',
+    body: { currentPassword: VALID_PASSWORD, confirmation: true },
+  });
+  assert.equal(res.status, 401);
+  assert.equal(res.data.error.code, 'not_authenticated');
+});
+
 test('修改密码：旧密码校验、其它设备被踢下线、新密码生效', async (t) => {
   const server = await startTestServer();
   t.after(() => server.close());

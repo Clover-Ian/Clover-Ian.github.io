@@ -142,7 +142,176 @@ a:focus-visible {
     max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
-    cursor: default;
+    cursor: pointer;
+    font: inherit;
+}
+
+.account-menu-container {
+    position: relative;
+    margin-left: 8px;
+}
+
+.nav-links .account-menu-container .account-nav-user {
+    margin-left: 0;
+}
+
+.account-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    right: 0;
+    display: grid;
+    min-width: 150px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgb(20 30 45 / 14%);
+}
+
+.account-menu[hidden] {
+    display: none;
+}
+
+.account-menu button {
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.account-menu button:hover,
+.account-menu button:focus-visible {
+    background: #eef6ff;
+    outline: none;
+}
+
+.account-menu button:disabled {
+    cursor: wait;
+}
+
+.account-menu .account-delete-option {
+    color: #a11818;
+}
+
+.account-menu-status {
+    max-width: 230px;
+    margin: 4px 8px;
+    color: #a11818;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.account-email-dialog,
+.account-settings-dialog {
+    width: min(440px, calc(100% - 32px));
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    color: var(--ink);
+}
+
+.account-email-dialog::backdrop,
+.account-settings-dialog::backdrop {
+    background: rgb(20 30 45 / 48%);
+}
+
+.account-email-form,
+.account-settings-form {
+    display: grid;
+    gap: 16px;
+}
+
+.account-email-form h2,
+.account-email-form p,
+.account-settings-form h2,
+.account-settings-form p {
+    margin: 0;
+}
+
+.account-email-current {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.account-email-form label,
+.account-settings-form label {
+    display: grid;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.account-email-form input,
+.account-settings-form input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font: inherit;
+}
+
+.account-settings-form .account-delete-warning {
+    color: #a11818;
+    line-height: 1.5;
+}
+
+.account-settings-form .account-delete-confirm {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.account-settings-form .account-delete-confirm input {
+    width: auto;
+    min-height: 0;
+    margin: 3px 0 0;
+}
+
+.account-email-actions .account-delete-submit {
+    border: 0;
+    background: #a11818;
+    color: #fff;
+}
+
+.account-email-form .account-feedback,
+.account-settings-form .account-feedback {
+    margin: 0;
+}
+
+.account-email-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.account-email-actions button {
+    min-height: 42px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 600;
+}
+
+.account-email-cancel {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+}
+
+.account-email-actions .account-submit {
+    margin-top: 0;
+}
+
+.account-email-actions .account-submit:disabled {
+    cursor: wait;
 }
 
 .hero,

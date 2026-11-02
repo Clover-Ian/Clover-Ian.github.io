@@ -165,3 +165,61 @@ export async function changePassword(db, userId, currentPassword, newPassword) {
     'UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ? WHERE id = ?',
   ).run(passwordHash, now, now, userId);
 }
+
+/** 修改显示名称。 */
+export function changeDisplayName(db, userId, displayName) {
+  const now = new Date().toISOString();
+  const result = db
+    .prepare('UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?')
+    .run(displayName, now, userId);
+  if (result.changes === 0) throw unauthorized();
+
+  const updatedUser = db
+    .prepare('SELECT id, email, display_name, email_verified, created_at FROM users WHERE id = ?')
+    .get(userId);
+  return mapUser(updatedUser);
+}
+
+/** 修改邮箱前验证当前密码；新邮箱变更后需要重新验证邮箱。 */
+export async function changeEmail(db, userId, email, currentPassword) {
+  const row = db.prepare('SELECT email, password_hash FROM users WHERE id = ?').get(userId);
+  if (!row) throw unauthorized();
+
+  const ok = await verifyPassword(currentPassword, row.password_hash);
+  if (!ok) {
+    throw badRequest('Current password is incorrect.', 'invalid_current_password');
+  }
+
+  if (email !== row.email) {
+    const now = new Date().toISOString();
+    try {
+      db.prepare(
+        'UPDATE users SET email = ?, email_verified = 0, updated_at = ? WHERE id = ?',
+      ).run(email, now, userId);
+    } catch (error) {
+      const message = String(error?.message ?? '');
+      if (message.includes('UNIQUE') || String(error?.code).includes('CONSTRAINT')) {
+        throw conflict('An account with this email already exists.', 'email_taken');
+      }
+      throw error;
+    }
+  }
+
+  const updatedUser = db
+    .prepare('SELECT id, email, display_name, email_verified, created_at FROM users WHERE id = ?')
+    .get(userId);
+  return mapUser(updatedUser);
+}
+
+/** 删除账户前验证当前密码；关联会话由外键级联删除。 */
+export async function deleteUser(db, userId, currentPassword) {
+  const row = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(userId);
+  if (!row) throw unauthorized();
+
+  const ok = await verifyPassword(currentPassword, row.password_hash);
+  if (!ok) {
+    throw badRequest('Current password is incorrect.', 'invalid_current_password');
+  }
+
+  db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+}

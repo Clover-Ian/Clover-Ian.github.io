@@ -4,12 +4,15 @@ import { normalizeDisplayName, normalizeEmail, normalizeNewPassword, readJsonObj
 import { requireAuth } from './middleware.js';
 import {
   authenticateUser,
+  changeDisplayName as updateDisplayName,
+  changeEmail as updateEmail,
   changePassword as updatePassword,
   createSession,
   createUser,
   deleteAllSessions,
   deleteOtherSessions,
   deleteSessionById,
+  deleteUser as removeUser,
   findUserByEmail,
 } from './service.js';
 
@@ -138,6 +141,41 @@ export function createAuthRouter({ db, config, limiters }) {
     await updatePassword(db, req.auth.userId, currentPassword, newPassword);
     // 其它设备上的登录立即失效，当前设备保持登录
     deleteOtherSessions(db, req.auth.userId, req.auth.sessionId);
+    res.status(204).end();
+  });
+
+  // POST /api/auth/change-username  { displayName }
+  router.post('/change-username', requireAuth, (req, res) => {
+    const body = readJsonObject(req.body);
+    const displayName = normalizeDisplayName(body.displayName);
+    if (!displayName) {
+      throw badRequest('Username is required.', 'invalid_display_name');
+    }
+
+    const user = updateDisplayName(db, req.auth.userId, displayName);
+    res.json({ user });
+  });
+
+  // POST /api/auth/change-email  { email, currentPassword }
+  router.post('/change-email', requireAuth, async (req, res) => {
+    const body = readJsonObject(req.body);
+    const email = normalizeEmail(body.email);
+    const currentPassword = readLoginPassword(body.currentPassword, 'Current password is required.');
+
+    const user = await updateEmail(db, req.auth.userId, email, currentPassword);
+    res.json({ user });
+  });
+
+  // POST /api/auth/delete-account  { currentPassword, confirmation }
+  router.post('/delete-account', requireAuth, async (req, res) => {
+    const body = readJsonObject(req.body);
+    if (body.confirmation !== true) {
+      throw badRequest('Account deletion must be confirmed.', 'confirmation_required');
+    }
+    const currentPassword = readLoginPassword(body.currentPassword, 'Current password is required.');
+
+    await removeUser(db, req.auth.userId, currentPassword);
+    clearSessionCookie(res, config);
     res.status(204).end();
   });
 

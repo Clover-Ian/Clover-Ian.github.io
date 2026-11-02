@@ -81,6 +81,9 @@ server/
 | POST | `/api/auth/logout` | 否 | 注销当前会话 |
 | POST | `/api/auth/logout-all` | 是 | 注销该账号全部设备 |
 | POST | `/api/auth/change-password` | 是 | 修改密码（会踢掉其它设备） |
+| POST | `/api/auth/change-username` | 是 | 修改显示用户名 |
+| POST | `/api/auth/change-email` | 是 | 修改邮箱（需要当前密码） |
+| POST | `/api/auth/delete-account` | 是 | 删除账户及其全部会话（需要当前密码和确认） |
 
 用户对象（任何接口都不会返回密码哈希）：
 
@@ -158,7 +161,29 @@ Content-Type: application/json
 成功 `204`。当前设备保持登录，该账号在其它设备/浏览器上的会话全部失效。
 旧密码不对返回 `400 invalid_current_password`。
 
-### 3.6 用 curl 试一遍
+### 3.6 修改用户名
+
+```http
+POST /api/auth/change-username
+Content-Type: application/json
+
+{ "displayName": "New username" }
+```
+
+成功返回 `200 { "user": {...} }`。用户名会去除首尾空格、合并连续空格，最长 50 字符。
+
+### 3.7 删除账户
+
+```http
+POST /api/auth/delete-account
+Content-Type: application/json
+
+{ "currentPassword": "当前密码", "confirmation": true }
+```
+
+成功返回 `204`、清除当前会话 Cookie，并删除账户及其所有设备的会话。需要提供正确的当前密码和显式确认。
+
+### 3.8 用 curl 试一遍
 
 ```bash
 cd server
