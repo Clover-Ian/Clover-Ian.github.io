@@ -97,11 +97,23 @@
     changePasswordButton.type = 'button';
     changePasswordButton.textContent = 'Change password';
 
+    const deleteAccountButton = document.createElement('button');
+    deleteAccountButton.type = 'button';
+    deleteAccountButton.className = 'account-delete-option';
+    deleteAccountButton.textContent = 'Delete account';
+
     const signOutButton = document.createElement('button');
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
 
-    menu.append(changeUsernameButton, changeEmailButton, changePasswordButton, signOutButton, menuStatus);
+    menu.append(
+      changeUsernameButton,
+      changeEmailButton,
+      changePasswordButton,
+      deleteAccountButton,
+      signOutButton,
+      menuStatus,
+    );
     accountMenu.append(userLabel, menu);
     signInLink.replaceWith(accountMenu);
     signUpLink.remove();
@@ -342,6 +354,79 @@
         showRequestError(passwordFeedback, error, 'Could not update your password. Please try again.');
       } finally {
         passwordSubmit.disabled = false;
+      }
+    });
+
+    // ----- Delete account -----
+    const deleteDialog = document.createElement('dialog');
+    deleteDialog.className = 'account-settings-dialog';
+    deleteDialog.setAttribute('aria-labelledby', 'account-delete-title');
+    deleteDialog.innerHTML = `
+      <form class="account-settings-form">
+        <h2 id="account-delete-title">Delete your account?</h2>
+        <p class="account-delete-warning">
+          This permanently deletes your account and signs you out on all devices. This cannot be undone.
+        </p>
+        <label>
+          Current password
+          <input name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+        </label>
+        <label class="account-delete-confirm">
+          <input name="confirmation" type="checkbox" required>
+          I understand and want to permanently delete my account.
+        </label>
+        <p class="account-feedback" role="status" hidden></p>
+        <div class="account-email-actions">
+          <button class="account-email-cancel" type="button">Cancel</button>
+          <button class="account-delete-submit" type="submit">Delete account</button>
+        </div>
+      </form>
+    `;
+    document.body.append(deleteDialog);
+
+    const deleteForm = deleteDialog.querySelector('.account-settings-form');
+    const deletePasswordInput = deleteForm.elements.currentPassword;
+    const deleteConfirmation = deleteForm.elements.confirmation;
+    const deleteFeedback = deleteForm.querySelector('.account-feedback');
+    const deleteSubmit = deleteForm.querySelector('[type="submit"]');
+
+    deleteAccountButton.addEventListener('click', () => {
+      setMenuOpen(false);
+      deleteForm.reset();
+      clearFeedback(deleteFeedback);
+      deleteDialog.showModal();
+      deletePasswordInput.focus();
+    });
+
+    deleteForm.querySelector('.account-email-cancel').addEventListener('click', () => {
+      deleteDialog.close();
+    });
+
+    deleteForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearFeedback(deleteFeedback);
+      deleteSubmit.disabled = true;
+
+      try {
+        if (!deleteConfirmation.checked) {
+          throw new Error('Please confirm that you want to delete your account.');
+        }
+
+        const { error: reauthError } = await client.auth.signInWithPassword({
+          email: user.email,
+          password: deletePasswordInput.value,
+        });
+        if (reauthError) throw reauthError;
+
+        const { error } = await client.rpc('delete_my_account');
+        if (error) throw error;
+
+        showFeedback(deleteFeedback, 'Your account has been deleted.', 'success');
+        await client.auth.signOut({ scope: 'local' }).catch(() => {});
+        window.setTimeout(() => window.location.assign('index.html'), 700);
+      } catch (error) {
+        showRequestError(deleteFeedback, error, 'Could not delete your account. Please try again.');
+        deleteSubmit.disabled = false;
       }
     });
 
