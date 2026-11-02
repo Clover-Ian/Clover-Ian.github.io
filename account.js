@@ -1,6 +1,6 @@
 /**
  * 注册 / 登录页面共用的表单逻辑。
- * 会话保存在 HttpOnly Cookie 里，前端不需要也不应该把 token 存到 localStorage。
+ * 账号由 Supabase Auth 托管；浏览器本地保存会话，不再依赖我们自己的后端。
  */
 (() => {
   const form = document.querySelector('form[data-account-form]');
@@ -10,14 +10,18 @@
   const button = form.querySelector('button[type="submit"]');
   const feedback = form.querySelector('.account-feedback');
   const defaultLabel = button ? button.textContent : '';
+  const client = window.iysSupabase;
 
   const ERROR_MESSAGES = {
-    email_taken: 'An account with this email already exists. Try signing in instead.',
     invalid_credentials: 'Email or password is incorrect.',
-    invalid_email: 'Please enter a valid email address.',
-    invalid_password: 'Password must be at least 8 characters.',
-    invalid_display_name: 'Please use a shorter name (50 characters or fewer).',
-    too_many_requests: 'Too many attempts. Please wait a few minutes and try again.',
+    email_not_confirmed: 'Please confirm your email before signing in.',
+    user_already_exists: 'An account with this email already exists. Try signing in instead.',
+    email_exists: 'An account with this email already exists. Try signing in instead.',
+    weak_password: 'Password is too weak. Use at least 8 characters.',
+    over_email_send_rate_limit: 'Too many emails sent. Please wait a few minutes and try again.',
+    over_request_rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
+    signup_disabled: 'Sign ups are currently disabled.',
+    email_address_invalid: 'Please enter a valid email address.',
   };
 
   function showMessage(message, type = 'error') {
@@ -44,33 +48,21 @@
       : defaultLabel;
   }
 
-  async function postJson(path, payload) {
-    const response = await fetch(path, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch {
-      // 204 或非 JSON 响应
+  function messageForError(error) {
+    if (error instanceof TypeError) {
+      return 'Could not reach the account service. Check your connection and try again.';
     }
-
-    if (!response.ok) {
-      const error = new Error(data?.error?.message || `Request failed (${response.status}).`);
-      error.code = data?.error?.code;
-      error.status = response.status;
-      throw error;
-    }
-    return data;
+    return ERROR_MESSAGES[error?.code] || error?.message || 'Something went wrong. Please try again.';
   }
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage();
+
+    if (!client) {
+      showMessage('Account service is not available. Please try again later.');
+      return;
+    }
 
     const values = Object.fromEntries(new FormData(form));
     const email = String(values.email ?? '').trim();
@@ -85,19 +77,27 @@
       }
     }
 
-    const endpoint = mode === 'signup' ? '/api/auth/register' : '/api/auth/login';
-    const payload =
-      mode === 'signup'
-        ? {
-            email,
-            password,
-            displayName: String(values.name ?? '').trim() || undefined,
-          }
-        : { email, password };
-
     setBusy(true);
     try {
-      await postJson(endpoint, payload);
+      if (mode === 'signup') {
+        const displayName = String(values.name ?? '').trim();
+        const { data, error } = await client.auth.signUp({
+          email,
+          password,
+          options: displayName ? { data: { display_name: displayName } } : undefined,
+        });
+        if (error) throw error;
+
+        if (!data.session) {
+          showMessage('Account created. Check your email to confirm, then sign in.', 'success');
+          setBusy(false);
+          return;
+        }
+      } else {
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+
       showMessage(
         mode === 'signup'
           ? 'Account created. Taking you to the homepage…'
@@ -108,13 +108,7 @@
         window.location.assign('index.html');
       }, 700);
     } catch (error) {
-      if (error instanceof TypeError) {
-        showMessage('Could not reach the server. Check your connection and try again.');
-      } else {
-        showMessage(
-          ERROR_MESSAGES[error.code] || error.message || 'Something went wrong. Please try again.',
-        );
-      }
+      showMessage(messageForError(error));
       setBusy(false);
     }
   });

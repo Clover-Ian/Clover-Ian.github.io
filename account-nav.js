@@ -1,31 +1,62 @@
+/**
+ * 导航栏账号菜单。会话由 Supabase Auth 管理。
+ * 支持：显示当前用户、改用户名、改邮箱、改密码、退出登录。
+ */
 (() => {
   const signInLink = document.querySelector('.account-nav-link[href="IYS Account Sign In.html"]');
   const signUpLink = document.querySelector('.account-nav-link[href="IYS Account Sign Up.html"]');
 
   if (!signInLink || !signUpLink) return;
 
-  async function updateAccountNavigation() {
-    const response = await fetch('/api/auth/me', {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    });
+  const client = window.iysSupabase;
+  if (!client) {
+    console.error('Supabase client is not available.');
+    return;
+  }
 
-    if (response.status === 401) return;
-    if (!response.ok) {
-      throw new Error(`Account session check failed (${response.status}).`);
-    }
+  const AUTH_ERROR_MESSAGES = {
+    invalid_credentials: 'Current password is incorrect.',
+    email_exists: 'That email is already in use.',
+    user_already_exists: 'That email is already in use.',
+    email_address_invalid: 'Please enter a valid email address.',
+    weak_password: 'Password is too weak. Use at least 8 characters.',
+    same_password: 'The new password must be different from the old one.',
+    over_email_send_rate_limit: 'Too many emails sent. Please wait a few minutes and try again.',
+    over_request_rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
+  };
 
-    const data = await response.json();
-    const user = data?.user;
-    const displayName = user?.displayName;
-    const email = user?.email;
-    const name = typeof displayName === 'string' && displayName.trim()
-      ? displayName.trim()
-      : email;
-    if (typeof name !== 'string' || name.length === 0) {
-      throw new Error('Account session response did not include a valid user name.');
+  function displayNameOf(user) {
+    const name = user?.user_metadata?.display_name;
+    if (typeof name === 'string' && name.trim()) return name.trim();
+    return user?.email || 'Account';
+  }
+
+  function showFeedback(feedback, message, type = 'error') {
+    feedback.textContent = message;
+    feedback.classList.toggle('is-success', type === 'success');
+    feedback.hidden = false;
+  }
+
+  function clearFeedback(feedback) {
+    feedback.hidden = true;
+    feedback.textContent = '';
+    feedback.classList.remove('is-success');
+  }
+
+  function showRequestError(feedback, error, fallback) {
+    if (error instanceof TypeError) {
+      showFeedback(feedback, 'Could not reach the account service. Check your connection and try again.');
+      return;
     }
+    showFeedback(feedback, AUTH_ERROR_MESSAGES[error?.code] || error?.message || fallback);
+  }
+
+  async function init() {
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    if (!data.session?.user) return;
+
+    let user = data.session.user;
 
     const accountMenu = document.createElement('div');
     accountMenu.className = 'account-menu-container';
@@ -33,17 +64,16 @@
     const userLabel = document.createElement('button');
     userLabel.type = 'button';
     userLabel.className = 'account-nav-link account-nav-user';
-    userLabel.textContent = name;
-    userLabel.title = `Signed in as ${name}`;
-    userLabel.setAttribute('aria-label', `Account options for ${name}`);
+    userLabel.setAttribute('aria-label', `Account options for ${displayNameOf(user)}`);
     userLabel.setAttribute('aria-expanded', 'false');
 
     function updateUserLabel() {
-      const updatedName = user.displayName?.trim() || user.email;
-      userLabel.textContent = updatedName;
-      userLabel.title = `Signed in as ${updatedName}`;
-      userLabel.setAttribute('aria-label', `Account options for ${updatedName}`);
+      const name = displayNameOf(user);
+      userLabel.textContent = name;
+      userLabel.title = `Signed in as ${user.email || name}`;
+      userLabel.setAttribute('aria-label', `Account options for ${name}`);
     }
+    updateUserLabel();
 
     const menu = document.createElement('div');
     menu.className = 'account-menu';
@@ -67,23 +97,11 @@
     changePasswordButton.type = 'button';
     changePasswordButton.textContent = 'Change password';
 
-    const deleteAccountButton = document.createElement('button');
-    deleteAccountButton.type = 'button';
-    deleteAccountButton.className = 'account-delete-option';
-    deleteAccountButton.textContent = 'Delete account';
-
     const signOutButton = document.createElement('button');
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
 
-    menu.append(
-      changeUsernameButton,
-      changeEmailButton,
-      changePasswordButton,
-      deleteAccountButton,
-      signOutButton,
-      menuStatus,
-    );
+    menu.append(changeUsernameButton, changeEmailButton, changePasswordButton, signOutButton, menuStatus);
     accountMenu.append(userLabel, menu);
     signInLink.replaceWith(accountMenu);
     signUpLink.remove();
@@ -97,59 +115,10 @@
       }
     }
 
-    async function postAccountChange(path, payload) {
-      const response = await fetch(path, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      let data = null;
-      if (response.status !== 204) {
-        data = await response.json();
-      }
-
-      if (!response.ok) {
-        const error = new Error(data?.error?.message || `Request failed (${response.status}).`);
-        error.code = data?.error?.code;
-        throw error;
-      }
-      return data;
-    }
-
-    function showFeedback(feedback, message, type = 'error') {
-      feedback.textContent = message;
-      feedback.classList.toggle('is-success', type === 'success');
-      feedback.hidden = false;
-    }
-
-    function clearFeedback(feedback) {
-      feedback.hidden = true;
-      feedback.textContent = '';
-      feedback.classList.remove('is-success');
-    }
-
-    function showRequestError(feedback, error, fallback) {
-      showFeedback(
-        feedback,
-        error instanceof TypeError
-          ? 'Could not reach the server. Check your connection and try again.'
-          : error.message || fallback,
-      );
-    }
-
-    userLabel.addEventListener('click', () => {
-      setMenuOpen(menu.hidden);
-    });
-
+    userLabel.addEventListener('click', () => setMenuOpen(menu.hidden));
     document.addEventListener('click', (event) => {
       if (!accountMenu.contains(event.target)) setMenuOpen(false);
     });
-
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !menu.hidden) {
         setMenuOpen(false);
@@ -157,6 +126,7 @@
       }
     });
 
+    // ----- Change username -----
     const usernameDialog = document.createElement('dialog');
     usernameDialog.className = 'account-settings-dialog';
     usernameDialog.setAttribute('aria-labelledby', 'account-username-title');
@@ -185,8 +155,8 @@
     changeUsernameButton.addEventListener('click', () => {
       setMenuOpen(false);
       usernameForm.querySelector('.account-email-current').textContent =
-        `Current username: ${user.displayName?.trim() || user.email}`;
-      usernameInput.value = user.displayName?.trim() || '';
+        `Current username: ${displayNameOf(user)}`;
+      usernameInput.value = user.user_metadata?.display_name || '';
       clearFeedback(usernameFeedback);
       usernameDialog.showModal();
       usernameInput.focus();
@@ -202,13 +172,13 @@
       usernameSubmit.disabled = true;
 
       try {
-        const data = await postAccountChange('/api/auth/change-username', {
-          displayName: usernameInput.value.trim(),
-        });
-        user.displayName = data.user.displayName;
+        const name = usernameInput.value.trim();
+        const { data, error } = await client.auth.updateUser({ data: { display_name: name } });
+        if (error) throw error;
+        user = data.user ?? user;
         updateUserLabel();
         usernameForm.querySelector('.account-email-current').textContent =
-          `Current username: ${user.displayName}`;
+          `Current username: ${displayNameOf(user)}`;
         showFeedback(usernameFeedback, 'Your username has been updated.', 'success');
       } catch (error) {
         showRequestError(usernameFeedback, error, 'Could not update your username. Please try again.');
@@ -217,6 +187,7 @@
       }
     });
 
+    // ----- Change email -----
     const emailDialog = document.createElement('dialog');
     emailDialog.className = 'account-email-dialog';
     emailDialog.setAttribute('aria-labelledby', 'account-email-title');
@@ -243,7 +214,7 @@
 
     const emailForm = emailDialog.querySelector('.account-email-form');
     const emailInput = emailForm.elements.email;
-    const passwordInput = emailForm.elements.password;
+    const emailPasswordInput = emailForm.elements.password;
     const emailFeedback = emailForm.querySelector('.account-feedback');
     const emailSubmit = emailForm.querySelector('[type="submit"]');
 
@@ -251,7 +222,7 @@
       setMenuOpen(false);
       emailForm.querySelector('.account-email-current').textContent = `Current email: ${user.email}`;
       emailInput.value = '';
-      passwordInput.value = '';
+      emailPasswordInput.value = '';
       clearFeedback(emailFeedback);
       emailDialog.showModal();
       emailInput.focus();
@@ -267,15 +238,30 @@
       emailSubmit.disabled = true;
 
       try {
-        const data = await postAccountChange('/api/auth/change-email', {
-          email: emailInput.value.trim(),
-          currentPassword: passwordInput.value,
+        const newEmail = emailInput.value.trim();
+
+        // 先验证当前密码，避免别人拿到已登录设备就能改邮箱。
+        const { error: reauthError } = await client.auth.signInWithPassword({
+          email: user.email,
+          password: emailPasswordInput.value,
         });
-        user.email = data.user.email;
-        updateUserLabel();
-        emailForm.querySelector('.account-email-current').textContent = `Current email: ${user.email}`;
-        passwordInput.value = '';
-        showFeedback(emailFeedback, 'Your email has been updated.', 'success');
+        if (reauthError) throw reauthError;
+
+        const { data, error } = await client.auth.updateUser({ email: newEmail });
+        if (error) throw error;
+        user = data.user ?? user;
+
+        emailPasswordInput.value = '';
+        if (user.email?.toLowerCase() === newEmail.toLowerCase()) {
+          emailForm.querySelector('.account-email-current').textContent = `Current email: ${user.email}`;
+          showFeedback(emailFeedback, 'Your email has been updated.', 'success');
+        } else {
+          showFeedback(
+            emailFeedback,
+            'Confirmation email sent. Check your inbox to finish changing your email.',
+            'success',
+          );
+        }
       } catch (error) {
         showRequestError(emailFeedback, error, 'Could not update your email. Please try again.');
       } finally {
@@ -283,6 +269,7 @@
       }
     });
 
+    // ----- Change password -----
     const passwordDialog = document.createElement('dialog');
     passwordDialog.className = 'account-settings-dialog';
     passwordDialog.setAttribute('aria-labelledby', 'account-password-title');
@@ -340,10 +327,15 @@
       passwordSubmit.disabled = true;
 
       try {
-        await postAccountChange('/api/auth/change-password', {
-          currentPassword: currentPasswordInput.value,
-          newPassword: newPasswordInput.value,
+        const { error: reauthError } = await client.auth.signInWithPassword({
+          email: user.email,
+          password: currentPasswordInput.value,
         });
+        if (reauthError) throw reauthError;
+
+        const { error } = await client.auth.updateUser({ password: newPasswordInput.value });
+        if (error) throw error;
+
         passwordForm.reset();
         showFeedback(passwordFeedback, 'Your password has been updated.', 'success');
       } catch (error) {
@@ -353,90 +345,26 @@
       }
     });
 
-    const deleteDialog = document.createElement('dialog');
-    deleteDialog.className = 'account-settings-dialog';
-    deleteDialog.setAttribute('aria-labelledby', 'account-delete-title');
-    deleteDialog.innerHTML = `
-      <form class="account-settings-form">
-        <h2 id="account-delete-title">Delete your account?</h2>
-        <p class="account-delete-warning">
-          This permanently deletes your account and signs you out on all devices. This cannot be undone.
-        </p>
-        <label>
-          Current password
-          <input name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
-        </label>
-        <label class="account-delete-confirm">
-          <input name="confirmation" type="checkbox" required>
-          I understand and want to permanently delete my account.
-        </label>
-        <p class="account-feedback" role="status" hidden></p>
-        <div class="account-email-actions">
-          <button class="account-email-cancel" type="button">Cancel</button>
-          <button class="account-delete-submit" type="submit">Delete account</button>
-        </div>
-      </form>
-    `;
-    document.body.append(deleteDialog);
-
-    const deleteForm = deleteDialog.querySelector('.account-settings-form');
-    const deletePasswordInput = deleteForm.elements.currentPassword;
-    const deleteConfirmation = deleteForm.elements.confirmation;
-    const deleteFeedback = deleteForm.querySelector('.account-feedback');
-    const deleteSubmit = deleteForm.querySelector('[type="submit"]');
-
-    deleteAccountButton.addEventListener('click', () => {
-      setMenuOpen(false);
-      deleteForm.reset();
-      clearFeedback(deleteFeedback);
-      deleteDialog.showModal();
-      deletePasswordInput.focus();
-    });
-
-    deleteForm.querySelector('.account-email-cancel').addEventListener('click', () => {
-      deleteDialog.close();
-    });
-
-    deleteForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      clearFeedback(deleteFeedback);
-      deleteSubmit.disabled = true;
-
-      try {
-        await postAccountChange('/api/auth/delete-account', {
-          currentPassword: deletePasswordInput.value,
-          confirmation: deleteConfirmation.checked,
-        });
-        showFeedback(deleteFeedback, 'Your account has been deleted.', 'success');
-        window.setTimeout(() => window.location.assign('index.html'), 700);
-      } catch (error) {
-        showRequestError(deleteFeedback, error, 'Could not delete your account. Please try again.');
-        deleteSubmit.disabled = false;
-      }
-    });
-
+    // ----- Sign out -----
     signOutButton.addEventListener('click', async () => {
       signOutButton.disabled = true;
       menuStatus.hidden = true;
       try {
-        const response = await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { Accept: 'application/json' },
-        });
-        if (!response.ok) throw new Error(`Sign out failed (${response.status}).`);
+        const { error } = await client.auth.signOut({ scope: 'local' });
+        if (error) throw error;
         window.location.reload();
       } catch (error) {
-        menuStatus.textContent = error instanceof TypeError
-          ? 'Could not reach the server. Check your connection and try again.'
-          : error.message;
+        menuStatus.textContent =
+          error instanceof TypeError
+            ? 'Could not reach the account service. Check your connection and try again.'
+            : error.message;
         menuStatus.hidden = false;
         signOutButton.disabled = false;
       }
     });
   }
 
-  updateAccountNavigation().catch((error) => {
+  init().catch((error) => {
     console.error('Unable to update IYS account navigation.', error);
   });
 })();
