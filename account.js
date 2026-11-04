@@ -81,10 +81,16 @@
     try {
       if (mode === 'signup') {
         const displayName = String(values.name ?? '').trim();
+        const options = {
+          // 明确指定邮件确认后的落地页，避免依赖 Supabase 的 Site URL。
+          emailRedirectTo: new URL('index.html', window.location.href).href,
+        };
+        if (displayName) options.data = { display_name: displayName };
+
         const { data, error } = await client.auth.signUp({
           email,
           password,
-          options: displayName ? { data: { display_name: displayName } } : undefined,
+          options,
         });
         if (error) throw error;
 
