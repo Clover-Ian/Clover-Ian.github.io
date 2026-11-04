@@ -118,4 +118,46 @@
       setBusy(false);
     }
   });
+
+  // Forgot password: only send a reset email when nobody is signed in.
+  const forgotLink = form.querySelector('[data-forgot-password]');
+  if (mode === 'signin' && forgotLink) {
+    forgotLink.addEventListener('click', async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      if (!client) {
+        showMessage('Account service is not available. Please try again later.');
+        return;
+      }
+
+      const emailInput = form.querySelector('input[name="email"]');
+      const email = String(emailInput?.value ?? '').trim();
+      if (!email) {
+        showMessage('Enter your email address first.');
+        emailInput?.focus();
+        return;
+      }
+
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        if (session) {
+          showMessage(
+            'You are already signed in. Change your password from the account menu.',
+            'success',
+          );
+          return;
+        }
+
+        const { error } = await client.auth.resetPasswordForEmail(email, {
+          redirectTo: new URL('IYS Account Reset Password.html', window.location.href).href,
+        });
+        if (error) throw error;
+
+        showMessage('If an account exists for that email, a reset link has been sent.', 'success');
+      } catch (error) {
+        showMessage(messageForError(error));
+      }
+    });
+  }
 })();
