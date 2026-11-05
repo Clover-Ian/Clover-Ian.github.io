@@ -582,6 +582,85 @@ h3 {
     background: var(--surface);
 }
 
+.studio-video {
+    padding: 64px 12px 0;
+}
+
+.studio-video-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.studio-video-heading h2 {
+    margin-bottom: 0;
+    font-size: clamp(28px, 3.5vw, 40px);
+}
+
+.studio-video-heading > p {
+    max-width: 300px;
+    margin: 0 0 4px;
+    color: var(--muted);
+}
+
+.studio-video-link {
+    display: flex;
+    min-height: 220px;
+    aspect-ratio: 16 / 9;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background:
+        radial-gradient(ellipse at 50% 100%, rgb(0 102 204 / 10%), transparent 58%),
+        linear-gradient(145deg, #f8f8fa, #ececf1);
+    color: var(--muted);
+    text-decoration: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.studio-video-link:hover {
+    transform: translateY(-2px);
+    border-color: rgb(0 102 204 / 35%);
+    box-shadow: 0 12px 32px rgb(29 29 31 / 8%);
+    text-decoration: none;
+}
+
+.studio-video-link:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 4px;
+}
+
+.studio-video-play {
+    display: grid;
+    width: 68px;
+    height: 68px;
+    place-items: center;
+    border: 1px solid rgb(29 29 31 / 12%);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 76%);
+}
+
+.studio-video-play::after {
+    width: 0;
+    height: 0;
+    margin-left: 4px;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-left: 13px solid var(--blue);
+    content: "";
+}
+
+.studio-video-link-label {
+    font-size: 15px;
+    font-weight: 600;
+}
+
 .member-license {
     margin-top: 20px;
 }
@@ -892,6 +971,22 @@ article.legal-policy h2 {
         flex-direction: column;
         gap: 20px;
         padding: 32px 8px 0;
+    }
+
+    .studio-video {
+        padding: 44px 8px 0;
+    }
+
+    .studio-video-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .studio-video-link {
+        min-height: 180px;
+        border-radius: 18px;
     }
 
     .footer-inner {
