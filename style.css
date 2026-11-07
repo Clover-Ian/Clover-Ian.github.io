@@ -862,18 +862,26 @@ article.legal-policy h2 {
         width: calc(100% - 32px);
     }
 
+    .navigation {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 0;
+    }
+
     .nav-links {
-        gap: 12px;
+        flex: 1 0 100%;
+        justify-content: space-between;
+        gap: 8px;
         font-size: 12px;
     }
 
     .nav-links .account-nav-link {
-        margin-left: 4px;
+        margin-left: 0;
         padding: 5px 8px;
     }
 
     .nav-links .account-signup-link {
-        margin-left: -8px;
+        margin-left: 0;
     }
 
     .nav-links .account-nav-user {
@@ -920,7 +928,15 @@ article.legal-policy h2 {
     }
 
     .feature-card {
-        padding: 38px 24px;
+        padding: 124px 24px 38px;
+    }
+
+    .feature-card-icon {
+        top: 24px;
+        left: 50%;
+        width: 72px;
+        height: 72px;
+        transform: translateX(-50%);
     }
 
     .product-section {
@@ -1004,10 +1020,6 @@ article.legal-policy h2 {
 
 @media (max-width: 390px) {
     .nav-links {
-        gap: 5px;
-    }
-
-    .nav-links {
         gap: 4px;
         font-size: 11px;
     }
@@ -1031,17 +1043,5 @@ article.legal-policy h2 {
 
     .product-heading {
         flex-direction: column;
-    }
-}
-
-@media (max-width: 340px) {
-    .navigation {
-        flex-wrap: wrap;
-        padding: 8px 0;
-    }
-
-    .navigation .nav-links {
-        width: 100%;
-        justify-content: space-between;
     }
 }
