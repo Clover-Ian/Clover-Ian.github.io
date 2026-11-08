@@ -433,12 +433,10 @@ h3 {
 }
 
 .feature-card-icon {
-    position: absolute;
-    top: 24px;
-    left: 24px;
     display: block;
     width: 88px;
     height: 88px;
+    margin-bottom: 18px;
     object-fit: contain;
 }
 
@@ -928,15 +926,13 @@ article.legal-policy h2 {
     }
 
     .feature-card {
-        padding: 124px 24px 38px;
+        padding: 38px 24px;
     }
 
     .feature-card-icon {
-        top: 24px;
-        left: 50%;
         width: 72px;
         height: 72px;
-        transform: translateX(-50%);
+        margin-bottom: 16px;
     }
 
     .product-section {
