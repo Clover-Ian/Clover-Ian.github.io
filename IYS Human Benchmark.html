@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three quick tests for reaction time, clicking speed, and typing speed. Runs entirely in your browser.">
+    <title>Human Benchmark | IYS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="benchmark.css">
+    <script src="supabase.js" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="account-nav.js" defer></script>
+    <script src="benchmark.js" defer></script>
+</head>
+<body class="benchmark-page">
+    <header class="site-header hb-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="hb-main">
+
+        <!-- ================= 首页：三个测试入口 ================= -->
+        <section class="hb-view is-active" id="view-home" aria-labelledby="hb-title">
+            <div class="hb-hero">
+                <p class="hb-eyebrow">Interactive tests</p>
+                <h1 id="hb-title">Human Benchmark</h1>
+                <p class="hb-lede">
+                    How fast are you, really? Try three short tests for reaction time, click speed,
+                    and typing speed. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
+                </p>
+            </div>
+
+            <div class="hb-cards">
+                <button type="button" class="hb-card" data-open="reaction">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 9.5-12H13z"/></svg>
+                    <span class="hb-card-title">Reaction Time</span>
+                    <span class="hb-card-copy">Click the moment the screen turns green. Five rounds, averaged.</span>
+                    <span class="hb-card-best" data-best="reaction">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="click">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+                    <span class="hb-card-title">Click Speed</span>
+                    <span class="hb-card-copy">How many clicks can you land in ten seconds?</span>
+                    <span class="hb-card-best" data-best="click">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="typing">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 13.5h.01M17 13.5h.01M9.5 16h5"/></svg>
+                    <span class="hb-card-title">Typing Speed</span>
+                    <span class="hb-card-copy">Type a random passage. Copy and paste are disabled.</span>
+                    <span class="hb-card-best" data-best="typing">Not tested yet</span>
+                </button>
+            </div>
+
+            <p class="hb-note">
+                Browsers are not laboratory equipment. Display refresh and input lag both add a few
+                milliseconds — treat these as relative scores, not clinical measurements.
+            </p>
+        </section>
+
+        <!-- ================= 反应测试 ================= -->
+        <section class="hb-view" id="view-reaction" aria-labelledby="hb-reaction-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-reaction-title">Reaction Time</h2>
+                <p class="hb-sub">Round <span data-reaction-round>0</span> of 5</p>
+            </div>
+
+            <div class="hb-stage hb-stage--reaction" data-reaction-stage>
+                <div class="hb-stage-inner">
+                    <p class="hb-stage-title" data-reaction-title>Click to start</p>
+                    <p class="hb-stage-copy" data-reaction-copy>Five rounds. Wait for green, then click as fast as you can.</p>
+                </div>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Last</span>
+                    <span class="hb-stat-value" data-reaction-last>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Average</span>
+                    <span class="hb-stat-value" data-reaction-average>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-reaction-best>—</span>
+                </div>
+            </div>
+
+            <ol class="hb-rounds" data-reaction-rounds aria-label="Round results"></ol>
+        </section>
+
+        <!-- ================= 点击速度 ================= -->
+        <section class="hb-view" id="view-click" aria-labelledby="hb-click-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-click-title">Click Speed</h2>
+                <p class="hb-sub">Click as many times as you can before time runs out.</p>
+            </div>
+
+            <div class="hb-duration" role="group" aria-label="Test duration">
+                <button type="button" class="hb-chip is-selected" data-duration="10">10 seconds</button>
+                <button type="button" class="hb-chip" data-duration="60">60 seconds</button>
+            </div>
+
+            <div class="hb-stage hb-stage--click" data-click-stage tabindex="0" role="button"
+                 aria-label="Click as fast as you can">
+                <div class="hb-stage-inner">
+                    <p class="hb-click-count" data-click-count>0</p>
+                    <p class="hb-stage-copy" data-click-copy>Click anywhere in this box to start</p>
+                </div>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Time left</span>
+                    <span class="hb-stat-value" data-click-time>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Clicks / second</span>
+                    <span class="hb-stat-value" data-click-cps>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-click-best>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 打字速度 ================= -->
+        <section class="hb-view" id="view-typing" aria-labelledby="hb-typing-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-typing-title">Typing Speed</h2>
+                <p class="hb-sub">Copy and paste are disabled. The timer starts when you begin typing.</p>
+            </div>
+
+            <div class="hb-passage" data-typing-passage aria-hidden="true"></div>
+
+            <label class="hb-sr-only" for="hb-typing-input">Type the passage above</label>
+            <textarea id="hb-typing-input" class="hb-input" data-typing-input
+                      autocomplete="off" autocorrect="off" autocapitalize="off"
+                      spellcheck="false" rows="4" placeholder="Start typing here…"></textarea>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Time</span>
+                    <span class="hb-stat-value" data-typing-time>0.0s</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Words / minute</span>
+                    <span class="hb-stat-value" data-typing-wpm>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Accuracy</span>
+                    <span class="hb-stat-value" data-typing-accuracy>—</span>
+                </div>
+            </div>
+
+            <div class="hb-actions">
+                <button type="button" class="hb-button hb-button--primary" data-typing-restart>New passage</button>
+                <span class="hb-save-state" data-save-state role="status"></span>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer hb-footer">
+        <div class="footer-inner">
+            <p><a href="index.html">← Back to IYS</a></p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,560 @@
+/* ==========================================================================
+   IYS Human Benchmark
+   深色版式：和主站同一套排版/字体/圆角语言，但背景换成深灰，
+   让"变绿"的反应测试更醒目，也让这一页和主站明显区分开。
+   ========================================================================== */
+
+.benchmark-page {
+    color-scheme: dark;
+    --hb-bg: #0b0b0d;
+    --hb-surface: #17171a;
+    --hb-surface-raised: #1f1f24;
+    --hb-line: rgb(255 255 255 / 10%);
+    --hb-ink: #f5f5f7;
+    --hb-muted: #9a9aa2;
+    --hb-accent: #0a84ff;
+    --hb-green: #30d158;
+    --hb-red: #ff453a;
+
+    background: var(--hb-bg);
+    color: var(--hb-ink);
+}
+
+/* 背景：顶部一层极淡的光晕，别无其他装饰 */
+.benchmark-page::before {
+    position: fixed;
+    z-index: 0;
+    top: -20vh;
+    left: 50%;
+    width: min(1100px, 120vw);
+    height: 70vh;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at 50% 0%, rgb(90 140 255 / 16%) 0%, rgb(11 11 13 / 0%) 70%);
+    content: "";
+    pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- 顶栏 */
+
+.benchmark-page .hb-header {
+    border-bottom: 1px solid var(--hb-line);
+    background: rgb(11 11 13 / 78%);
+    backdrop-filter: saturate(180%) blur(20px);
+}
+
+.benchmark-page .brand {
+    color: var(--hb-ink);
+    letter-spacing: 0.02em;
+}
+
+.benchmark-page .nav-links a {
+    color: rgb(245 245 247 / 72%);
+}
+
+.benchmark-page .nav-links a:hover {
+    color: var(--hb-ink);
+    text-decoration: none;
+}
+
+/* 登录/注册按钮：站点的浅蓝胶囊在深色页上要换一套配色，
+   否则白色文字会落在浅蓝底上，看不见 */
+.benchmark-page .nav-links .account-nav-link {
+    border-color: rgb(255 255 255 / 22%);
+    background: rgb(255 255 255 / 8%);
+    color: var(--hb-ink);
+}
+
+.benchmark-page .nav-links .account-nav-link:not(.account-signup-link):hover {
+    border-color: rgb(255 255 255 / 40%);
+    background: rgb(255 255 255 / 14%);
+    text-decoration: none;
+}
+
+.benchmark-page .nav-links .account-signup-link {
+    border-color: transparent;
+    background: var(--hb-accent);
+    color: #fff;
+}
+
+.benchmark-page .nav-links .account-signup-link:hover {
+    background: #3a9bff;
+    text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- 布局 */
+
+.hb-main {
+    position: relative;
+    z-index: 1;
+    width: min(var(--content-width), calc(100% - 48px));
+    margin: 0 auto;
+    padding: 56px 0 96px;
+}
+
+.hb-view {
+    display: none;
+}
+
+.hb-view.is-active {
+    display: block;
+    animation: hb-fade 0.28s ease both;
+}
+
+@keyframes hb-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.hb-hero {
+    max-width: 680px;
+    margin-bottom: 48px;
+}
+
+.hb-eyebrow {
+    margin: 0 0 12px;
+    color: var(--hb-accent);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.hb-hero h1 {
+    margin: 0 0 16px;
+    font-size: clamp(34px, 5vw, 56px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.hb-lede {
+    margin: 0;
+    color: var(--hb-muted);
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------- 卡片 */
+
+.hb-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.hb-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 26px 24px 22px;
+    border: 1px solid var(--hb-line);
+    border-radius: 20px;
+    background: var(--hb-surface);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.hb-card:hover {
+    background: var(--hb-surface-raised);
+    border-color: rgb(255 255 255 / 18%);
+    transform: translateY(-2px);
+}
+
+.hb-card:focus-visible {
+    outline: 2px solid var(--hb-accent);
+    outline-offset: 3px;
+}
+
+.hb-card-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--hb-accent);
+    opacity: 0.9;
+}
+
+.hb-card-title {
+    margin-top: 6px;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.hb-card-copy {
+    color: var(--hb-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.hb-card-best {
+    margin-top: auto;
+    padding-top: 14px;
+    color: rgb(245 245 247 / 45%);
+    font-size: 13px;
+}
+
+.hb-account-note {
+    margin: 18px 0 0;
+    color: rgb(245 245 247 / 55%);
+    font-size: 14px;
+}
+
+.hb-account-note a {
+    color: var(--hb-accent);
+}
+
+.hb-save-state {
+    align-self: center;
+    color: rgb(245 245 247 / 45%);
+    font-size: 13px;
+}
+
+.hb-note {
+    margin-top: 36px;
+    max-width: 620px;
+    color: rgb(245 245 247 / 38%);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------- 子页头 */
+
+.hb-view-head {
+    margin-bottom: 28px;
+}
+
+.hb-view-head h2 {
+    margin: 8px 0 4px;
+    font-size: clamp(26px, 3.4vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.hb-sub {
+    margin: 0;
+    color: var(--hb-muted);
+    font-size: 15px;
+}
+
+.hb-text-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--hb-accent);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.hb-text-button:hover {
+    text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- 舞台 */
+
+.hb-stage {
+    display: grid;
+    min-height: 46vh;
+    place-items: center;
+    padding: 32px;
+    border: 1px solid var(--hb-line);
+    border-radius: 24px;
+    background: var(--hb-surface);
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.hb-stage-inner {
+    display: grid;
+    gap: 10px;
+    place-items: center;
+}
+
+.hb-stage-title {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.hb-stage-copy {
+    margin: 0;
+    max-width: 420px;
+    color: var(--hb-muted);
+    font-size: 15px;
+}
+
+/* 反应测试：等待 / 就绪 / 太早 */
+.hb-stage--reaction {
+    cursor: pointer;
+}
+
+.hb-stage--reaction.is-waiting {
+    background: #221a1a;
+    border-color: rgb(255 69 58 / 35%);
+}
+
+.hb-stage--reaction.is-ready {
+    background: var(--hb-green);
+    border-color: var(--hb-green);
+}
+
+.hb-stage--reaction.is-ready .hb-stage-title,
+.hb-stage--reaction.is-ready .hb-stage-copy {
+    color: #05230f;
+}
+
+.hb-stage--reaction.is-early {
+    background: #2a1614;
+    border-color: rgb(255 69 58 / 55%);
+}
+
+/* 点击测试 */
+.hb-stage--click {
+    cursor: pointer;
+}
+
+.hb-stage--click.is-running {
+    border-color: rgb(10 132 255 / 45%);
+}
+
+.hb-click-count {
+    margin: 0;
+    font-size: clamp(56px, 9vw, 96px);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+/* ---------------------------------------------------------------- 数字与按钮 */
+
+.hb-result-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.hb-stat {
+    display: grid;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--hb-line);
+    border-radius: 16px;
+    background: rgb(255 255 255 / 3%);
+}
+
+.hb-stat-label {
+    color: var(--hb-muted);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hb-stat-value {
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.hb-rounds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hb-rounds li {
+    padding: 6px 12px;
+    border: 1px solid var(--hb-line);
+    border-radius: 999px;
+    color: var(--hb-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hb-duration {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.hb-chip {
+    padding: 8px 16px;
+    border: 1px solid var(--hb-line);
+    border-radius: 999px;
+    background: none;
+    color: var(--hb-muted);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.hb-chip:hover {
+    color: var(--hb-ink);
+}
+
+.hb-chip.is-selected {
+    border-color: transparent;
+    background: var(--hb-ink);
+    color: #0b0b0d;
+}
+
+.hb-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.hb-button {
+    padding: 10px 20px;
+    border: 1px solid var(--hb-line);
+    border-radius: 999px;
+    background: none;
+    color: var(--hb-ink);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.hb-button:hover {
+    background: var(--hb-surface-raised);
+}
+
+.hb-button--primary {
+    border-color: transparent;
+    background: var(--hb-accent);
+    color: #fff;
+}
+
+.hb-button--primary:hover {
+    background: #3a9bff;
+}
+
+/* ---------------------------------------------------------------- 打字测试 */
+
+.hb-passage {
+    padding: 26px 28px;
+    border: 1px solid var(--hb-line);
+    border-radius: 20px;
+    background: var(--hb-surface);
+    color: rgb(245 245 247 / 88%);
+    font-size: 19px;
+    line-height: 1.9;
+    letter-spacing: 0.01em;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.hb-passage .hb-char.is-correct {
+    color: var(--hb-ink);
+}
+
+.hb-passage .hb-char.is-wrong {
+    border-radius: 3px;
+    background: rgb(255 69 58 / 28%);
+    color: #ffd8d5;
+}
+
+.hb-passage .hb-char.is-current {
+    border-radius: 2px;
+    box-shadow: inset 0 -2px 0 var(--hb-accent);
+}
+
+.hb-input {
+    width: 100%;
+    margin-top: 14px;
+    padding: 18px 20px;
+    border: 1px solid var(--hb-line);
+    border-radius: 16px;
+    background: #131316;
+    color: var(--hb-ink);
+    font: inherit;
+    font-size: 17px;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color 0.18s ease;
+}
+
+.hb-input:focus {
+    border-color: rgb(10 132 255 / 55%);
+    outline: none;
+}
+
+.hb-input::placeholder {
+    color: rgb(245 245 247 / 28%);
+}
+
+.hb-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------------------------------------------------------------- 页脚 */
+
+.benchmark-page .hb-footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--hb-line);
+    background: transparent;
+}
+
+.benchmark-page .hb-footer .footer-inner,
+.benchmark-page .hb-footer p,
+.benchmark-page .hb-footer a {
+    color: rgb(245 245 247 / 50%);
+}
+
+.benchmark-page .hb-footer a:hover {
+    color: var(--hb-ink);
+}
+
+/* ---------------------------------------------------------------- 响应式 */
+
+@media (max-width: 700px) {
+    .benchmark-page .nav-links {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .hb-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .hb-result-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hb-main {
+        padding: 36px 0 64px;
+    }
+
+    .hb-stage {
+        min-height: 38vh;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hb-view.is-active,
+    .hb-card {
+        animation: none;
+        transition: none;
+        transform: none;
+    }
+}
