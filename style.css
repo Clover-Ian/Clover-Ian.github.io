@@ -543,6 +543,28 @@ h3 {
     color: var(--muted);
 }
 
+.software-account-notice {
+    margin: 32px 0;
+    padding: 22px 24px;
+    border: 2px solid #d88a00;
+    border-radius: 14px;
+    background: #fff8e8;
+}
+
+.software-account-notice .eyebrow {
+    margin-bottom: 8px;
+    color: #805000;
+    font-weight: 700;
+}
+
+.software-account-notice p:not(.eyebrow) {
+    margin-bottom: 8px;
+}
+
+.software-account-notice p:last-child {
+    margin-bottom: 0;
+}
+
 .action-row {
     display: flex;
     flex-wrap: wrap;
