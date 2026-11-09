@@ -6,7 +6,7 @@
  *   - 点击测试：10 秒 / 60 秒，统计次数与 CPS
  *   - 打字测试：从几段长文里随机抽一段，禁复制粘贴，算 WPM 与准确率
  *
- * 成绩只存 localStorage（键名前缀 iys.hb.）。
+ * 成绩不存本地：登录后写入 Supabase（表 benchmark_scores），未登录不记录。
  */
 (() => {
   'use strict';
@@ -15,25 +15,6 @@
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-
-  const STORAGE = {
-    reaction: 'iys.hb.reaction.best',
-    click: 'iys.hb.click.best',
-    typing: 'iys.hb.typing.best',
-  };
-
-  function readBest(key) {
-    const raw = Number(localStorage.getItem(key));
-    return Number.isFinite(raw) && raw > 0 ? raw : null;
-  }
-
-  function writeBest(key, value) {
-    const current = readBest(key);
-    // 反应时间越低越好，其他两个越高越好
-    const better = current === null || (key === STORAGE.reaction ? value < current : value > current);
-    if (better) localStorage.setItem(key, String(value));
-    return better;
-  }
 
   const fmtMs = (ms) => `${Math.round(ms)} ms`;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -81,7 +62,7 @@
   async function saveScoreToCloud(test, value, detail) {
     const state = $('[data-save-state]');
     if (!cloud.ready) {
-      if (state) state.textContent = 'Saved on this device — sign in to keep it.';
+      if (state) state.textContent = 'Sign in to save this score.';
       return false;
     }
     if (state) state.textContent = 'Saving…';
@@ -100,13 +81,20 @@
     return true;
   }
 
-  /** 本地和云端取更好的那个 */
+  /** 成绩只存在账号里，没有登录就没有成绩 */
   function bestOf(test) {
-    const local = readBest(STORAGE[test]);
-    const remote = cloudBest[test];
-    if (local === null) return remote ?? null;
-    if (remote === undefined || remote === null) return local;
-    return test === 'reaction' ? Math.min(local, remote) : Math.max(local, remote);
+    return cloudBest[test] ?? null;
+  }
+
+  /** 这次是不是比之前更好（反应时间越小越好） */
+  function isRecord(test, value) {
+    const current = cloudBest[test];
+    if (current === undefined || current === null) return true;
+    return test === 'reaction' ? value < current : value > current;
+  }
+
+  function rememberScore(test, value) {
+    if (isRecord(test, value)) cloudBest[test] = value;
   }
 
   function updateAccountNote() {
@@ -167,6 +155,12 @@
     const typing = bestOf('typing');
 
     const label = (element, text) => { if (element) element.textContent = text; };
+    if (!cloud.ready) {
+      label($('[data-best="reaction"]'), 'Sign in to save scores');
+      label($('[data-best="click"]'), 'Sign in to save scores');
+      label($('[data-best="typing"]'), 'Sign in to save scores');
+      return;
+    }
     label($('[data-best="reaction"]'), reaction ? `Best ${fmtMs(reaction)}` : 'Not tested yet');
     label($('[data-best="click"]'), click ? `Best ${click} clicks` : 'Not tested yet');
     label($('[data-best="typing"]'), typing ? `Best ${Math.round(typing)} WPM` : 'Not tested yet');
@@ -244,10 +238,15 @@
       reaction.state = 'done';
       reactionSetStage('idle');
       const average = sum / reaction.results.length;
-      const isRecord = writeBest(STORAGE.reaction, average);
-      saveScoreToCloud('reaction', average, { rounds: reaction.results });
-      reactionTitle.textContent = isRecord ? 'New personal best' : 'Done';
-      reactionCopy.textContent = `Average ${fmtMs(average)} over ${REACTION_ROUNDS} rounds. Click to try again.`;
+      const record = isRecord('reaction', average);
+      if (cloud.ready) {
+        rememberScore('reaction', average);
+        saveScoreToCloud('reaction', average, { rounds: reaction.results });
+      }
+      reactionTitle.textContent = cloud.ready && record ? 'New personal best' : 'Done';
+      reactionCopy.textContent = cloud.ready
+        ? `Average ${fmtMs(average)} over ${REACTION_ROUNDS} rounds. Click to try again.`
+        : `Average ${fmtMs(average)} over ${REACTION_ROUNDS} rounds. Sign in to keep this score. Click to try again.`;
       reactionRoundLabel.textContent = String(REACTION_ROUNDS);
       refreshBests();
       return;
@@ -321,11 +320,12 @@
     running: false,
     count: 0,
     startedAt: 0,
-    frame: 0,
+    finishedAt: 0,
+    timer: 0,
   };
 
   function clickReset() {
-    cancelAnimationFrame(click.frame);
+    clearInterval(click.timer);
     click.running = false;
     click.count = 0;
     click.startedAt = 0;
@@ -334,8 +334,8 @@
     clickCopy.textContent = 'Click anywhere in this box to start';
     clickTime.textContent = `${click.duration}s`;
     clickCps.textContent = '—';
-    const best = readBest(STORAGE.click);
-    clickBest.textContent = best ? `${best} clicks` : '—';
+    const best = bestOf('click');
+    clickBest.textContent = best ? `${Math.round(best)} clicks` : '—';
   }
 
   function clickTick() {
@@ -343,32 +343,39 @@
     const left = Math.max(0, click.duration - elapsed);
     clickTime.textContent = `${left.toFixed(1)}s`;
 
-    if (left <= 0) {
-      clickFinish(elapsed);
-      return;
-    }
-    click.frame = requestAnimationFrame(clickTick);
+    if (left <= 0) clickFinish(elapsed);
   }
 
   function clickFinish(elapsed) {
+    clearInterval(click.timer);
     click.running = false;
     clickStage.classList.remove('is-running');
     const cps = click.count / Math.max(elapsed, 0.001);
     clickCps.textContent = cps.toFixed(2);
     clickTime.textContent = '0.0s';
-    const isRecord = writeBest(STORAGE.click, click.count);
-    saveScoreToCloud('click', click.count, { seconds: click.duration });
-    clickCopy.textContent = isRecord
-      ? `New personal best — ${click.count} clicks. Click to go again.`
-      : `${click.count} clicks in ${click.duration}s. Click to go again.`;
-    clickBest.textContent = `${readBest(STORAGE.click)} clicks`;
+    click.finishedAt = performance.now();
+    const record = isRecord('click', click.count);
+    if (cloud.ready) {
+      rememberScore('click', click.count);
+      saveScoreToCloud('click', click.count, { seconds: click.duration });
+    }
+    const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
+    clickCopy.textContent = !cloud.ready
+      ? `${clicks} in ${click.duration}s. Sign in to keep this score, or click to go again.`
+      : record
+        ? `New personal best — ${clicks}. Click to go again.`
+        : `${clicks} in ${click.duration}s. Click to go again.`;
+    const best = bestOf('click');
+    clickBest.textContent = best ? `${Math.round(best)} clicks` : '—';
     refreshBests();
   }
 
   clickStage.addEventListener('pointerdown', (event) => {
     event.preventDefault();
     if (!click.running) {
-      if (click.count > 0 && clickTime.textContent === '0.0s') return; // 刚结束，避免误触
+      // 结束后 300ms 内的点击忽略，避免最后一次连点误触发重开
+      if (click.finishedAt && performance.now() - click.finishedAt < 300) return;
+      click.finishedAt = 0;
       click.running = true;
       click.count = 1;
       click.startedAt = performance.now();
@@ -376,7 +383,7 @@
       clickCopy.textContent = 'Go!';
       clickCps.textContent = '—';
       clickStage.classList.add('is-running');
-      click.frame = requestAnimationFrame(clickTick);
+      click.timer = setInterval(clickTick, 100);
       return;
     }
     click.count += 1;
@@ -393,7 +400,7 @@
   });
 
   function clickTeardown() {
-    cancelAnimationFrame(click.frame);
+    clearInterval(click.timer);
     click.running = false;
     clickReset();
   }
@@ -501,15 +508,20 @@
     if (!typing.finished && typed.length >= typing.target.length) {
       typing.finished = true;
       typingInput.disabled = true;
-      const isRecord = writeBest(STORAGE.typing, wpm);
-      saveScoreToCloud('typing', Math.round(wpm), {
-        seconds: Math.round(elapsed * 10) / 10,
-        accuracy: Math.round(accuracy),
-      });
+      const record = isRecord('typing', Math.round(wpm));
+      if (cloud.ready) {
+        rememberScore('typing', Math.round(wpm));
+        saveScoreToCloud('typing', Math.round(wpm), {
+          seconds: Math.round(elapsed * 10) / 10,
+          accuracy: Math.round(accuracy),
+        });
+      } else {
+        saveScoreToCloud('typing', Math.round(wpm));
+      }
       typingWpm.textContent = String(Math.round(wpm));
       typingAccuracy.textContent = `${Math.round(clamp(accuracy, 0, 100))}%`;
       typingTime.textContent = `${elapsed.toFixed(1)}s`;
-      if (isRecord) typingWpm.textContent = `${Math.round(wpm)} ★`;
+      if (cloud.ready && record) typingWpm.textContent = `${Math.round(wpm)} ★`;
       refreshBests();
     }
   }
