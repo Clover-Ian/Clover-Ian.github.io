@@ -22,7 +22,10 @@
   // ------------------------------------------------------------ 云端成绩（Supabase）
 
   const cloud = { client: null, userId: null, ready: false };
-  const cloudBest = {}; // 云端每个测试的最好成绩
+  const cloudBest = {}; // 云端每个测试的最好成绩；点击测试按时长分开：click:10 / click:60
+
+  const LOWER_IS_BETTER = new Set(['reaction']);
+  const clickKey = (duration) => `click:${duration}`;
 
   async function initCloud() {
     const client = window.iysSupabase;
@@ -42,7 +45,7 @@
   /** 拉云端历史，算出每个测试的最好成绩 */
   async function loadCloudBests() {
     if (!cloud.ready) return;
-    const { data, error } = await cloud.client.from('benchmark_scores').select('test, value');
+    const { data, error } = await cloud.client.from('benchmark_scores').select('test, value, detail');
     if (error) {
       console.warn('[benchmark] 读取云端成绩失败：', error.message);
       return;
@@ -50,11 +53,13 @@
     for (const row of data ?? []) {
       const value = Number(row.value);
       if (!Number.isFinite(value)) continue;
-      const current = cloudBest[row.test];
-      if (current === undefined) cloudBest[row.test] = value;
-      else cloudBest[row.test] = row.test === 'reaction'
-        ? Math.min(current, value)
-        : Math.max(current, value);
+      // 10 秒和 60 秒的成绩不能混在一起比，用时长当 key
+      const key = row.test === 'click'
+        ? clickKey(Number(row.detail?.seconds) || 10)
+        : row.test;
+      const current = cloudBest[key];
+      if (current === undefined) cloudBest[key] = value;
+      else cloudBest[key] = LOWER_IS_BETTER.has(key) ? Math.min(current, value) : Math.max(current, value);
     }
   }
 
@@ -82,19 +87,19 @@
   }
 
   /** 成绩只存在账号里，没有登录就没有成绩 */
-  function bestOf(test) {
-    return cloudBest[test] ?? null;
+  function bestOf(key) {
+    return cloudBest[key] ?? null;
   }
 
   /** 这次是不是比之前更好（反应时间越小越好） */
-  function isRecord(test, value) {
-    const current = cloudBest[test];
+  function isRecord(key, value) {
+    const current = cloudBest[key];
     if (current === undefined || current === null) return true;
-    return test === 'reaction' ? value < current : value > current;
+    return LOWER_IS_BETTER.has(key) ? value < current : value > current;
   }
 
-  function rememberScore(test, value) {
-    if (isRecord(test, value)) cloudBest[test] = value;
+  function rememberScore(key, value) {
+    if (isRecord(key, value)) cloudBest[key] = value;
   }
 
   function updateAccountNote() {
@@ -151,7 +156,8 @@
   // 首页卡片上显示历史最好成绩
   function refreshBests() {
     const reaction = bestOf('reaction');
-    const click = bestOf('click');
+    const click10 = bestOf(clickKey(10));
+    const click60 = bestOf(clickKey(60));
     const typing = bestOf('typing');
 
     const label = (element, text) => { if (element) element.textContent = text; };
@@ -162,7 +168,10 @@
       return;
     }
     label($('[data-best="reaction"]'), reaction ? `Best ${fmtMs(reaction)}` : 'Not tested yet');
-    label($('[data-best="click"]'), click ? `Best ${click} clicks` : 'Not tested yet');
+    const clickParts = [];
+    if (click10) clickParts.push(`${Math.round(click10)} (10s)`);
+    if (click60) clickParts.push(`${Math.round(click60)} (60s)`);
+    label($('[data-best="click"]'), clickParts.length ? `Best ${clickParts.join(' · ')}` : 'Not tested yet');
     label($('[data-best="typing"]'), typing ? `Best ${Math.round(typing)} WPM` : 'Not tested yet');
   }
 
@@ -324,6 +333,12 @@
     timer: 0,
   };
 
+  /** 当前时长对应的最好成绩（10 秒和 60 秒分开算） */
+  function updateClickBest() {
+    const best = bestOf(clickKey(click.duration));
+    clickBest.textContent = best ? `${Math.round(best)} clicks` : '—';
+  }
+
   function clickReset() {
     clearInterval(click.timer);
     click.running = false;
@@ -334,8 +349,7 @@
     clickCopy.textContent = 'Click anywhere in this box to start';
     clickTime.textContent = `${click.duration}s`;
     clickCps.textContent = '—';
-    const best = bestOf('click');
-    clickBest.textContent = best ? `${Math.round(best)} clicks` : '—';
+    updateClickBest();
   }
 
   function clickTick() {
@@ -354,9 +368,9 @@
     clickCps.textContent = cps.toFixed(2);
     clickTime.textContent = '0.0s';
     click.finishedAt = performance.now();
-    const record = isRecord('click', click.count);
+    const record = isRecord(clickKey(click.duration), click.count);
     if (cloud.ready) {
-      rememberScore('click', click.count);
+      rememberScore(clickKey(click.duration), click.count);
       saveScoreToCloud('click', click.count, { seconds: click.duration });
     }
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
@@ -365,8 +379,7 @@
       : record
         ? `New personal best — ${clicks}. Click to go again.`
         : `${clicks} in ${click.duration}s. Click to go again.`;
-    const best = bestOf('click');
-    clickBest.textContent = best ? `${Math.round(best)} clicks` : '—';
+    updateClickBest();
     refreshBests();
   }
 
@@ -552,6 +565,7 @@
     .then(async () => {
       if (cloud.ready) await loadCloudBests();
       refreshBests();
+      updateClickBest();
       updateAccountNote();
     })
     .catch((error) => console.warn('[benchmark] 初始化账号失败', error));
