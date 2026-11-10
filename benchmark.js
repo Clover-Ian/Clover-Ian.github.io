@@ -323,6 +323,8 @@
   const clickTime = $('[data-click-time]');
   const clickCps = $('[data-click-cps]');
   const clickBest = $('[data-click-best]');
+  const clickRestart = $('[data-click-restart]');
+  const clickActions = $('[data-click-actions]');
 
   let click = {
     duration: 10,
@@ -349,7 +351,22 @@
     clickCopy.textContent = 'Click anywhere in this box to start';
     clickTime.textContent = `${click.duration}s`;
     clickCps.textContent = '—';
+    clickActions.hidden = true;
     updateClickBest();
+  }
+
+  /** 开始一轮（区域点击和下面的按钮都走这里） */
+  function clickStart() {
+    click.finishedAt = 0;
+    click.running = true;
+    click.count = 1;
+    click.startedAt = performance.now();
+    clickCount.textContent = '1';
+    clickCopy.textContent = 'Go!';
+    clickCps.textContent = '—';
+    clickActions.hidden = true;
+    clickStage.classList.add('is-running');
+    click.timer = setInterval(clickTick, 100);
   }
 
   function clickTick() {
@@ -375,33 +392,28 @@
     }
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
     clickCopy.textContent = !cloud.ready
-      ? `${clicks} in ${click.duration}s. Sign in to keep this score, or click to go again.`
+      ? `${clicks} in ${click.duration}s. Sign in to keep this score.`
       : record
-        ? `New personal best — ${clicks}. Click to go again.`
-        : `${clicks} in ${click.duration}s. Click to go again.`;
+        ? `New personal best — ${clicks}.`
+        : `${clicks} in ${click.duration}s.`;
+    clickActions.hidden = false;
     updateClickBest();
     refreshBests();
   }
 
   clickStage.addEventListener('pointerdown', (event) => {
     event.preventDefault();
-    if (!click.running) {
-      // 结束后 300ms 内的点击忽略，避免最后一次连点误触发重开
-      if (click.finishedAt && performance.now() - click.finishedAt < 300) return;
-      click.finishedAt = 0;
-      click.running = true;
-      click.count = 1;
-      click.startedAt = performance.now();
-      clickCount.textContent = '1';
-      clickCopy.textContent = 'Go!';
-      clickCps.textContent = '—';
-      clickStage.classList.add('is-running');
-      click.timer = setInterval(clickTick, 100);
+    if (click.running) {
+      click.count += 1;
+      clickCount.textContent = String(click.count);
       return;
     }
-    click.count += 1;
-    clickCount.textContent = String(click.count);
+    // 一轮结束后，必须点下面的按钮才能重开，避免手还在连点时误触
+    if (click.finishedAt) return;
+    clickStart();
   });
+
+  clickRestart.addEventListener('click', () => clickStart());
 
   $$('[data-duration]').forEach((chip) => {
     chip.addEventListener('click', () => {

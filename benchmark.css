@@ -413,6 +413,15 @@
     margin-top: 20px;
 }
 
+/* 点击测速：开始/重开按钮放在点击区域下面，结束后才出现 */
+.hb-click-actions {
+    margin: 16px 0 0;
+}
+
+.hb-click-actions[hidden] {
+    display: none;
+}
+
 .hb-button {
     padding: 10px 20px;
     border: 1px solid var(--hb-line);
