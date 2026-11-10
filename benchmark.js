@@ -346,6 +346,7 @@
     click.running = false;
     click.count = 0;
     click.startedAt = 0;
+    click.finishedAt = 0;
     clickStage.classList.remove('is-running');
     clickCount.textContent = '0';
     clickCopy.textContent = 'Click anywhere in this box to start';
@@ -413,7 +414,11 @@
     clickStart();
   });
 
-  clickRestart.addEventListener('click', () => clickStart());
+  clickRestart.addEventListener('click', () => {
+    // 回到"点框开始"的状态：手移回框里再点第一下，计时才起跳，不浪费这段移动时间
+    clickReset();
+    clickStage.focus();
+  });
 
   $$('[data-duration]').forEach((chip) => {
     chip.addEventListener('click', () => {
