@@ -3,20 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IYS AutoClicker Pro - Buy</title>
+    <meta name="description" content="Buy IYS AutoClicker Pro — extra automation modes, timing controls and a Cyberpunk theme for IYS AutoClicker.">
+    <title>Buy IYS AutoClicker Pro | IYS</title>
     <link rel="stylesheet" href="style.css">
+    <script src="supabase.js" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="account-nav.js" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
         <nav class="navigation" aria-label="Main navigation">
             <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
             <div class="nav-links">
-                <a href="IYS Software.html">Software</a>
+                <a class="current" href="IYS Software.html" aria-current="page">Software</a>
                 <a href="IYS Studio.html">Studio</a>
                 <a href="IYS Website.html">Website</a>
                 <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
             </div>
         </nav>
     </header>
+
+    <main>
+        <section class="buy-hero">
+            <p class="eyebrow">IYS AutoClicker Pro</p>
+            <h1>Unlock the full app.</h1>
+            <p class="hero-copy">
+                Extra automation modes, timing controls and a Cyberpunk theme —
+                added to the AutoClicker you already use.
+            </p>
+            <p><a class="text-link" href="IYS AutoClicker Pro.html">← Back to IYS AutoClicker Pro</a></p>
+        </section>
+
+        <!-- ================= 价格卡 ================= -->
+        <section class="buy-section content-width" aria-labelledby="buy-plan-heading">
+            <div class="buy-price-card">
+                <header class="buy-price-head">
+                    <p class="eyebrow">Pro license</p>
+                    <h2 id="buy-plan-heading" class="buy-price-line">
+                        <span class="buy-price">$3</span>
+                        <span class="buy-price-meta">USD</span>
+                        <span class="buy-price-meta">30 days</span>
+                    </h2>
+                    <p class="buy-price-sub">For one Mac. $3 provides 30 days of Pro access; renew from inside the app when the license period ends.</p>
+                </header>
+
+                <ul class="buy-checklist">
+                    <li>Text Input</li>
+                    <li>Key Repeat</li>
+                    <li>Random click offset</li>
+                    <li>Random interval</li>
+                    <li>Timer start / stop</li>
+                    <li>Cyberpunk background</li>
+                </ul>
+
+                <!-- TODO: 接好支付后，把按钮换成 Paddle checkout 跳转 -->
+                <button type="button" class="buy-cta" data-checkout>Continue to checkout</button>
+
+                <p class="buy-fineprint">
+                    Payments are processed by Paddle, our merchant of record.
+                    Your license key is sent to the email you pay with.
+                </p>
+            </div>
+
+            <p class="buy-help">
+                Can't complete the payment, or something else is in the way?
+                <a href="mailto:iys-ian@outlook.com?subject=IYS%20AutoClicker%20Pro%20purchase%20help">Email iys-ian@outlook.com</a>
+                and we'll sort it out.
+            </p>
+        </section>
+
+        <!-- ================= 购买流程 ================= -->
+        <section class="buy-section content-width" aria-labelledby="buy-how-heading">
+            <h2 id="buy-how-heading" class="buy-section-title">How it works</h2>
+            <ol class="buy-steps">
+                <li class="buy-step">
+                    <span class="buy-step-number" aria-hidden="true">1</span>
+                    <h3>Pay at checkout</h3>
+                    <p>Card details are handled by Paddle. IYS never sees or stores them.</p>
+                </li>
+                <li class="buy-step">
+                    <span class="buy-step-number" aria-hidden="true">2</span>
+                    <h3>Get your license key</h3>
+                    <p>The key arrives by email, usually within a few minutes of payment.</p>
+                </li>
+                <li class="buy-step">
+                    <span class="buy-step-number" aria-hidden="true">3</span>
+                    <h3>Enter it in the app</h3>
+                    <p>Open IYS AutoClicker, go to the license area, paste the key.</p>
+                </li>
+            </ol>
+        </section>
+
+        <!-- ================= 包含的功能 ================= -->
+        <section class="buy-section content-width" aria-labelledby="buy-features-heading">
+            <div class="buy-section-intro">
+                <p class="eyebrow">What you get</p>
+                <h2 id="buy-features-heading">Everything in the app, plus six more modes.</h2>
+                <p class="buy-section-copy">
+                    The standard clicker stays exactly as it is. Pro adds a second set of
+                    options alongside it, and shows your remaining license time in the app.
+                </p>
+            </div>
+
+            <div class="details-grid">
+                <article class="detail-card">
+                    <h3>Text Input</h3>
+                    <p>Enter text as part of your workflow instead of typing it by hand.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Key Repeat</h3>
+                    <p>Repeat a single key at your chosen interval, for consistent repeated input.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Random click offset</h3>
+                    <p>Shift each click by a small random distance, with an adjustable pixel range.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Random interval</h3>
+                    <p>Vary the gap between clicks instead of using one fixed delay.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Timer start / stop</h3>
+                    <p>Start and stop automation on a timer instead of clicking the button yourself.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Cyberpunk background</h3>
+                    <p>Swap the app's appearance for a Cyberpunk-style theme.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- ================= FAQ ================= -->
+        <section class="buy-section content-width" aria-labelledby="buy-faq-heading">
+            <h2 id="buy-faq-heading" class="buy-section-title">Questions</h2>
+
+            <div class="buy-faq">
+                <details>
+                    <summary>Do I need Pro to use IYS AutoClicker?</summary>
+                    <p>No. The standard app is free and stays free. Pro only adds the extra modes listed above.</p>
+                </details>
+                <details>
+                    <summary>Is this a subscription?</summary>
+                    <p>No. $3 provides 30 days of Pro access. When that period ends, you can renew from the license area inside the app.</p>
+                </details>
+                <details>
+                    <summary>What if I can't complete the payment?</summary>
+                    <p>
+                        Some cards and regions are rejected by the payment provider, and that is not your fault.
+                        Email <a href="mailto:iys-ian@outlook.com?subject=IYS%20AutoClicker%20Pro%20purchase%20help">iys-ian@outlook.com</a>
+                        with your macOS version and we'll find another way to get you a license.
+                    </p>
+                </details>
+                <details>
+                    <summary>Something else went wrong — who do I ask?</summary>
+                    <p>
+                        Email <a href="mailto:iys-ian@outlook.com?subject=IYS%20AutoClicker%20Pro%20support">iys-ian@outlook.com</a>.
+                        License problems, refunds, questions before buying — it all goes to the same place.
+                    </p>
+                </details>
+                <details>
+                    <summary>Which macOS versions are supported?</summary>
+                    <p>macOS 13 or later.</p>
+                </details>
+                <details>
+                    <summary>What if it doesn't work for me?</summary>
+                    <p>See the <a href="refund-IYS AutoClicker Pro.html">refund policy</a>, or email <a href="mailto:iys-ian@outlook.com">iys-ian@outlook.com</a> and we'll sort it out.</p>
+                </details>
+            </div>
+        </section>
+
+        <section class="buy-section content-width">
+            <div class="action-row">
+                <a class="button-link" href="IYS AutoClicker Pro.html">See all Pro features</a>
+                <a class="text-link" href="https://github.com/clover-ian/IYS-AutoClicker/releases" target="_blank" rel="noopener noreferrer">Download IYS AutoClicker <span aria-hidden="true">→</span></a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Questions? <a href="mailto:iys-ian@outlook.com">Email IYS</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms-IYS AutoClicker Pro.html">Terms of Service</a>
+                <a href="privacy-IYS AutoClicker Pro.html">Privacy Policy</a>
+                <a href="refund-IYS AutoClicker Pro.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>

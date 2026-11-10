@@ -6,7 +6,7 @@
  *   - 点击测试：10 秒 / 60 秒，统计次数与 CPS
  *   - 打字测试：从几段长文里随机抽一段，禁复制粘贴，算 WPM 与准确率
  *
- * 成绩不存本地：登录后写入 Supabase（表 benchmark_scores），未登录不记录。
+ * 成绩不存本地：登录后写进 Supabase 账号的 user_metadata，未登录不记录。
  */
 (() => {
   'use strict';
@@ -42,48 +42,65 @@
     }
   }
 
-  /** 拉云端历史，算出每个测试的最好成绩 */
+  /**
+   * 成绩存在用户的 user_metadata 里（Supabase 账号自带的 JSON 字段）。
+   * 好处：不需要建表、不需要后台，客户端用 publishable key 就能读写。
+   * 坏处：只有最好成绩，没有历史；而且用户自己也能改（不适合当防作弊数据）。
+   */
+  const META_KEY = 'benchmark';
+
+  function bestsFromUser(user) {
+    const meta = user?.user_metadata?.[META_KEY];
+    if (!meta || typeof meta !== 'object') return {};
+    const clean = {};
+    for (const [key, raw] of Object.entries(meta)) {
+      const value = Number(raw);
+      if (Number.isFinite(value) && value > 0) clean[key] = value;
+    }
+    return clean;
+  }
+
+  /** 从账号里读出历史最好成绩 */
   async function loadCloudBests() {
     if (!cloud.ready) return;
-    const { data, error } = await cloud.client.from('benchmark_scores').select('test, value, detail');
-    if (error) {
-      console.warn('[benchmark] 读取云端成绩失败：', error.message);
-      return;
-    }
-    for (const row of data ?? []) {
-      const value = Number(row.value);
-      if (!Number.isFinite(value)) continue;
-      // 10 秒和 60 秒的成绩不能混在一起比，用时长当 key
-      const key = row.test === 'click'
-        ? clickKey(Number(row.detail?.seconds) || 10)
-        : row.test;
-      const current = cloudBest[key];
-      if (current === undefined) cloudBest[key] = value;
-      else cloudBest[key] = LOWER_IS_BETTER.has(key) ? Math.min(current, value) : Math.max(current, value);
+    try {
+      const { data } = await cloud.client.auth.getSession();
+      Object.assign(cloudBest, bestsFromUser(data?.session?.user));
+    } catch (error) {
+      console.warn('[benchmark] 读取账号成绩失败：', error);
     }
   }
 
-  /** 存一条成绩到云端（只有登录后才有意义） */
-  async function saveScoreToCloud(test, value, detail) {
+  /** 成绩写回账号（只写更好的那个） */
+  async function saveScoreToCloud(key, value) {
     const state = $('[data-save-state]');
     if (!cloud.ready) {
       if (state) state.textContent = 'Sign in to save this score.';
       return false;
     }
+
+    const previous = cloudBest[key];
+    const better = previous === undefined
+      || (LOWER_IS_BETTER.has(key) ? value < previous : value > previous);
+    if (!better) {
+      if (state) state.textContent = 'Score saved (not a new best).';
+      return true;
+    }
+
     if (state) state.textContent = 'Saving…';
-    const { error } = await cloud.client.from('benchmark_scores').insert({
-      user_id: cloud.userId,
-      test,
-      value,
-      detail: detail ?? null,
-    });
-    if (error) {
-      console.warn('[benchmark] 保存到云端失败：', error.message);
+    try {
+      const { data } = await cloud.client.auth.getSession();
+      const meta = { ...bestsFromUser(data?.session?.user), [key]: value };
+      const { error } = await cloud.client.auth.updateUser({ data: { [META_KEY]: meta } });
+      if (error) throw error;
+      cloudBest[key] = value;
+      if (state) state.textContent = 'Saved to your IYS account.';
+      return true;
+    } catch (error) {
+      console.warn('[benchmark] 保存到账号失败：', error?.message || error);
       if (state) state.textContent = 'Could not save to your account.';
       return false;
     }
-    if (state) state.textContent = 'Saved to your IYS account.';
-    return true;
   }
 
   /** 成绩只存在账号里，没有登录就没有成绩 */
@@ -96,10 +113,6 @@
     const current = cloudBest[key];
     if (current === undefined || current === null) return true;
     return LOWER_IS_BETTER.has(key) ? value < current : value > current;
-  }
-
-  function rememberScore(key, value) {
-    if (isRecord(key, value)) cloudBest[key] = value;
   }
 
   function updateAccountNote() {
@@ -248,10 +261,7 @@
       reactionSetStage('idle');
       const average = sum / reaction.results.length;
       const record = isRecord('reaction', average);
-      if (cloud.ready) {
-        rememberScore('reaction', average);
-        saveScoreToCloud('reaction', average, { rounds: reaction.results });
-      }
+      if (cloud.ready) saveScoreToCloud('reaction', average);
       reactionTitle.textContent = cloud.ready && record ? 'New personal best' : 'Done';
       reactionCopy.textContent = cloud.ready
         ? `Average ${fmtMs(average)} over ${REACTION_ROUNDS} rounds. Click to try again.`
@@ -387,10 +397,7 @@
     clickTime.textContent = '0.0s';
     click.finishedAt = performance.now();
     const record = isRecord(clickKey(click.duration), click.count);
-    if (cloud.ready) {
-      rememberScore(clickKey(click.duration), click.count);
-      saveScoreToCloud('click', click.count, { seconds: click.duration });
-    }
+    if (cloud.ready) saveScoreToCloud(clickKey(click.duration), click.count);
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
     clickCopy.textContent = !cloud.ready
       ? `${clicks} in ${click.duration}s. Sign in to keep this score.`
@@ -539,15 +546,7 @@
       typing.finished = true;
       typingInput.disabled = true;
       const record = isRecord('typing', Math.round(wpm));
-      if (cloud.ready) {
-        rememberScore('typing', Math.round(wpm));
-        saveScoreToCloud('typing', Math.round(wpm), {
-          seconds: Math.round(elapsed * 10) / 10,
-          accuracy: Math.round(accuracy),
-        });
-      } else {
-        saveScoreToCloud('typing', Math.round(wpm));
-      }
+      saveScoreToCloud('typing', Math.round(wpm));
       typingWpm.textContent = String(Math.round(wpm));
       typingAccuracy.textContent = `${Math.round(clamp(accuracy, 0, 100))}%`;
       typingTime.textContent = `${elapsed.toFixed(1)}s`;
