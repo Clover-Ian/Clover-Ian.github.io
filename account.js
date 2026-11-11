@@ -12,7 +12,7 @@
   const defaultLabel = button ? button.textContent : '';
   const client = window.iysSupabase;
 
-  // 注册后用 6 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
+  // 注册后用 8 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
   const verifyStep = document.querySelector('[data-verify-step]');
   const verifyForm = document.querySelector('[data-verify-form]');
   const verifyEmail = document.querySelector('[data-verify-email]');
@@ -160,9 +160,9 @@
 
   // ----- 邮箱验证码 -----
   if (verifyForm) {
-    // 只允许数字，最多 6 位
+    // 只允许数字，最多 8 位
     verifyCode?.addEventListener('input', () => {
-      const digits = verifyCode.value.replace(/\D/g, '').slice(0, 6);
+      const digits = verifyCode.value.replace(/\D/g, '').slice(0, 8);
       if (digits !== verifyCode.value) verifyCode.value = digits;
     });
 
@@ -176,8 +176,8 @@
       }
 
       const code = String(verifyCode?.value ?? '').replace(/\D/g, '');
-      if (code.length !== 6) {
-        showVerifyMessage('Enter the 6-digit code from the email.');
+      if (code.length !== 8) {
+        showVerifyMessage('Enter the 8-digit code from the email.');
         verifyCode?.focus();
         return;
       }

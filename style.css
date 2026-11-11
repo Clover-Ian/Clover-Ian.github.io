@@ -867,12 +867,26 @@ article.legal-policy h2 {
     word-break: break-all;
 }
 
-.account-code {
-    font-size: 26px;
+/* 验证码输入框：大号、加粗、浅灰底，和普通输入框区分开 */
+.account-form input.account-code {
+    min-height: 84px;
+    padding: 16px 12px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 38px;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.32em;
+    line-height: 1.1;
+    letter-spacing: 0.28em;
     text-align: center;
-    text-indent: 0.32em;
+    text-indent: 0.28em;
+}
+
+.account-form input.account-code::placeholder {
+    color: #c7c7cc;
+    font-weight: 700;
 }
 
 .account-verify-resend {
