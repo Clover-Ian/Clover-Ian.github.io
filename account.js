@@ -12,6 +12,16 @@
   const defaultLabel = button ? button.textContent : '';
   const client = window.iysSupabase;
 
+  // 注册后用 6 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
+  const verifyStep = document.querySelector('[data-verify-step]');
+  const verifyForm = document.querySelector('[data-verify-form]');
+  const verifyEmail = document.querySelector('[data-verify-email]');
+  const verifyCode = document.querySelector('[data-verify-code]');
+  const verifyFeedback = verifyStep ? verifyStep.querySelector('.account-feedback') : null;
+  const verifyButton = verifyForm ? verifyForm.querySelector('button[type="submit"]') : null;
+  const resendButton = document.querySelector('[data-verify-resend]');
+  let pendingEmail = '';
+
   const ERROR_MESSAGES = {
     invalid_credentials: 'Email or password is incorrect.',
     email_not_confirmed: 'Please confirm your email before signing in.',
@@ -22,6 +32,9 @@
     over_request_rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
     signup_disabled: 'Sign ups are currently disabled.',
     email_address_invalid: 'Please enter a valid email address.',
+    otp_expired: 'That code has expired or is invalid. Send a new one.',
+    token_expired: 'That code has expired. Send a new one.',
+    invalid_token: 'That code is not right. Check it and try again.',
   };
 
   function showMessage(message, type = 'error') {
@@ -36,6 +49,31 @@
     feedback.hidden = true;
     feedback.textContent = '';
     feedback.classList.remove('is-success');
+  }
+
+  function showVerifyMessage(message, type = 'error') {
+    if (!verifyFeedback) return;
+    verifyFeedback.textContent = message;
+    verifyFeedback.classList.toggle('is-success', type === 'success');
+    verifyFeedback.hidden = false;
+  }
+
+  function clearVerifyMessage() {
+    if (!verifyFeedback) return;
+    verifyFeedback.hidden = true;
+    verifyFeedback.textContent = '';
+    verifyFeedback.classList.remove('is-success');
+  }
+
+  /** 切到"输验证码"这一步 */
+  function showVerifyStep(email) {
+    pendingEmail = email;
+    if (!verifyStep) return;
+    if (verifyEmail) verifyEmail.textContent = email;
+    form.hidden = true;
+    verifyStep.hidden = false;
+    clearVerifyMessage();
+    verifyCode?.focus();
   }
 
   function setBusy(busy) {
@@ -95,7 +133,8 @@
         if (error) throw error;
 
         if (!data.session) {
-          showMessage('Account created. Check your email to confirm, then sign in.', 'success');
+          // Supabase 这边开启了邮箱确认：拿不到会话，进入输码步骤
+          showVerifyStep(email);
           setBusy(false);
           return;
         }
@@ -118,6 +157,76 @@
       setBusy(false);
     }
   });
+
+  // ----- 邮箱验证码 -----
+  if (verifyForm) {
+    // 只允许数字，最多 6 位
+    verifyCode?.addEventListener('input', () => {
+      const digits = verifyCode.value.replace(/\D/g, '').slice(0, 6);
+      if (digits !== verifyCode.value) verifyCode.value = digits;
+    });
+
+    verifyForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearVerifyMessage();
+
+      if (!client) {
+        showVerifyMessage('Account service is not available. Please try again later.');
+        return;
+      }
+
+      const code = String(verifyCode?.value ?? '').replace(/\D/g, '');
+      if (code.length !== 6) {
+        showVerifyMessage('Enter the 6-digit code from the email.');
+        verifyCode?.focus();
+        return;
+      }
+
+      if (verifyButton) {
+        verifyButton.disabled = true;
+        verifyButton.textContent = 'Verifying…';
+      }
+
+      try {
+        const { error } = await client.auth.verifyOtp({
+          email: pendingEmail,
+          token: code,
+          type: 'signup',
+        });
+        if (error) throw error;
+
+        showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
+        window.setTimeout(() => {
+          window.location.assign('index.html');
+        }, 700);
+      } catch (error) {
+        showVerifyMessage(messageForError(error));
+        if (verifyButton) {
+          verifyButton.disabled = false;
+          verifyButton.textContent = 'Verify email';
+        }
+        verifyCode?.select();
+      }
+    });
+  }
+
+  if (resendButton) {
+    resendButton.addEventListener('click', async () => {
+      clearVerifyMessage();
+      if (!client || !pendingEmail) return;
+
+      resendButton.disabled = true;
+      try {
+        const { error } = await client.auth.resend({ type: 'signup', email: pendingEmail });
+        if (error) throw error;
+        showVerifyMessage('A new code is on its way. Check your inbox.', 'success');
+      } catch (error) {
+        showVerifyMessage(messageForError(error));
+      } finally {
+        resendButton.disabled = false;
+      }
+    });
+  }
 
   // Forgot password: only send a reset email when nobody is signed in.
   const forgotLink = form.querySelector('[data-forgot-password]');

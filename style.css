@@ -766,6 +766,11 @@ article.legal-policy h2 {
     gap: 10px;
 }
 
+/* display:grid 会盖掉 hidden 属性，这里显式处理 */
+.account-form[hidden] {
+    display: none;
+}
+
 .account-form label {
     margin-top: 8px;
     font-size: 14px;
@@ -831,6 +836,65 @@ article.legal-policy h2 {
     border-color: #bfe0c8;
     background: #f2fbf4;
     color: #1d6b34;
+}
+
+/* 注册页：6 位邮箱验证码 */
+.account-verify {
+    display: grid;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.account-verify[hidden] {
+    display: none;
+}
+
+.account-verify h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.account-verify-copy {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.account-verify-copy strong {
+    color: var(--ink);
+    word-break: break-all;
+}
+
+.account-code {
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.32em;
+    text-align: center;
+    text-indent: 0.32em;
+}
+
+.account-verify-resend {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.account-link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue);
+    font: inherit;
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.account-link-button:disabled {
+    color: var(--muted);
+    cursor: wait;
 }
 
 .account-switch {
