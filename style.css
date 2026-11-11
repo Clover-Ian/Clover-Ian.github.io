@@ -338,6 +338,12 @@ a:focus-visible {
     padding-top: 132px;
 }
 
+/* 首页 hero 顶部的 IYS 图标，和其他页面标题图标对齐 */
+.hero-icon {
+    display: block;
+    margin: 0 auto 24px;
+}
+
 .eyebrow {
     margin: 0 0 12px;
     color: var(--muted);
