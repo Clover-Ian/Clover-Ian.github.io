@@ -37,7 +37,20 @@ body.corner-background::before {
     bottom: 0;
     width: clamp(240px, 38vw, 520px);
     aspect-ratio: 1;
-    background: radial-gradient(ellipse at 100% 100%, #AED5FF 0%, #fff 48%, rgb(255 255 255 / 0) 100%);
+    background: radial-gradient(ellipse at 100% 100%, #DCF1FF 0%, #fff 48%, rgb(255 255 255 / 0) 100%);
+    content: "";
+    pointer-events: none;
+}
+
+/* 左下角：粉色光晕，和右下角的蓝色对称 */
+body.corner-background::after {
+    position: fixed;
+    z-index: -1;
+    bottom: 0;
+    left: 0;
+    width: clamp(240px, 38vw, 520px);
+    aspect-ratio: 1;
+    background: radial-gradient(ellipse at 0% 100%, #FFE7FF 0%, #fff 48%, rgb(255 255 255 / 0) 100%);
     content: "";
     pointer-events: none;
 }
