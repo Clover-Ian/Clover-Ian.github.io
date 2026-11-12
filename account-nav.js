@@ -31,6 +31,50 @@
     return user?.email || 'Account';
   }
 
+  // ----- 头像 -----
+  const AVATAR_COLORS = ['#6554d9', '#0a84ff', '#2fa36b', '#e0453f', '#c2410c', '#0891b2', '#7c3aed', '#be185d'];
+
+  function avatarUrlOf(user) {
+    const url = user?.user_metadata?.avatar_url;
+    return typeof url === 'string' && url ? url : null;
+  }
+
+  function initialOf(name) {
+    const text = String(name || '').trim();
+    return text ? text.slice(0, 1).toUpperCase() : '?';
+  }
+
+  /** 同一个名字永远得到同一个颜色 */
+  function avatarColorOf(name) {
+    const text = String(name || '');
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) % 100003;
+    return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  }
+
+  /** 有图片就显示图片，没有就显示首字母 */
+  function buildAvatar(user, size) {
+    const el = document.createElement('span');
+    el.className = 'avatar';
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+
+    const url = avatarUrlOf(user);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.loading = 'lazy';
+      el.append(img);
+    } else {
+      const name = displayNameOf(user);
+      el.textContent = initialOf(name);
+      el.style.backgroundColor = avatarColorOf(name);
+      el.style.fontSize = `${Math.round(size * 0.42)}px`;
+    }
+    return el;
+  }
+
   function showFeedback(feedback, message, type = 'error') {
     feedback.textContent = message;
     feedback.classList.toggle('is-success', type === 'success');
@@ -67,11 +111,16 @@
     userLabel.setAttribute('aria-label', `Account options for ${displayNameOf(user)}`);
     userLabel.setAttribute('aria-expanded', 'false');
 
+    let renderMenuUser = () => {};
+
     function updateUserLabel() {
       const name = displayNameOf(user);
-      userLabel.textContent = name;
+      const label = document.createElement('span');
+      label.textContent = name;
+      userLabel.replaceChildren(buildAvatar(user, 24), label);
       userLabel.title = `Signed in as ${user.email || name}`;
       userLabel.setAttribute('aria-label', `Account options for ${name}`);
+      renderMenuUser();
     }
     updateUserLabel();
 
@@ -84,6 +133,27 @@
     menuStatus.className = 'account-menu-status';
     menuStatus.hidden = true;
     menuStatus.setAttribute('role', 'status');
+
+    const menuUser = document.createElement('div');
+    menuUser.className = 'account-menu-user';
+    const menuAvatarSlot = document.createElement('span');
+    const menuIdentity = document.createElement('span');
+    menuIdentity.className = 'account-menu-user-name';
+    const menuName = document.createElement('strong');
+    const menuEmail = document.createElement('span');
+    menuIdentity.append(menuName, menuEmail);
+    menuUser.append(menuAvatarSlot, menuIdentity);
+
+    renderMenuUser = () => {
+      menuAvatarSlot.replaceChildren(buildAvatar(user, 40));
+      menuName.textContent = displayNameOf(user);
+      menuEmail.textContent = user.email || '';
+    };
+    renderMenuUser();
+
+    const changePhotoButton = document.createElement('button');
+    changePhotoButton.type = 'button';
+    changePhotoButton.textContent = 'Change photo';
 
     const changeUsernameButton = document.createElement('button');
     changeUsernameButton.type = 'button';
@@ -107,6 +177,8 @@
     signOutButton.textContent = 'Sign out';
 
     menu.append(
+      menuUser,
+      changePhotoButton,
       changeUsernameButton,
       changeEmailButton,
       changePasswordButton,
@@ -472,6 +544,172 @@
         menuStatus.hidden = false;
         signOutButton.disabled = false;
       }
+    });
+
+    // ----- Change photo -----
+    const avatarDialog = document.createElement('dialog');
+    avatarDialog.className = 'account-settings-dialog';
+    avatarDialog.setAttribute('aria-labelledby', 'account-avatar-title');
+    avatarDialog.innerHTML = `
+      <form class="account-settings-form">
+        <h2 id="account-avatar-title">Change your photo</h2>
+        <div class="avatar-stage">
+          <canvas width="260" height="260" aria-label="Drag to reposition, slide to zoom"></canvas>
+        </div>
+        <input class="avatar-zoom" type="range" min="1" max="3" step="0.01" value="1" aria-label="Zoom" disabled>
+        <p class="avatar-hint">Choose an image, then drag it to pick the part you want.</p>
+        <p class="account-feedback" role="status" hidden></p>
+        <div class="account-email-actions">
+          <label class="avatar-picker">Choose image<input type="file" accept="image/*" hidden></label>
+          <button class="account-email-cancel" type="button">Cancel</button>
+          <button class="account-submit" type="submit" disabled>Save</button>
+        </div>
+      </form>
+    `;
+    document.body.append(avatarDialog);
+
+    const avatarForm = avatarDialog.querySelector('form');
+    const avatarCanvas = avatarDialog.querySelector('canvas');
+    const avatarCtx = avatarCanvas.getContext('2d');
+    const avatarZoom = avatarDialog.querySelector('.avatar-zoom');
+    const avatarFile = avatarDialog.querySelector('input[type="file"]');
+    const avatarFeedback = avatarDialog.querySelector('.account-feedback');
+    const avatarSave = avatarForm.querySelector('[type="submit"]');
+
+    const AVATAR_SIZE = 260;
+    const view = { img: null, scale: 1, minScale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+
+    function clampView() {
+      if (!view.img) return;
+      const width = view.img.width * view.scale;
+      const height = view.img.height * view.scale;
+      view.x = Math.min(0, Math.max(AVATAR_SIZE - width, view.x));
+      view.y = Math.min(0, Math.max(AVATAR_SIZE - height, view.y));
+    }
+
+    function drawAvatar() {
+      avatarCtx.clearRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
+      if (!view.img) return;
+      avatarCtx.drawImage(view.img, view.x, view.y,
+        view.img.width * view.scale, view.img.height * view.scale);
+    }
+
+    avatarFile.addEventListener('change', () => {
+      const file = avatarFile.files && avatarFile.files[0];
+      clearFeedback(avatarFeedback);
+      if (!file) return;
+
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        view.img = img;
+        view.minScale = Math.max(AVATAR_SIZE / img.width, AVATAR_SIZE / img.height);
+        view.scale = view.minScale;
+        view.x = (AVATAR_SIZE - img.width * view.scale) / 2;
+        view.y = (AVATAR_SIZE - img.height * view.scale) / 2;
+        avatarZoom.value = '1';
+        avatarZoom.disabled = false;
+        drawAvatar();
+        avatarSave.disabled = false;
+      };
+      img.onerror = () => showFeedback(avatarFeedback, 'That image could not be read.');
+      img.src = objectUrl;
+    });
+
+    avatarZoom.addEventListener('input', () => {
+      if (!view.img) return;
+      const factor = Number(avatarZoom.value);
+      const centerX = (AVATAR_SIZE / 2 - view.x) / view.scale;
+      const centerY = (AVATAR_SIZE / 2 - view.y) / view.scale;
+      view.scale = view.minScale * factor;
+      view.x = AVATAR_SIZE / 2 - centerX * view.scale;
+      view.y = AVATAR_SIZE / 2 - centerY * view.scale;
+      clampView();
+      drawAvatar();
+    });
+
+    avatarCanvas.addEventListener('pointerdown', (event) => {
+      if (!view.img) return;
+      view.dragging = true;
+      view.startX = event.clientX;
+      view.startY = event.clientY;
+      view.originX = view.x;
+      view.originY = view.y;
+      avatarCanvas.setPointerCapture(event.pointerId);
+    });
+
+    avatarCanvas.addEventListener('pointermove', (event) => {
+      if (!view.dragging) return;
+      const rect = avatarCanvas.getBoundingClientRect();
+      const ratio = AVATAR_SIZE / rect.width;
+      view.x = view.originX + (event.clientX - view.startX) * ratio;
+      view.y = view.originY + (event.clientY - view.startY) * ratio;
+      clampView();
+      drawAvatar();
+    });
+
+    ['pointerup', 'pointercancel'].forEach((type) => {
+      avatarCanvas.addEventListener(type, () => { view.dragging = false; });
+    });
+
+    avatarForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!view.img || !client) return;
+
+      avatarSave.disabled = true;
+      avatarSave.textContent = 'Saving…';
+      clearFeedback(avatarFeedback);
+
+      try {
+        const output = document.createElement('canvas');
+        output.width = 256;
+        output.height = 256;
+        const outCtx = output.getContext('2d');
+        const ratio = 256 / AVATAR_SIZE;
+        outCtx.drawImage(view.img, view.x * ratio, view.y * ratio,
+          view.img.width * view.scale * ratio, view.img.height * view.scale * ratio);
+
+        const blob = await new Promise((resolve) => output.toBlob(resolve, 'image/jpeg', 0.9));
+        if (!blob) throw new Error('Could not process that image.');
+
+        const path = `${user.id}/avatar.jpg`;
+        const { error } = await client.storage.from('avatars').upload(path, blob, {
+          upsert: true,
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+        });
+        if (error) throw error;
+
+        const { data } = client.storage.from('avatars').getPublicUrl(path);
+        const url = `${data.publicUrl}?v=${Date.now()}`;
+        const { error: metaError } = await client.auth.updateUser({ data: { avatar_url: url } });
+        if (metaError) throw metaError;
+
+        user = { ...user, user_metadata: { ...user.user_metadata, avatar_url: url } };
+        updateUserLabel();
+        showFeedback(avatarFeedback, 'Photo updated.', 'success');
+        window.setTimeout(() => avatarDialog.close(), 600);
+      } catch (error) {
+        showRequestError(avatarFeedback, error, 'Could not save the photo. Please try again.');
+      } finally {
+        avatarSave.disabled = false;
+        avatarSave.textContent = 'Save';
+      }
+    });
+
+    changePhotoButton.addEventListener('click', () => {
+      setMenuOpen(false);
+      clearFeedback(avatarFeedback);
+      view.img = null;
+      avatarZoom.value = '1';
+      avatarZoom.disabled = true;
+      avatarCtx.clearRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
+      avatarSave.disabled = true;
+      avatarDialog.showModal();
+    });
+
+    avatarForm.querySelector('.account-email-cancel').addEventListener('click', () => {
+      avatarDialog.close();
     });
   }
 

@@ -657,6 +657,35 @@
   const leaderboard = { test: 'reaction', seconds: 10 };
   let leaderboardToken = 0; // 快速切标签时，丢掉已经过期的请求结果
 
+  const BOARD_COLORS = ['#6554d9', '#0a84ff', '#2fa36b', '#e0453f', '#c2410c', '#0891b2', '#7c3aed', '#be185d'];
+
+  function boardColor(name) {
+    const text = String(name || '');
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) % 100003;
+    return BOARD_COLORS[hash % BOARD_COLORS.length];
+  }
+
+  /** 排行榜里的头像：有图显示图，没图显示首字母 */
+  function boardAvatar(url, name, size = 28) {
+    const el = document.createElement('span');
+    el.className = 'avatar';
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.loading = 'lazy';
+      el.append(img);
+    } else {
+      el.textContent = (String(name || '?').trim().slice(0, 1) || '?').toUpperCase();
+      el.style.fontSize = `${Math.round(size * 0.42)}px`;
+      el.style.backgroundColor = boardColor(name);
+    }
+    return el;
+  }
+
   function formatScore(test, value) {
     if (test === 'reaction') return `${Math.round(value)} ms`;
     if (test === 'typing') return `${Math.round(value)} WPM`;
@@ -678,7 +707,7 @@
         user_id: user.id,
         test,
         value,
-        detail: { name, ...extra },
+        detail: { name, avatar: user.user_metadata?.avatar_url || null, ...extra },
       });
       if (error) console.warn('[benchmark] 排行榜写入失败：', error.message);
     } catch (error) {
@@ -755,9 +784,15 @@
       rank.className = 'hb-board-rank';
       rank.textContent = String(index + 1);
 
+      const display = row.detail?.name || 'Player';
       const name = document.createElement('span');
       name.className = 'hb-board-name';
-      name.textContent = row.detail?.name || 'Player';
+      name.append(boardAvatar(row.detail?.avatar, display));
+
+      const nameText = document.createElement('span');
+      nameText.className = 'hb-board-name-text';
+      nameText.textContent = display;
+      name.append(nameText);
 
       const score = document.createElement('span');
       score.className = 'hb-board-score';
