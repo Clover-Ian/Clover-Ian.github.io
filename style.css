@@ -2305,3 +2305,137 @@ article.legal-policy h2 {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------- 记数字 */
+
+.hb-num-display {
+    margin: 0;
+    color: var(--hb-ink);
+    font-size: clamp(34px, 6vw, 58px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.18em;
+    line-height: 1.2;
+    text-indent: 0.18em;
+}
+
+.hb-num-display[hidden] {
+    display: none;
+}
+
+.hb-num-form {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.hb-num-form[hidden] {
+    display: none;
+}
+
+.hb-num-form .hb-input {
+    flex: 1;
+    margin-top: 0;
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------- 记忆顺序 */
+
+.hb-seq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: min(420px, 100%);
+    margin: 0 auto;
+    aspect-ratio: 1;
+}
+
+.hb-cell {
+    border: 1px solid var(--hb-line);
+    border-radius: 18px;
+    background: var(--hb-surface);
+    cursor: pointer;
+    transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.hb-cell:hover {
+    background: var(--hb-surface-raised);
+}
+
+.hb-cell.is-active {
+    border-color: transparent;
+    background: var(--hb-accent);
+    transform: scale(1.04);
+}
+
+.hb-cell.is-right {
+    border-color: transparent;
+    background: var(--hb-green);
+}
+
+.hb-cell.is-wrong {
+    border-color: transparent;
+    background: var(--hb-red);
+}
+
+.hb-cell:disabled {
+    cursor: default;
+}
+
+.hb-seq-status {
+    margin: 18px 0 0;
+    color: var(--hb-muted);
+    font-size: 15px;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------- 目标点击 */
+
+.hb-aim-stage {
+    position: relative;
+    overflow: hidden;
+    height: min(440px, 58vh);
+    border: 1px solid var(--hb-line);
+    border-radius: 24px;
+    background: var(--hb-surface);
+    cursor: crosshair;
+}
+
+.hb-aim-hint {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    margin: 0;
+    padding: 24px;
+    color: var(--hb-muted);
+    font-size: 15px;
+    text-align: center;
+    place-items: center;
+    pointer-events: none;
+}
+
+/* display:grid 会盖掉 hidden 属性 */
+.hb-aim-hint[hidden] {
+    display: none;
+}
+
+.hb-target {
+    position: absolute;
+    width: 62px;
+    height: 62px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--hb-accent);
+    box-shadow: 0 6px 18px rgb(101 84 217 / 28%);
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s ease;
+}
+
+.hb-target:hover {
+    transform: translate(-50%, -50%) scale(1.06);
+}

@@ -24,7 +24,7 @@
   const cloud = { client: null, userId: null, ready: false };
   const cloudBest = {}; // 云端每个测试的最好成绩；点击测试按时长分开：click:10 / click:60
 
-  const LOWER_IS_BETTER = new Set(['reaction']);
+  const LOWER_IS_BETTER = new Set(['reaction', 'aim']);
   const clickKey = (duration) => `click:${duration}`;
 
   async function initCloud() {
@@ -148,6 +148,9 @@
     reaction: $('#view-reaction'),
     click: $('#view-click'),
     typing: $('#view-typing'),
+    numbers: $('#view-numbers'),
+    sequence: $('#view-sequence'),
+    aim: $('#view-aim'),
     leaderboard: $('#view-leaderboard'),
   };
 
@@ -163,6 +166,9 @@
     if (activeView === 'reaction') reactionTeardown();
     if (activeView === 'click') clickTeardown();
     if (activeView === 'typing') typingStopClock();
+    if (activeView === 'numbers') numbersTeardown();
+    if (activeView === 'sequence') sequenceTeardown();
+    if (activeView === 'aim') aimTeardown();
 
     Object.entries(views).forEach(([key, node]) => {
       node.classList.toggle('is-active', key === name);
@@ -197,9 +203,9 @@
 
     const label = (element, text) => { if (element) element.textContent = text; };
     if (!cloud.ready) {
-      label($('[data-best="reaction"]'), 'Sign in to save scores');
-      label($('[data-best="click"]'), 'Sign in to save scores');
-      label($('[data-best="typing"]'), 'Sign in to save scores');
+      ['reaction', 'click', 'typing', 'numbers', 'sequence', 'aim'].forEach((key) => {
+        label($(`[data-best="${key}"]`), 'Sign in to save scores');
+      });
       return;
     }
     label($('[data-best="reaction"]'), reaction ? `Best ${fmtMs(reaction)}` : 'Not tested yet');
@@ -208,6 +214,16 @@
     if (click60) clickParts.push(`${Math.round(click60)} (60s)`);
     label($('[data-best="click"]'), clickParts.length ? `Best ${clickParts.join(' · ')}` : 'Not tested yet');
     label($('[data-best="typing"]'), typing ? `Best ${Math.round(typing)} WPM` : 'Not tested yet');
+
+    const numbersBest = bestOf('numbers');
+    const sequenceBest = bestOf('sequence');
+    const aimBest = bestOf('aim');
+    label($('[data-best="numbers"]'), numbersBest ? `Best level ${Math.round(numbersBest)}` : 'Not tested yet');
+    label($('[data-best="sequence"]'), sequenceBest ? `Best level ${Math.round(sequenceBest)}` : 'Not tested yet');
+    label($('[data-best="aim"]'), aimBest ? `Best ${Math.round(aimBest)} ms` : 'Not tested yet');
+    updateNumberBests();
+    updateSequenceBests();
+    updateAimBest();
   }
 
   // ============================================================ 反应测试
@@ -648,6 +664,350 @@
     typingInput.focus();
   });
 
+  // ============================================================ 记数字
+
+  const NUM_MAX = 50;
+  const numDisplay = $('[data-num-display]');
+  const numTitle = $('[data-num-title]');
+  const numCopy = $('[data-num-copy]');
+  const numForm = $('[data-num-form]');
+  const numInput = $('[data-num-input]');
+  const numLevelEl = $('[data-num-level]');
+  const numDigitsEl = $('[data-num-digits]');
+  const numCurrent = $('[data-num-current]');
+  const numBest = $('[data-num-best]');
+  const numDigitsBest = $('[data-num-digits-best]');
+  const numState = $('[data-num-state]');
+
+  const numbers = { level: 1, answer: '', timer: 0, playing: false };
+
+  function randomNumber(length) {
+    let out = '';
+    for (let i = 0; i < length; i += 1) out += String(Math.floor(Math.random() * 10));
+    return out;
+  }
+
+  function updateNumberBests() {
+    const best = bestOf('numbers');
+    if (numBest) numBest.textContent = best ? `Level ${Math.round(best)}` : '—';
+    if (numDigitsBest) numDigitsBest.textContent = best ? String(Math.round(best)) : '—';
+  }
+
+  function numbersReset() {
+    clearTimeout(numbers.timer);
+    numbers.playing = false;
+    numbers.level = 1;
+    numbers.answer = '';
+    if (numDisplay) numDisplay.hidden = true;
+    if (numForm) numForm.hidden = true;
+    if (numTitle) numTitle.textContent = 'Remember the number';
+    if (numCopy) numCopy.textContent = 'Click Start. The number disappears when you have to type it.';
+    if (numLevelEl) numLevelEl.textContent = '1';
+    if (numDigitsEl) numDigitsEl.textContent = '1';
+    if (numCurrent) numCurrent.textContent = '—';
+    if (numState) numState.textContent = '';
+    updateNumberBests();
+  }
+
+  function numbersRound() {
+    numbers.playing = true;
+    const digits = Math.min(numbers.level, NUM_MAX);
+    numbers.answer = randomNumber(digits);
+    if (numLevelEl) numLevelEl.textContent = String(numbers.level);
+    if (numDigitsEl) numDigitsEl.textContent = String(digits);
+    if (numCurrent) numCurrent.textContent = String(numbers.level);
+    if (numTitle) numTitle.textContent = 'Remember the number';
+    if (numCopy) numCopy.textContent = '';
+    if (numDisplay) { numDisplay.textContent = numbers.answer; numDisplay.hidden = false; }
+    if (numForm) numForm.hidden = true;
+
+    // 位数越多，给的时间越长
+    const showMs = 1000 + digits * 320;
+    numbers.timer = setTimeout(() => {
+      if (activeView !== 'numbers') return;
+      if (numDisplay) numDisplay.hidden = true;
+      if (numTitle) numTitle.textContent = 'Type what you saw';
+      if (numForm) numForm.hidden = false;
+      if (numInput) { numInput.value = ''; numInput.focus(); }
+    }, showMs);
+  }
+
+  function numbersFinish(perfect) {
+    numbers.playing = false;
+    clearTimeout(numbers.timer);
+    if (numForm) numForm.hidden = true;
+    if (numDisplay) numDisplay.hidden = true;
+
+    const reached = perfect ? NUM_MAX : numbers.level - 1;
+    if (numTitle) numTitle.textContent = perfect ? 'Perfect run' : 'Game over';
+    if (numCopy) numCopy.textContent = `You remembered ${reached} digit${reached === 1 ? '' : 's'}.`;
+    if (numCurrent) numCurrent.textContent = String(reached);
+
+    if (cloud.ready) {
+      const record = isRecord('numbers', reached);
+      saveScoreToCloud('numbers', reached).then(() => {
+        if (numState) numState.textContent = record ? 'New best saved.' : '';
+      });
+    }
+    updateNumberBests();
+  }
+
+  function numbersTeardown() {
+    clearTimeout(numbers.timer);
+    numbers.playing = false;
+  }
+
+  if (numForm) {
+    numForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!numbers.playing || !numInput) return;
+      const answer = numInput.value.trim();
+      if (!answer) return;
+      if (answer === numbers.answer) {
+        numbers.level += 1;
+        if (numbers.level > NUM_MAX) { numbersFinish(true); return; }
+        numbersRound();
+        return;
+      }
+      numbersFinish(false);
+    });
+  }
+  $('[data-num-start]')?.addEventListener('click', () => {
+    numbers.level = 1;
+    numbersRound();
+  });
+
+  // ============================================================ 记忆顺序
+
+  const SEQ_MAX = 50;
+  const seqCells = $$('.hb-cell');
+  const seqStatus = $('[data-seq-status]');
+  const seqLevelEl = $('[data-seq-level]');
+  const seqLengthEl = $('[data-seq-length]');
+  const seqCurrent = $('[data-seq-current]');
+  const seqBest = $('[data-seq-best]');
+  const seqSteps = $('[data-seq-steps]');
+  const seqState = $('[data-seq-state]');
+
+  const sequence = { level: 1, seq: [], index: 0, accepting: false, timers: [] };
+
+  function seqClearTimers() {
+    sequence.timers.forEach((id) => clearTimeout(id));
+    sequence.timers = [];
+  }
+
+  function seqLock(locked) {
+    seqCells.forEach((cell) => { cell.disabled = locked; });
+  }
+
+  function updateSequenceBests() {
+    const best = bestOf('sequence');
+    if (seqBest) seqBest.textContent = best ? `Level ${Math.round(best)}` : '—';
+    if (seqSteps) seqSteps.textContent = best ? String(Math.round(best)) : '—';
+  }
+
+  function sequenceReset() {
+    seqClearTimers();
+    sequence.level = 1;
+    sequence.seq = [];
+    sequence.index = 0;
+    sequence.accepting = false;
+    seqLock(false);
+    seqCells.forEach((cell) => cell.classList.remove('is-active', 'is-right', 'is-wrong'));
+    if (seqStatus) seqStatus.textContent = 'Click Start to watch the first square.';
+    if (seqLevelEl) seqLevelEl.textContent = '1';
+    if (seqLengthEl) seqLengthEl.textContent = '1';
+    if (seqCurrent) seqCurrent.textContent = '—';
+    if (seqState) seqState.textContent = '';
+    updateSequenceBests();
+  }
+
+  function sequencePlay() {
+    sequence.accepting = false;
+    seqLock(true);
+    if (seqStatus) seqStatus.textContent = 'Watch…';
+
+    let i = 0;
+    const step = () => {
+      if (activeView !== 'sequence') return;
+      if (i >= sequence.seq.length) {
+        sequence.index = 0;
+        sequence.accepting = true;
+        seqLock(false);
+        if (seqStatus) seqStatus.textContent = 'Your turn — repeat the order.';
+        return;
+      }
+      const cell = seqCells[sequence.seq[i]];
+      if (!cell) return;
+      cell.classList.add('is-active');
+      sequence.timers.push(setTimeout(() => {
+        cell.classList.remove('is-active');
+        i += 1;
+        sequence.timers.push(setTimeout(step, 200));
+      }, 450));
+    };
+    sequence.timers.push(setTimeout(step, 400));
+  }
+
+  function sequenceAdvance() {
+    sequence.level += 1;
+    if (seqLevelEl) seqLevelEl.textContent = String(sequence.level);
+    if (seqLengthEl) seqLengthEl.textContent = String(sequence.level);
+    if (seqCurrent) seqCurrent.textContent = String(sequence.level);
+    sequence.seq.push(Math.floor(Math.random() * 9));
+    sequencePlay();
+  }
+
+  function sequenceFinish() {
+    seqClearTimers();
+    sequence.accepting = false;
+    seqLock(true);
+    const reached = sequence.level - 1;
+    if (seqStatus) seqStatus.textContent = `Game over — you reached level ${reached}.`;
+    if (seqCurrent) seqCurrent.textContent = String(reached);
+
+    if (cloud.ready) {
+      const record = isRecord('sequence', reached);
+      saveScoreToCloud('sequence', reached).then(() => {
+        if (seqState) seqState.textContent = record ? 'New best saved.' : '';
+      });
+    }
+    updateSequenceBests();
+  }
+
+  function sequenceTeardown() {
+    seqClearTimers();
+    sequence.accepting = false;
+    seqLock(false);
+    seqCells.forEach((cell) => cell.classList.remove('is-active', 'is-right', 'is-wrong'));
+  }
+
+  seqCells.forEach((cell, index) => {
+    cell.addEventListener('click', () => {
+      if (!sequence.accepting) return;
+      if (index !== sequence.seq[sequence.index]) {
+        cell.classList.add('is-wrong');
+        sequence.timers.push(setTimeout(() => cell.classList.remove('is-wrong'), 450));
+        sequenceFinish();
+        return;
+      }
+      cell.classList.add('is-right');
+      sequence.timers.push(setTimeout(() => cell.classList.remove('is-right'), 160));
+      sequence.index += 1;
+
+      if (sequence.index >= sequence.seq.length) {
+        sequence.accepting = false;
+        seqLock(true);
+        if (sequence.level >= SEQ_MAX) {
+          if (seqStatus) seqStatus.textContent = 'Perfect run.';
+          sequenceFinish();
+          return;
+        }
+        sequence.timers.push(setTimeout(sequenceAdvance, 600));
+      }
+    });
+  });
+
+  $('[data-seq-start]')?.addEventListener('click', () => {
+    sequenceReset();
+    sequence.seq = [Math.floor(Math.random() * 9)];
+    if (seqLevelEl) seqLevelEl.textContent = '1';
+    if (seqLengthEl) seqLengthEl.textContent = '1';
+    if (seqCurrent) seqCurrent.textContent = '1';
+    sequencePlay();
+  });
+
+  // ============================================================ 目标点击
+
+  const AIM_TOTAL = 30;
+  const aimStage = $('[data-aim-stage]');
+  const aimHint = $('[data-aim-hint]');
+  const aimHitsEl = $('[data-aim-hits]');
+  const aimAverageEl = $('[data-aim-average]');
+  const aimBestEl = $('[data-aim-best]');
+  const aimState = $('[data-aim-state]');
+
+  const aim = { hits: 0, times: [], targetAt: 0, playing: false };
+
+  function updateAimBest() {
+    const best = bestOf('aim');
+    if (aimBestEl) aimBestEl.textContent = best ? `${Math.round(best)} ms` : '—';
+  }
+
+  function aimClearTargets() {
+    if (!aimStage) return;
+    aimStage.querySelectorAll('.hb-target').forEach((target) => target.remove());
+  }
+
+  function aimReset() {
+    aimClearTargets();
+    aim.playing = false;
+    aim.hits = 0;
+    aim.times = [];
+    if (aimHint) aimHint.hidden = false;
+    if (aimHitsEl) aimHitsEl.textContent = '0';
+    if (aimAverageEl) aimAverageEl.textContent = '—';
+    if (aimState) aimState.textContent = '';
+    updateAimBest();
+  }
+
+  function aimSpawn() {
+    if (!aimStage) return;
+    const target = document.createElement('button');
+    target.type = 'button';
+    target.className = 'hb-target';
+    target.setAttribute('aria-label', 'Target');
+
+    const rect = aimStage.getBoundingClientRect();
+    const pad = 44;
+    const x = pad + Math.random() * Math.max(1, rect.width - pad * 2);
+    const y = pad + Math.random() * Math.max(1, rect.height - pad * 2);
+    target.style.left = `${x}px`;
+    target.style.top = `${y}px`;
+
+    aim.targetAt = performance.now();
+    target.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      if (!aim.playing) return;
+      aim.times.push(performance.now() - aim.targetAt);
+      aim.hits += 1;
+      if (aimHitsEl) aimHitsEl.textContent = String(aim.hits);
+      target.remove();
+      if (aim.hits >= AIM_TOTAL) aimFinish();
+      else aimSpawn();
+    }, { once: true });
+
+    aimStage.append(target);
+  }
+
+  function aimFinish() {
+    aim.playing = false;
+    const total = aim.times.reduce((sum, value) => sum + value, 0);
+    const average = aim.times.length ? total / aim.times.length : 0;
+    if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
+    if (aimHint) { aimHint.hidden = false; aimHint.textContent = `Done — ${Math.round(average)} ms per target.`; }
+
+    if (cloud.ready) {
+      const record = isRecord('aim', Math.round(average));
+      saveScoreToCloud('aim', Math.round(average)).then(() => {
+        if (aimState) aimState.textContent = record ? 'New best saved.' : '';
+      });
+    }
+    updateAimBest();
+  }
+
+  function aimTeardown() {
+    aim.playing = false;
+    aimClearTargets();
+  }
+
+  $('[data-aim-start]')?.addEventListener('click', () => {
+    aimReset();
+    aim.playing = true;
+    if (aimHint) aimHint.hidden = true;
+    aimSpawn();
+  });
+
   // ============================================================ 排行榜
 
   const lbRows = $('[data-lb-rows]');
@@ -845,6 +1205,9 @@
   reactionStage.setAttribute('role', 'button');
   reactionReset();
   clickReset();
+  numbersReset();
+  sequenceReset();
+  aimReset();
   refreshBests();
   typingStartNewPassage();
   showView(hashView() || 'home');

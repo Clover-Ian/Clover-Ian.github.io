@@ -33,8 +33,8 @@
                 <p class="hb-eyebrow">Interactive tests</p>
                 <h1 id="hb-title">Human Benchmark</h1>
                 <p class="hb-lede">
-                    How fast are you, really? Try three short tests for reaction time, click speed,
-                    and typing speed. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
+                    How fast are you, really? Six short tests — reaction time, click speed, typing,
+                    numbers, sequences and aim. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
                 </p>
             </div>
 
@@ -58,6 +58,27 @@
                     <span class="hb-card-title">Typing Speed</span>
                     <span class="hb-card-copy">Type a random passage. Copy and paste are disabled.</span>
                     <span class="hb-card-best" data-best="typing">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="numbers">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 3 7.5 21M16.5 3 15 21M4 8.5h16M3 15.5h16"/></svg>
+                    <span class="hb-card-title">Number Memory</span>
+                    <span class="hb-card-copy">One digit, then two, then three — how far can you go?</span>
+                    <span class="hb-card-best" data-best="numbers">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="sequence">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1.2"/><rect x="9.5" y="3" width="5" height="5" rx="1.2"/><rect x="16" y="3" width="5" height="5" rx="1.2"/><rect x="3" y="9.5" width="5" height="5" rx="1.2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"/><rect x="16" y="9.5" width="5" height="5" rx="1.2"/><rect x="3" y="16" width="5" height="5" rx="1.2"/><rect x="9.5" y="16" width="5" height="5" rx="1.2"/><rect x="16" y="16" width="5" height="5" rx="1.2"/></svg>
+                    <span class="hb-card-title">Sequence Memory</span>
+                    <span class="hb-card-copy">Watch the squares light up, then repeat the order.</span>
+                    <span class="hb-card-best" data-best="sequence">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="aim">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>
+                    <span class="hb-card-title">Aim Trainer</span>
+                    <span class="hb-card-copy">Thirty targets. Hit each one as fast as you can.</span>
+                    <span class="hb-card-best" data-best="aim">Not tested yet</span>
                 </button>
 
             </div>
@@ -175,6 +196,127 @@
             <div class="hb-actions">
                 <button type="button" class="hb-button hb-button--primary" data-typing-restart>New passage</button>
                 <span class="hb-save-state" data-save-state role="status"></span>
+            </div>
+        </section>
+
+
+        <!-- ================= 记数字 ================= -->
+        <section class="hb-view" id="view-numbers" aria-labelledby="hb-numbers-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-numbers-title">Number Memory</h2>
+                <p class="hb-sub">Level <span data-num-level>1</span> · <span data-num-digits>1</span> digit</p>
+            </div>
+
+            <div class="hb-stage hb-stage--numbers" data-num-stage>
+                <div class="hb-stage-inner">
+                    <p class="hb-stage-title" data-num-title>Remember the number</p>
+                    <p class="hb-num-display" data-num-display hidden>0</p>
+                    <p class="hb-stage-copy" data-num-copy>Click Start. The number disappears when you have to type it.</p>
+                </div>
+            </div>
+
+            <form class="hb-num-form" data-num-form hidden>
+                <label class="hb-sr-only" for="hb-num-input">Type the number you saw</label>
+                <input id="hb-num-input" class="hb-input" data-num-input type="text"
+                       inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Type the number">
+                <button class="hb-button hb-button--primary" type="submit">Submit</button>
+            </form>
+
+            <div class="hb-actions">
+                <button type="button" class="hb-button hb-button--primary" data-num-start>Start</button>
+                <span class="hb-save-state" data-num-state role="status"></span>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Level</span>
+                    <span class="hb-stat-value" data-num-current>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-num-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Digits</span>
+                    <span class="hb-stat-value" data-num-digits-best>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 记忆顺序 ================= -->
+        <section class="hb-view" id="view-sequence" aria-labelledby="hb-sequence-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-sequence-title">Sequence Memory</h2>
+                <p class="hb-sub">Level <span data-seq-level>1</span> · <span data-seq-length>1</span> step</p>
+            </div>
+
+            <div class="hb-seq-grid" data-seq-grid role="group" aria-label="Sequence grid">
+                <button type="button" class="hb-cell" data-cell="0" aria-label="Cell 1"></button>
+                <button type="button" class="hb-cell" data-cell="1" aria-label="Cell 2"></button>
+                <button type="button" class="hb-cell" data-cell="2" aria-label="Cell 3"></button>
+                <button type="button" class="hb-cell" data-cell="3" aria-label="Cell 4"></button>
+                <button type="button" class="hb-cell" data-cell="4" aria-label="Cell 5"></button>
+                <button type="button" class="hb-cell" data-cell="5" aria-label="Cell 6"></button>
+                <button type="button" class="hb-cell" data-cell="6" aria-label="Cell 7"></button>
+                <button type="button" class="hb-cell" data-cell="7" aria-label="Cell 8"></button>
+                <button type="button" class="hb-cell" data-cell="8" aria-label="Cell 9"></button>
+            </div>
+
+            <p class="hb-seq-status" data-seq-status>Click Start to watch the first square.</p>
+
+            <div class="hb-actions">
+                <button type="button" class="hb-button hb-button--primary" data-seq-start>Start</button>
+                <span class="hb-save-state" data-seq-state role="status"></span>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Level</span>
+                    <span class="hb-stat-value" data-seq-current>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-seq-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Steps</span>
+                    <span class="hb-stat-value" data-seq-steps>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 目标点击 ================= -->
+        <section class="hb-view" id="view-aim" aria-labelledby="hb-aim-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-aim-title">Aim Trainer</h2>
+                <p class="hb-sub">Hit <span data-aim-total>30</span> targets. Average time is your score.</p>
+            </div>
+
+            <div class="hb-aim-stage" data-aim-stage>
+                <p class="hb-aim-hint" data-aim-hint>Click Start, then hit each target as soon as it appears.</p>
+            </div>
+
+            <div class="hb-actions">
+                <button type="button" class="hb-button hb-button--primary" data-aim-start>Start</button>
+                <span class="hb-save-state" data-aim-state role="status"></span>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Hits</span>
+                    <span class="hb-stat-value" data-aim-hits>0</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Average</span>
+                    <span class="hb-stat-value" data-aim-average>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-aim-best>—</span>
+                </div>
             </div>
         </section>
 
