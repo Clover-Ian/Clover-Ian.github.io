@@ -264,6 +264,7 @@
         usernameForm.querySelector('.account-email-current').textContent =
           `Current username: ${displayNameOf(user)}`;
         showFeedback(usernameFeedback, 'Your username has been updated.', 'success');
+        window.setTimeout(() => { if (usernameDialog.open) usernameDialog.close(); }, 900);
       } catch (error) {
         showRequestError(usernameFeedback, error, 'Could not update your username. Please try again.');
       } finally {
@@ -339,12 +340,14 @@
         if (user.email?.toLowerCase() === newEmail.toLowerCase()) {
           emailForm.querySelector('.account-email-current').textContent = `Current email: ${user.email}`;
           showFeedback(emailFeedback, 'Your email has been updated.', 'success');
+          window.setTimeout(() => { if (emailDialog.open) emailDialog.close(); }, 900);
         } else {
           showFeedback(
             emailFeedback,
             'Confirmation email sent. Check your inbox to finish changing your email.',
             'success',
           );
+          window.setTimeout(() => { if (emailDialog.open) emailDialog.close(); }, 1600);
         }
       } catch (error) {
         showRequestError(emailFeedback, error, 'Could not update your email. Please try again.');
@@ -448,6 +451,7 @@
 
         passwordForm.reset();
         showFeedback(passwordFeedback, 'Your password has been updated.', 'success');
+        window.setTimeout(() => { if (passwordDialog.open) passwordDialog.close(); }, 900);
       } catch (error) {
         showRequestError(passwordFeedback, error, 'Could not update your password. Please try again.');
       } finally {
