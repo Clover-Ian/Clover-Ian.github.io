@@ -666,22 +666,37 @@
     return BOARD_COLORS[hash % BOARD_COLORS.length];
   }
 
-  /** 排行榜里的头像：有图显示图，没图显示首字母 */
-  function boardAvatar(url, name, size = 28) {
+  /**
+   * 排行榜里的头像。
+   * 头像文件路径是固定的 avatars/<user_id>/avatar.jpg，
+   * 所以按 ID 拼地址就能拿到，旧成绩也能显示照片；
+   * 没有文件（404）时自动退回首字母。
+   */
+  function boardAvatar(userId, name, size = 28) {
     const el = document.createElement('span');
     el.className = 'avatar';
     el.style.width = `${size}px`;
     el.style.height = `${size}px`;
-    if (url) {
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = '';
-      img.loading = 'lazy';
-      el.append(img);
-    } else {
+
+    const paintInitial = () => {
       el.textContent = (String(name || '?').trim().slice(0, 1) || '?').toUpperCase();
       el.style.fontSize = `${Math.round(size * 0.42)}px`;
       el.style.backgroundColor = boardColor(name);
+    };
+
+    const base = window.IYS_SUPABASE_URL;
+    if (userId && base) {
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = '';
+      img.src = `${base}/storage/v1/object/public/avatars/${userId}/avatar.jpg`;
+      img.addEventListener('error', () => {
+        img.remove();
+        paintInitial();
+      }, { once: true });
+      el.append(img);
+    } else {
+      paintInitial();
     }
     return el;
   }
@@ -787,7 +802,7 @@
       const display = row.detail?.name || 'Player';
       const name = document.createElement('span');
       name.className = 'hb-board-name';
-      name.append(boardAvatar(row.detail?.avatar, display));
+      name.append(boardAvatar(row.user_id, display));
 
       const nameText = document.createElement('span');
       nameText.className = 'hb-board-name-text';
