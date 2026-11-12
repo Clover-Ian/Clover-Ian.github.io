@@ -60,12 +60,28 @@
     return clean;
   }
 
+  /**
+   * 取最新的用户资料。
+   * getSession() 读的是浏览器里的缓存，另一台设备改过之后就过期了；
+   * getUser() 会向服务器要一次，跨设备才能立刻同步。网络失败时退回缓存。
+   */
+  async function currentUser() {
+    try {
+      const { data, error } = await cloud.client.auth.getUser();
+      if (!error && data?.user) return data.user;
+    } catch (error) {
+      // 离线或请求失败，退回本地会话
+    }
+    const { data } = await cloud.client.auth.getSession();
+    return data?.session?.user ?? null;
+  }
+
   /** 从账号里读出历史最好成绩 */
   async function loadCloudBests() {
     if (!cloud.ready) return;
     try {
-      const { data } = await cloud.client.auth.getSession();
-      Object.assign(cloudBest, bestsFromUser(data?.session?.user));
+      const user = await currentUser();
+      Object.assign(cloudBest, bestsFromUser(user));
     } catch (error) {
       console.warn('[benchmark] 读取账号成绩失败：', error);
     }
@@ -89,8 +105,8 @@
 
     if (state) state.textContent = 'Saving…';
     try {
-      const { data } = await cloud.client.auth.getSession();
-      const meta = { ...bestsFromUser(data?.session?.user), [key]: value };
+      const user = await currentUser();
+      const meta = { ...bestsFromUser(user), [key]: value };
       const { error } = await cloud.client.auth.updateUser({ data: { [META_KEY]: meta } });
       if (error) throw error;
       cloudBest[key] = value;
