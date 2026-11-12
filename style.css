@@ -2055,3 +2055,114 @@ article.legal-policy h2 {
         transform: none;
     }
 }
+
+/* ---------------------------------------------------------------- 排行榜 */
+
+.hb-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.hb-tab {
+    padding: 9px 18px;
+    border: 1px solid var(--hb-line);
+    border-radius: 999px;
+    background: none;
+    color: var(--hb-muted);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.hb-tab:hover {
+    color: var(--hb-ink);
+}
+
+.hb-tab.is-selected {
+    border-color: transparent;
+    background: var(--hb-ink);
+    color: #fff;
+}
+
+.hb-lb-duration {
+    margin-bottom: 20px;
+}
+
+/* .hb-duration 是 flex，会盖掉 hidden 属性 */
+.hb-lb-duration[hidden] {
+    display: none;
+}
+
+.hb-board {
+    overflow: hidden;
+    border: 1px solid var(--hb-line);
+    border-radius: 20px;
+    background: var(--hb-surface);
+}
+
+.hb-board-head,
+.hb-board-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 22px;
+}
+
+.hb-board-head {
+    border-bottom: 1px solid var(--hb-line);
+    color: var(--hb-muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hb-board-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hb-board-row + .hb-board-row {
+    border-top: 1px solid var(--hb-line);
+}
+
+.hb-board-rank {
+    color: var(--hb-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.hb-board-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hb-board-score {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.hb-board-row.is-me {
+    background: rgb(101 84 217 / 9%);
+}
+
+.hb-board-row.is-me .hb-board-name::after {
+    color: var(--hb-accent);
+    font-size: 13px;
+    content: " (you)";
+}
+
+.hb-board-status {
+    margin: 0;
+    padding: 30px 22px;
+    color: var(--hb-muted);
+    text-align: center;
+}
+
+.hb-board-status[hidden] {
+    display: none;
+}

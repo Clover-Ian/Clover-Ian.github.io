@@ -148,6 +148,7 @@
     reaction: $('#view-reaction'),
     click: $('#view-click'),
     typing: $('#view-typing'),
+    leaderboard: $('#view-leaderboard'),
   };
 
   let activeView = 'home';
@@ -161,6 +162,7 @@
     if (!views[name]) return;
     if (activeView === 'reaction') reactionTeardown();
     if (activeView === 'click') clickTeardown();
+    if (activeView === 'typing') typingStopClock();
 
     Object.entries(views).forEach(([key, node]) => {
       node.classList.toggle('is-active', key === name);
@@ -172,7 +174,11 @@
       window.history.replaceState(null, '', hash || window.location.pathname);
     }
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-    if (name === 'typing') typingStartNewPassage();
+    if (name === 'leaderboard') loadLeaderboard();
+    if (name === 'typing') {
+      if (typing.startedAt && !typing.finished) typingResumeClock();
+      else typingStartNewPassage();
+    }
   }
 
   $$('[data-open]').forEach((button) => {
@@ -277,7 +283,10 @@
       reactionSetStage('idle');
       const average = sum / reaction.results.length;
       const record = isRecord('reaction', average);
-      if (cloud.ready) saveScoreToCloud('reaction', average);
+      if (cloud.ready) {
+        saveScoreToCloud('reaction', average);
+        saveScoreToBoard('reaction', average);
+      }
       reactionTitle.textContent = cloud.ready && record ? 'New personal best' : 'Done';
       reactionCopy.textContent = cloud.ready
         ? `Average ${fmtMs(average)} over ${REACTION_ROUNDS} rounds. Click to try again.`
@@ -413,7 +422,10 @@
     clickTime.textContent = '0.0s';
     click.finishedAt = performance.now();
     const record = isRecord(clickKey(click.duration), click.count);
-    if (cloud.ready) saveScoreToCloud(clickKey(click.duration), click.count);
+    if (cloud.ready) {
+      saveScoreToCloud(clickKey(click.duration), click.count);
+      saveScoreToBoard('click', click.count, { seconds: click.duration });
+    }
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
     clickCopy.textContent = !cloud.ready
       ? `${clicks} in ${click.duration}s. Sign in to keep this score.`
@@ -482,10 +494,37 @@
   let typing = {
     target: '',
     chars: [],
-    startedAt: 0,
+    startedAt: 0,   // 第一次按键的时刻
+    endedAt: 0,     // 打完整段的时刻
+    timer: 0,       // 走秒用的 interval
     finished: false,
     lastPassageIndex: -1,
   };
+
+  /** 已经用了多少秒；结束之后不再走表 */
+  function typingElapsed() {
+    if (!typing.startedAt) return 0;
+    const end = typing.endedAt || performance.now();
+    return Math.max(0, (end - typing.startedAt) / 1000);
+  }
+
+  /** 第一次按键就开始计时，不等到 input 事件 */
+  function typingStartClock() {
+    if (typing.startedAt || typing.finished) return;
+    typing.startedAt = performance.now();
+    typing.timer = setInterval(typingTick, 50); // 50ms 刷新一次，看起来是连续走的
+  }
+
+  function typingStopClock() {
+    clearInterval(typing.timer);
+    typing.timer = 0;
+  }
+
+  function typingResumeClock() {
+    if (typing.startedAt && !typing.finished && !typing.timer) {
+      typing.timer = setInterval(typingTick, 50);
+    }
+  }
 
   function typingStartNewPassage() {
     // 避免连续抽到同一段
@@ -495,7 +534,9 @@
     }
     typing.lastPassageIndex = index;
     typing.target = PASSAGES[index];
+    typingStopClock();
     typing.startedAt = 0;
+    typing.endedAt = 0;
     typing.finished = false;
 
     passageNode.innerHTML = '';
@@ -516,7 +557,7 @@
 
   function typingStats() {
     const typed = typingInput.value;
-    const elapsed = typing.startedAt ? (performance.now() - typing.startedAt) / 1000 : 0;
+    const elapsed = typingElapsed();
 
     let correct = 0;
     for (let i = 0; i < typed.length; i += 1) {
@@ -545,28 +586,44 @@
     }
   }
 
-  function typingUpdate() {
-    if (!typing.startedAt && typingInput.value.length > 0) {
-      typing.startedAt = performance.now();
-    }
-    typingRender();
-
+  /** 只刷新数字，不改状态 */
+  function typingPaint() {
     const { typed, elapsed, wpm, accuracy } = typingStats();
     typingTime.textContent = `${elapsed.toFixed(1)}s`;
-    if (typed.length >= 3) {
+    if (typed.length >= 1) {
       typingWpm.textContent = String(Math.round(wpm));
       typingAccuracy.textContent = `${Math.round(clamp(accuracy, 0, 100))}%`;
     }
+    return { typed, elapsed, wpm, accuracy };
+  }
+
+  /** 每 50ms 走一次表，跟有没有打字无关 */
+  function typingTick() {
+    if (!typing.startedAt || typing.finished) return;
+    typingPaint();
+  }
+
+  function typingUpdate() {
+    typingStartClock();
+    typingRender();
+    const { typed, elapsed, wpm, accuracy } = typingPaint();
 
     if (!typing.finished && typed.length >= typing.target.length) {
       typing.finished = true;
+      typing.endedAt = performance.now();   // 定格在打完整段的那一刻
+      typingStopClock();
       typingInput.disabled = true;
-      const record = isRecord('typing', Math.round(wpm));
-      saveScoreToCloud('typing', Math.round(wpm));
-      typingWpm.textContent = String(Math.round(wpm));
+
+      const finalElapsed = typingElapsed();
+      const finalWpm = finalElapsed > 0 ? wpm : 0;
+      const record = isRecord('typing', Math.round(finalWpm));
+      saveScoreToCloud('typing', Math.round(finalWpm));
+      saveScoreToBoard('typing', Math.round(finalWpm), { accuracy: Math.round(accuracy) });
+
+      typingTime.textContent = `${finalElapsed.toFixed(1)}s`;
+      typingWpm.textContent = String(Math.round(finalWpm));
       typingAccuracy.textContent = `${Math.round(clamp(accuracy, 0, 100))}%`;
-      typingTime.textContent = `${elapsed.toFixed(1)}s`;
-      if (cloud.ready && record) typingWpm.textContent = `${Math.round(wpm)} ★`;
+      if (cloud.ready && record) typingWpm.textContent = `${Math.round(finalWpm)} ★`;
       refreshBests();
     }
   }
@@ -578,9 +635,140 @@
   typingInput.addEventListener('contextmenu', (event) => event.preventDefault());
   typingInput.addEventListener('input', typingUpdate);
 
+  // keydown / beforeinput 比 input 事件更早触发，计时从这里开始
+  typingInput.addEventListener('keydown', (event) => {
+    if (event.key && event.key.length === 1) typingStartClock();
+  });
+  typingInput.addEventListener('beforeinput', (event) => {
+    if (String(event.inputType || '').startsWith('insert')) typingStartClock();
+  });
+
   $('[data-typing-restart]').addEventListener('click', () => {
     typingStartNewPassage();
     typingInput.focus();
+  });
+
+  // ============================================================ 排行榜
+
+  const lbRows = $('[data-lb-rows]');
+  const lbStatus = $('[data-lb-status]');
+  const lbDuration = $('[data-lb-duration]');
+
+  const leaderboard = { test: 'reaction', seconds: 10 };
+
+  function formatScore(test, value) {
+    if (test === 'reaction') return `${Math.round(value)} ms`;
+    if (test === 'typing') return `${Math.round(value)} WPM`;
+    return `${Math.round(value)}`;
+  }
+
+  /** 把一条成绩写进共享表，供排行榜读取；表不存在时静默跳过 */
+  async function saveScoreToBoard(test, value, extra = {}) {
+    const client = window.iysSupabase;
+    if (!client || !cloud.ready) return;
+    try {
+      const { data } = await client.auth.getSession();
+      const user = data?.session?.user;
+      if (!user) return;
+      const name = user.user_metadata?.display_name
+        || (user.email ? user.email.split('@')[0] : '')
+        || 'Player';
+      const { error } = await client.from('benchmark_scores').insert({
+        user_id: user.id,
+        test,
+        value,
+        detail: { name, ...extra },
+      });
+      if (error) console.warn('[benchmark] 排行榜写入失败：', error.message);
+    } catch (error) {
+      console.warn('[benchmark] 排行榜写入失败：', error?.message || error);
+    }
+  }
+
+  async function loadLeaderboard() {
+    const client = window.iysSupabase;
+    if (!lbRows || !lbStatus) return;
+
+    lbRows.innerHTML = '';
+    lbStatus.hidden = false;
+    lbStatus.textContent = 'Loading…';
+
+    if (!client) {
+      lbStatus.textContent = 'Leaderboard is not available right now.';
+      return;
+    }
+
+    let query = client
+      .from('benchmark_scores')
+      .select('user_id, test, value, detail')
+      .limit(10)
+      .order('value', { ascending: leaderboard.test === 'reaction' });
+
+    if (leaderboard.test === 'click') {
+      query = query.eq('test', 'click').eq('detail->>seconds', String(leaderboard.seconds));
+    } else {
+      query = query.eq('test', leaderboard.test);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.warn('[benchmark] 排行榜读取失败：', error.message);
+      lbStatus.textContent = error.code === 'PGRST205'
+        ? 'Leaderboard is not set up yet.'
+        : 'Could not load the leaderboard.';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      lbStatus.textContent = 'No scores yet — be the first.';
+      return;
+    }
+
+    lbStatus.hidden = true;
+    const me = cloud.userId;
+
+    data.forEach((row, index) => {
+      const item = document.createElement('li');
+      item.className = 'hb-board-row';
+      if (me && row.user_id === me) item.classList.add('is-me');
+
+      const rank = document.createElement('span');
+      rank.className = 'hb-board-rank';
+      rank.textContent = String(index + 1);
+
+      const name = document.createElement('span');
+      name.className = 'hb-board-name';
+      name.textContent = row.detail?.name || 'Player';
+
+      const score = document.createElement('span');
+      score.className = 'hb-board-score';
+      score.textContent = formatScore(row.test, Number(row.value));
+
+      item.append(rank, name, score);
+      lbRows.appendChild(item);
+    });
+  }
+
+  $$('[data-lb-test]').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      leaderboard.test = tab.dataset.lbTest;
+      $$('[data-lb-test]').forEach((other) => {
+        const selected = other === tab;
+        other.classList.toggle('is-selected', selected);
+        other.setAttribute('aria-selected', String(selected));
+      });
+      if (lbDuration) lbDuration.hidden = leaderboard.test !== 'click';
+      loadLeaderboard();
+    });
+  });
+
+  $$('[data-lb-seconds]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      leaderboard.seconds = Number(chip.dataset.lbSeconds);
+      $$('[data-lb-seconds]').forEach((other) => other.classList.toggle('is-selected', other === chip));
+      loadLeaderboard();
+    });
   });
 
   // ============================================================ 启动

@@ -58,6 +58,13 @@
                     <span class="hb-card-copy">Type a random passage. Copy and paste are disabled.</span>
                     <span class="hb-card-best" data-best="typing">Not tested yet</span>
                 </button>
+
+                <button type="button" class="hb-card" data-open="leaderboard">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><rect x="5" y="11" width="3.5" height="8" rx="1"/><rect x="10.2" y="6" width="3.5" height="13" rx="1"/><rect x="15.4" y="14" width="3.5" height="5" rx="1"/></svg>
+                    <span class="hb-card-title">Leaderboard</span>
+                    <span class="hb-card-copy">See how you compare across all three tests.</span>
+                    <span class="hb-card-best" data-best="leaderboard">Top scores</span>
+                </button>
             </div>
 
             <p class="hb-note">
@@ -173,6 +180,36 @@
             <div class="hb-actions">
                 <button type="button" class="hb-button hb-button--primary" data-typing-restart>New passage</button>
                 <span class="hb-save-state" data-save-state role="status"></span>
+            </div>
+        </section>
+
+        <!-- ================= 排行榜 ================= -->
+        <section class="hb-view" id="view-leaderboard" aria-labelledby="hb-board-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-board-title">Leaderboard</h2>
+                <p class="hb-sub">Best scores from everyone who is signed in.</p>
+            </div>
+
+            <div class="hb-tabs" role="tablist" aria-label="Leaderboard category">
+                <button type="button" class="hb-tab is-selected" role="tab" aria-selected="true" data-lb-test="reaction">Reaction</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="click">Click Speed</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="typing">Typing</button>
+            </div>
+
+            <div class="hb-duration hb-lb-duration" data-lb-duration hidden role="group" aria-label="Click duration">
+                <button type="button" class="hb-chip is-selected" data-lb-seconds="10">10 seconds</button>
+                <button type="button" class="hb-chip" data-lb-seconds="60">60 seconds</button>
+            </div>
+
+            <div class="hb-board">
+                <div class="hb-board-head" aria-hidden="true">
+                    <span>#</span>
+                    <span>Player</span>
+                    <span>Score</span>
+                </div>
+                <ol class="hb-board-rows" data-lb-rows></ol>
+                <p class="hb-board-status" data-lb-status role="status">Loading…</p>
             </div>
         </section>
 
