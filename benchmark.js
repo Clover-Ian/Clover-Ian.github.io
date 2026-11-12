@@ -670,9 +670,9 @@
       const { data } = await client.auth.getSession();
       const user = data?.session?.user;
       if (!user) return;
-      const name = user.user_metadata?.display_name
-        || (user.email ? user.email.split('@')[0] : '')
-        || 'Player';
+      // 只显示用户名（注册时填的 Name）；没填就显示 Player，绝不用邮箱
+      const displayName = user.user_metadata?.display_name;
+      const name = (typeof displayName === 'string' && displayName.trim()) || 'Player';
       const { error } = await client.from('benchmark_scores').insert({
         user_id: user.id,
         test,
