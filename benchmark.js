@@ -285,7 +285,7 @@
       const record = isRecord('reaction', average);
       if (cloud.ready) {
         saveScoreToCloud('reaction', average);
-        saveScoreToBoard('reaction', average);
+        if (record) saveScoreToBoard('reaction', average);
       }
       reactionTitle.textContent = cloud.ready && record ? 'New personal best' : 'Done';
       reactionCopy.textContent = cloud.ready
@@ -424,7 +424,7 @@
     const record = isRecord(clickKey(click.duration), click.count);
     if (cloud.ready) {
       saveScoreToCloud(clickKey(click.duration), click.count);
-      saveScoreToBoard('click', click.count, { seconds: click.duration });
+      if (record) saveScoreToBoard('click', click.count, { seconds: click.duration });
     }
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
     clickCopy.textContent = !cloud.ready
@@ -618,7 +618,7 @@
       const finalWpm = finalElapsed > 0 ? wpm : 0;
       const record = isRecord('typing', Math.round(finalWpm));
       saveScoreToCloud('typing', Math.round(finalWpm));
-      saveScoreToBoard('typing', Math.round(finalWpm), { accuracy: Math.round(accuracy) });
+      if (record) saveScoreToBoard('typing', Math.round(finalWpm), { accuracy: Math.round(accuracy) });
 
       typingTime.textContent = `${finalElapsed.toFixed(1)}s`;
       typingWpm.textContent = String(Math.round(finalWpm));
@@ -698,10 +698,11 @@
       return;
     }
 
+    // 多取一些，去重之后再截前 100
     let query = client
       .from('benchmark_scores')
       .select('user_id, test, value, detail')
-      .limit(10)
+      .limit(1000)
       .order('value', { ascending: leaderboard.test === 'reaction' });
 
     if (leaderboard.test === 'click') {
@@ -725,10 +726,21 @@
       return;
     }
 
+    // 同一用户同一项目只留最好的一条（数据已按成绩排好，先出现的即最好）
+    const seen = new Set();
+    const top = [];
+    for (const row of data) {
+      const key = row.user_id || row.detail?.name || String(top.length);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      top.push(row);
+      if (top.length >= 100) break;
+    }
+
     lbStatus.hidden = true;
     const me = cloud.userId;
 
-    data.forEach((row, index) => {
+    top.forEach((row, index) => {
       const item = document.createElement('li');
       item.className = 'hb-board-row';
       if (me && row.user_id === me) item.classList.add('is-me');
