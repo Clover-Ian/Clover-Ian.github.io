@@ -292,6 +292,7 @@
           Current password
           <input name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
         </label>
+        <a class="account-forgot-password" href="#" data-send-reset>Forgot your current password?</a>
         <label>
           New password
           <input name="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
@@ -326,6 +327,31 @@
 
     passwordForm.querySelector('.account-email-cancel').addEventListener('click', () => {
       passwordDialog.close();
+    });
+
+    // 不记得当前密码时，直接发一封重置邮件（链接里带着恢复会话）
+    const sendResetLink = passwordForm.querySelector('[data-send-reset]');
+    sendResetLink.addEventListener('click', async (event) => {
+      event.preventDefault();
+      clearFeedback(passwordFeedback);
+      if (!client) return;
+
+      sendResetLink.setAttribute('aria-disabled', 'true');
+      try {
+        const { error } = await client.auth.resetPasswordForEmail(user.email, {
+          redirectTo: new URL('IYS Account Reset Password.html', window.location.href).href,
+        });
+        if (error) throw error;
+        showFeedback(
+          passwordFeedback,
+          `Reset link sent to ${user.email}. Open it to set a new password.`,
+          'success',
+        );
+      } catch (error) {
+        showRequestError(passwordFeedback, error, 'Could not send the reset link. Please try again.');
+      } finally {
+        sendResetLink.removeAttribute('aria-disabled');
+      }
     });
 
     passwordForm.addEventListener('submit', async (event) => {
