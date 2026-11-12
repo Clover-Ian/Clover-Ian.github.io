@@ -927,7 +927,7 @@
   const aimBestEl = $('[data-aim-best]');
   const aimState = $('[data-aim-state]');
 
-  const aim = { hits: 0, times: [], targetAt: 0, playing: false };
+  const aim = { hits: 0, times: [], targetAt: 0, playing: false, finished: false };
 
   function updateAimBest() {
     const best = bestOf('aim');
@@ -942,9 +942,10 @@
   function aimReset() {
     aimClearTargets();
     aim.playing = false;
+    aim.finished = false;
     aim.hits = 0;
     aim.times = [];
-    if (aimHint) aimHint.hidden = false;
+    if (aimHint) { aimHint.hidden = false; aimHint.textContent = 'Click anywhere in this box to start.'; }
     if (aimHitsEl) aimHitsEl.textContent = '0';
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
@@ -982,6 +983,7 @@
 
   function aimFinish() {
     aim.playing = false;
+    aim.finished = true;
     const total = aim.times.reduce((sum, value) => sum + value, 0);
     const average = aim.times.length ? total / aim.times.length : 0;
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
@@ -1001,11 +1003,30 @@
     aimClearTargets();
   }
 
-  $('[data-aim-start]')?.addEventListener('click', () => {
-    aimReset();
+  /** 开始一轮：清空计数，弹出第一个目标 */
+  function aimStart() {
+    aimClearTargets();
+    aim.hits = 0;
+    aim.times = [];
     aim.playing = true;
+    aim.finished = false;
+    if (aimHitsEl) aimHitsEl.textContent = '0';
+    if (aimAverageEl) aimAverageEl.textContent = '—';
+    if (aimState) aimState.textContent = '';
     if (aimHint) aimHint.hidden = true;
     aimSpawn();
+  }
+
+  // 在框里点一下就开局；结束后必须点下面的 Restart，避免手还在连点时误触
+  aimStage?.addEventListener('pointerdown', (event) => {
+    if (aim.playing || aim.finished) return;
+    if (event.target.closest('.hb-target')) return;
+    event.preventDefault();
+    aimStart();
+  });
+
+  $('[data-aim-start]')?.addEventListener('click', () => {
+    aimReset();
   });
 
   // ============================================================ 排行榜
