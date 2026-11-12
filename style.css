@@ -2194,10 +2194,18 @@ article.legal-policy h2 {
     object-fit: cover;
 }
 
-.account-nav-user {
+/* 选择器要压过上面那条 .nav-links .account-nav-user 的 inline-block，
+   否则 gap 不生效，头像会和名字贴在一起 */
+.nav-links .account-nav-user {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+}
+
+.nav-links .account-nav-user > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .account-menu-user {
