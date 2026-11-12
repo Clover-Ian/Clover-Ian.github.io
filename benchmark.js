@@ -745,9 +745,9 @@
 
     if (cloud.ready) {
       const record = isRecord('numbers', reached);
-      saveScoreToCloud('numbers', reached).then(() => {
-        if (numState) numState.textContent = record ? 'New best saved.' : '';
-      });
+      saveScoreToCloud('numbers', reached);
+      if (record) saveScoreToBoard('numbers', reached);
+      if (numState) numState.textContent = record ? 'New best saved.' : '';
     }
     updateNumberBests();
   }
@@ -868,9 +868,9 @@
 
     if (cloud.ready) {
       const record = isRecord('sequence', reached);
-      saveScoreToCloud('sequence', reached).then(() => {
-        if (seqState) seqState.textContent = record ? 'New best saved.' : '';
-      });
+      saveScoreToCloud('sequence', reached);
+      if (record) saveScoreToBoard('sequence', reached);
+      if (seqState) seqState.textContent = record ? 'New best saved.' : '';
     }
     updateSequenceBests();
   }
@@ -989,9 +989,9 @@
 
     if (cloud.ready) {
       const record = isRecord('aim', Math.round(average));
-      saveScoreToCloud('aim', Math.round(average)).then(() => {
-        if (aimState) aimState.textContent = record ? 'New best saved.' : '';
-      });
+      saveScoreToCloud('aim', Math.round(average));
+      if (record) saveScoreToBoard('aim', Math.round(average));
+      if (aimState) aimState.textContent = record ? 'New best saved.' : '';
     }
     updateAimBest();
   }
@@ -1062,8 +1062,9 @@
   }
 
   function formatScore(test, value) {
-    if (test === 'reaction') return `${Math.round(value)} ms`;
+    if (test === 'reaction' || test === 'aim') return `${Math.round(value)} ms`;
     if (test === 'typing') return `${Math.round(value)} WPM`;
+    if (test === 'numbers' || test === 'sequence') return `Level ${Math.round(value)}`;
     return `${Math.round(value)}`;
   }
 
@@ -1110,7 +1111,7 @@
       .from('benchmark_scores')
       .select('user_id, test, value, detail')
       .limit(1000)
-      .order('value', { ascending: leaderboard.test === 'reaction' });
+      .order('value', { ascending: leaderboard.test === 'reaction' || leaderboard.test === 'aim' });
 
     if (leaderboard.test === 'click') {
       query = query.eq('test', 'click').eq('detail->>seconds', String(leaderboard.seconds));
