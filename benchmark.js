@@ -655,6 +655,7 @@
   const lbDuration = $('[data-lb-duration]');
 
   const leaderboard = { test: 'reaction', seconds: 10 };
+  let leaderboardToken = 0; // 快速切标签时，丢掉已经过期的请求结果
 
   function formatScore(test, value) {
     if (test === 'reaction') return `${Math.round(value)} ms`;
@@ -689,6 +690,8 @@
     const client = window.iysSupabase;
     if (!lbRows || !lbStatus) return;
 
+    const token = ++leaderboardToken;
+
     lbRows.innerHTML = '';
     lbStatus.hidden = false;
     lbStatus.textContent = 'Loading…';
@@ -712,6 +715,9 @@
     }
 
     const { data, error } = await query;
+
+    // 期间又切了标签，这次的结果作废，避免两次渲染叠在一起
+    if (token !== leaderboardToken) return;
 
     if (error) {
       console.warn('[benchmark] 排行榜读取失败：', error.message);
