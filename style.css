@@ -1479,36 +1479,39 @@ article.legal-policy h2 {
 }
 /* ==========================================================================
    IYS Human Benchmark
-   深色版式：和主站同一套排版/字体/圆角语言，但背景换成深灰，
-   让"变绿"的反应测试更醒目，也让这一页和主站明显区分开。
+   A light, colorful test-lab theme distinct from the main site.
    ========================================================================== */
 
 .benchmark-page {
-    color-scheme: dark;
-    --hb-bg: #0b0b0d;
-    --hb-surface: #17171a;
-    --hb-surface-raised: #1f1f24;
-    --hb-line: rgb(255 255 255 / 10%);
-    --hb-ink: #f5f5f7;
-    --hb-muted: #9a9aa2;
-    --hb-accent: #0a84ff;
+    color-scheme: light;
+    --hb-bg: #f4f3ff;
+    --hb-surface: rgb(255 255 255 / 82%);
+    --hb-surface-raised: #fff;
+    --hb-line: rgb(70 59 131 / 14%);
+    --hb-ink: #25213d;
+    --hb-muted: #716d89;
+    --hb-accent: #6554d9;
     --hb-green: #30d158;
-    --hb-red: #ff453a;
+    --hb-red: #d94d5c;
 
-    background: var(--hb-bg);
+    background-color: var(--hb-bg);
+    background-image:
+        radial-gradient(ellipse at 8% 12%, rgb(183 169 255 / 34%), transparent 34%),
+        radial-gradient(ellipse at 92% 38%, rgb(165 226 231 / 30%), transparent 32%),
+        linear-gradient(135deg, #f8f6ff 0%, #eff7ff 52%, #f8f3ff 100%);
     color: var(--hb-ink);
 }
 
-/* 背景：顶部一层极淡的光晕，别无其他装饰 */
+/* Soft color blooms keep the benchmark page visually separate from the site. */
 .benchmark-page::before {
     position: fixed;
     z-index: 0;
-    top: -20vh;
-    left: 50%;
-    width: min(1100px, 120vw);
-    height: 70vh;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse at 50% 0%, rgb(90 140 255 / 16%) 0%, rgb(11 11 13 / 0%) 70%);
+    top: 12vh;
+    right: -16vw;
+    width: min(560px, 72vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(255 203 147 / 20%) 0%, rgb(255 203 147 / 0%) 70%);
     content: "";
     pointer-events: none;
 }
@@ -1517,35 +1520,35 @@ article.legal-policy h2 {
 
 .benchmark-page .hb-header {
     border-bottom: 1px solid var(--hb-line);
-    background: rgb(11 11 13 / 78%);
+    background: rgb(250 249 255 / 82%);
     backdrop-filter: saturate(180%) blur(20px);
 }
 
 .benchmark-page .brand {
     color: var(--hb-ink);
-    letter-spacing: 0.02em;
+    letter-spacing: -0.04em;
 }
 
 .benchmark-page .nav-links a {
-    color: rgb(245 245 247 / 72%);
+    color: var(--hb-ink);
+    opacity: 0.72;
 }
 
 .benchmark-page .nav-links a:hover {
     color: var(--hb-ink);
+    opacity: 1;
     text-decoration: none;
 }
 
-/* 登录/注册按钮：站点的浅蓝胶囊在深色页上要换一套配色，
-   否则白色文字会落在浅蓝底上，看不见 */
 .benchmark-page .nav-links .account-nav-link {
-    border-color: rgb(255 255 255 / 22%);
-    background: rgb(255 255 255 / 8%);
+    border-color: rgb(101 84 217 / 24%);
+    background: rgb(255 255 255 / 72%);
     color: var(--hb-ink);
 }
 
 .benchmark-page .nav-links .account-nav-link:not(.account-signup-link):hover {
-    border-color: rgb(255 255 255 / 40%);
-    background: rgb(255 255 255 / 14%);
+    border-color: var(--hb-accent);
+    background: #fff;
     text-decoration: none;
 }
 
@@ -1556,7 +1559,7 @@ article.legal-policy h2 {
 }
 
 .benchmark-page .nav-links .account-signup-link:hover {
-    background: #3a9bff;
+    background: #5140c6;
     text-decoration: none;
 }
 
@@ -1632,12 +1635,15 @@ article.legal-policy h2 {
     font: inherit;
     text-align: left;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 12px 32px rgb(54 47 108 / 5%);
+    backdrop-filter: blur(12px);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .hb-card:hover {
     background: var(--hb-surface-raised);
-    border-color: rgb(255 255 255 / 18%);
+    border-color: rgb(101 84 217 / 32%);
+    box-shadow: 0 18px 38px rgb(54 47 108 / 10%);
     transform: translateY(-2px);
 }
 
@@ -1669,13 +1675,13 @@ article.legal-policy h2 {
 .hb-card-best {
     margin-top: auto;
     padding-top: 14px;
-    color: rgb(245 245 247 / 45%);
+    color: var(--hb-muted);
     font-size: 13px;
 }
 
 .hb-account-note {
     margin: 18px 0 0;
-    color: rgb(245 245 247 / 55%);
+    color: var(--hb-muted);
     font-size: 14px;
 }
 
@@ -1685,14 +1691,15 @@ article.legal-policy h2 {
 
 .hb-save-state {
     align-self: center;
-    color: rgb(245 245 247 / 45%);
+    color: var(--hb-muted);
     font-size: 13px;
 }
 
 .hb-note {
     margin-top: 36px;
     max-width: 620px;
-    color: rgb(245 245 247 / 38%);
+    color: var(--hb-muted);
+    opacity: 0.78;
     font-size: 13px;
     line-height: 1.6;
 }
@@ -1740,6 +1747,8 @@ article.legal-policy h2 {
     border: 1px solid var(--hb-line);
     border-radius: 24px;
     background: var(--hb-surface);
+    box-shadow: 0 16px 38px rgb(54 47 108 / 6%);
+    backdrop-filter: blur(12px);
     text-align: center;
     user-select: none;
     -webkit-user-select: none;
@@ -1772,8 +1781,8 @@ article.legal-policy h2 {
 }
 
 .hb-stage--reaction.is-waiting {
-    background: #221a1a;
-    border-color: rgb(255 69 58 / 35%);
+    background: #fff0ef;
+    border-color: rgb(217 77 92 / 32%);
 }
 
 .hb-stage--reaction.is-ready {
@@ -1787,8 +1796,8 @@ article.legal-policy h2 {
 }
 
 .hb-stage--reaction.is-early {
-    background: #2a1614;
-    border-color: rgb(255 69 58 / 55%);
+    background: #ffe8e6;
+    border-color: rgb(217 77 92 / 48%);
 }
 
 /* 点击测试 */
@@ -1797,7 +1806,7 @@ article.legal-policy h2 {
 }
 
 .hb-stage--click.is-running {
-    border-color: rgb(10 132 255 / 45%);
+    border-color: rgb(101 84 217 / 42%);
 }
 
 .hb-click-count {
@@ -1824,7 +1833,7 @@ article.legal-policy h2 {
     padding: 16px 18px;
     border: 1px solid var(--hb-line);
     border-radius: 16px;
-    background: rgb(255 255 255 / 3%);
+    background: rgb(255 255 255 / 68%);
 }
 
 .hb-stat-label {
@@ -1882,8 +1891,8 @@ article.legal-policy h2 {
 
 .hb-chip.is-selected {
     border-color: transparent;
-    background: var(--hb-ink);
-    color: #0b0b0d;
+    background: var(--hb-accent);
+    color: #fff;
 }
 
 .hb-actions {
@@ -1924,7 +1933,7 @@ article.legal-policy h2 {
 }
 
 .hb-button--primary:hover {
-    background: #3a9bff;
+    background: #5140c6;
 }
 
 /* ---------------------------------------------------------------- 打字测试 */
@@ -1934,7 +1943,7 @@ article.legal-policy h2 {
     border: 1px solid var(--hb-line);
     border-radius: 20px;
     background: var(--hb-surface);
-    color: rgb(245 245 247 / 88%);
+    color: var(--hb-ink);
     font-size: 19px;
     line-height: 1.9;
     letter-spacing: 0.01em;
@@ -1948,8 +1957,8 @@ article.legal-policy h2 {
 
 .hb-passage .hb-char.is-wrong {
     border-radius: 3px;
-    background: rgb(255 69 58 / 28%);
-    color: #ffd8d5;
+    background: rgb(217 77 92 / 18%);
+    color: #a52e3b;
 }
 
 .hb-passage .hb-char.is-current {
@@ -1963,7 +1972,7 @@ article.legal-policy h2 {
     padding: 18px 20px;
     border: 1px solid var(--hb-line);
     border-radius: 16px;
-    background: #131316;
+    background: rgb(255 255 255 / 88%);
     color: var(--hb-ink);
     font: inherit;
     font-size: 17px;
@@ -1973,12 +1982,12 @@ article.legal-policy h2 {
 }
 
 .hb-input:focus {
-    border-color: rgb(10 132 255 / 55%);
+    border-color: rgb(101 84 217 / 55%);
     outline: none;
 }
 
 .hb-input::placeholder {
-    color: rgb(245 245 247 / 28%);
+    color: rgb(37 33 61 / 38%);
 }
 
 .hb-sr-only {
@@ -2005,7 +2014,7 @@ article.legal-policy h2 {
 .benchmark-page .hb-footer .footer-inner,
 .benchmark-page .hb-footer p,
 .benchmark-page .hb-footer a {
-    color: rgb(245 245 247 / 50%);
+    color: var(--hb-muted);
 }
 
 .benchmark-page .hb-footer a:hover {
