@@ -746,7 +746,9 @@
     if (cloud.ready) {
       const record = isRecord('numbers', reached);
       saveScoreToCloud('numbers', reached);
-      if (record) saveScoreToBoard('numbers', reached);
+      // 每次都写一条：榜单只显示每人最好的一次，
+      // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
+      saveScoreToBoard('numbers', reached);
       if (numState) numState.textContent = record ? 'New best saved.' : '';
     }
     updateNumberBests();
@@ -754,6 +756,11 @@
 
   function numbersTeardown() {
     clearTimeout(numbers.timer);
+    // 中途离开也要记成绩，否则"答对了 10 位但没答错"就永远不会上榜
+    if (numbers.playing) {
+      numbersFinish(false);
+      return;
+    }
     numbers.playing = false;
   }
 
@@ -789,7 +796,7 @@
   const seqSteps = $('[data-seq-steps]');
   const seqState = $('[data-seq-state]');
 
-  const sequence = { level: 1, seq: [], index: 0, accepting: false, timers: [] };
+  const sequence = { level: 1, seq: [], index: 0, accepting: false, running: false, timers: [] };
 
   function seqClearTimers() {
     sequence.timers.forEach((id) => clearTimeout(id));
@@ -812,6 +819,7 @@
     sequence.seq = [];
     sequence.index = 0;
     sequence.accepting = false;
+    sequence.running = false;
     seqLock(false);
     seqCells.forEach((cell) => cell.classList.remove('is-active', 'is-right', 'is-wrong'));
     if (seqStatus) seqStatus.textContent = 'Click Start to watch the first square.';
@@ -860,6 +868,7 @@
 
   function sequenceFinish() {
     seqClearTimers();
+    sequence.running = false;
     sequence.accepting = false;
     seqLock(true);
     const reached = sequence.level - 1;
@@ -869,17 +878,21 @@
     if (cloud.ready) {
       const record = isRecord('sequence', reached);
       saveScoreToCloud('sequence', reached);
-      if (record) saveScoreToBoard('sequence', reached);
+      // 每次都写一条：榜单只显示每人最好的一次，
+      // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
+      saveScoreToBoard('sequence', reached);
       if (seqState) seqState.textContent = record ? 'New best saved.' : '';
     }
     updateSequenceBests();
   }
 
   function sequenceTeardown() {
-    seqClearTimers();
+    const wasRunning = sequence.running;
     sequence.accepting = false;
+    seqClearTimers();
     seqLock(false);
     seqCells.forEach((cell) => cell.classList.remove('is-active', 'is-right', 'is-wrong'));
+    if (wasRunning) sequenceFinish();
   }
 
   seqCells.forEach((cell, index) => {
@@ -910,6 +923,7 @@
 
   $('[data-seq-start]')?.addEventListener('click', () => {
     sequenceReset();
+    sequence.running = true;
     sequence.seq = [Math.floor(Math.random() * 9)];
     if (seqLevelEl) seqLevelEl.textContent = '1';
     if (seqLengthEl) seqLengthEl.textContent = '1';
@@ -992,7 +1006,9 @@
     if (cloud.ready) {
       const record = isRecord('aim', Math.round(average));
       saveScoreToCloud('aim', Math.round(average));
-      if (record) saveScoreToBoard('aim', Math.round(average));
+      // 每次都写一条：榜单只显示每人最好的一次，
+      // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
+      saveScoreToBoard('aim', Math.round(average));
       if (aimState) aimState.textContent = record ? 'New best saved.' : '';
     }
     updateAimBest();
