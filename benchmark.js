@@ -22,6 +22,7 @@
   // ------------------------------------------------------------ 云端成绩（Supabase）
 
   const cloud = { client: null, userId: null, ready: false };
+  let cloudInitPromise = null;
   const cloudBest = {}; // 云端每个测试的最好成绩；点击测试按时长分开：click:10 / click:60
 
   const LOWER_IS_BETTER = new Set(['reaction', 'aim']);
@@ -152,6 +153,7 @@
     sequence: $('#view-sequence'),
     aim: $('#view-aim'),
     leaderboard: $('#view-leaderboard'),
+    history: $('#view-history'),
   };
 
   let activeView = 'home';
@@ -181,6 +183,7 @@
     }
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     if (name === 'leaderboard') loadLeaderboard();
+    if (name === 'history') loadHistory(true);
     if (name === 'typing') {
       if (typing.startedAt && !typing.finished) typingResumeClock();
       else typingStartNewPassage();
@@ -301,7 +304,7 @@
       const record = isRecord('reaction', average);
       if (cloud.ready) {
         saveScoreToCloud('reaction', average);
-        if (record) saveScoreToBoard('reaction', average);
+        saveScoreToBoard('reaction', average);
       }
       reactionTitle.textContent = cloud.ready && record ? 'New personal best' : 'Done';
       reactionCopy.textContent = cloud.ready
@@ -440,7 +443,7 @@
     const record = isRecord(clickKey(click.duration), click.count);
     if (cloud.ready) {
       saveScoreToCloud(clickKey(click.duration), click.count);
-      if (record) saveScoreToBoard('click', click.count, { seconds: click.duration });
+      saveScoreToBoard('click', click.count, { seconds: click.duration });
     }
     const clicks = `${click.count} click${click.count === 1 ? '' : 's'}`;
     clickCopy.textContent = !cloud.ready
@@ -634,7 +637,7 @@
       const finalWpm = finalElapsed > 0 ? wpm : 0;
       const record = isRecord('typing', Math.round(finalWpm));
       saveScoreToCloud('typing', Math.round(finalWpm));
-      if (record) saveScoreToBoard('typing', Math.round(finalWpm), { accuracy: Math.round(accuracy) });
+      saveScoreToBoard('typing', Math.round(finalWpm), { accuracy: Math.round(accuracy) });
 
       typingTime.textContent = `${finalElapsed.toFixed(1)}s`;
       typingWpm.textContent = String(Math.round(finalWpm));
@@ -1076,6 +1079,194 @@
     aimReset();
   });
 
+
+  // ============================================================ 我的成绩
+
+  const historySearch = $('[data-history-search]');
+  const historyDate = $('[data-history-date]');
+  const historyRange = $('.hb-history-range');
+  const historyStatus = $('[data-history-status]');
+  const historyRows = $('[data-history-rows]');
+  const historyBoard = $('[data-history-board]');
+
+  const history = { rows: [], loaded: false, token: 0 };
+
+  const TEST_LABELS = {
+    reaction: 'Reaction Time',
+    click: 'Click Speed',
+    typing: 'Typing Speed',
+    numbers: 'Number Memory',
+    sequence: 'Sequence Memory',
+    aim: 'Aim Trainer',
+  };
+
+  function historyScore(row) {
+    const detail = row.detail || {};
+    if (row.test === 'click') {
+      const secs = detail.seconds === 60 ? ' (60s)' : ' (10s)';
+      return `${formatScore('click', row.value)}${secs}`;
+    }
+    if (row.test === 'typing' && detail.accuracy != null) {
+      return `${formatScore('typing', row.value)} · ${Math.round(detail.accuracy)}%`;
+    }
+    return formatScore(row.test, row.value);
+  }
+
+  function historyWhen(iso) {
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
+      + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function historyMatchesDate(row) {
+    if (!historyRange) return true;
+    const mode = historyRange.querySelector('.is-selected')?.dataset.historyRange || 'all';
+    if (mode === 'all') return true;
+    if (!historyDate || !historyDate.value) return true;
+
+    const picked = historyDate.value; // yyyy-mm-dd
+    const d = new Date(row.created_at);
+    const pad = (n) => String(n).padStart(2, '0');
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (mode === 'day') return day === picked;
+    if (mode === 'month') return day.slice(0, 7) === picked.slice(0, 7);
+    if (mode === 'year') return day.slice(0, 4) === picked.slice(0, 4);
+    return true;
+  }
+
+  function renderHistory() {
+    if (!historyRows || !historyStatus) return;
+
+    const term = (historySearch?.value || '').trim().toLowerCase();
+    const rows = history.rows.filter((row) => {
+      if (!historyMatchesDate(row)) return false;
+      if (!term) return true;
+      const haystack = `${TEST_LABELS[row.test] || row.test} ${historyScore(row)} ${historyWhen(row.created_at)}`.toLowerCase();
+      return haystack.includes(term);
+    });
+
+    historyRows.innerHTML = '';
+    if (!rows.length) {
+      historyStatus.hidden = false;
+      historyStatus.textContent = history.rows.length
+        ? 'No scores match this filter.'
+        : 'No scores yet. Play a test and it will show up here.';
+      if (historyBoard) historyBoard.hidden = true;
+      return;
+    }
+
+    historyStatus.hidden = true;
+    if (historyBoard) historyBoard.hidden = false;
+
+    rows.slice(0, 500).forEach((row) => {
+      const li = document.createElement('li');
+      li.className = 'hb-board-row hb-history-row';
+
+      const when = document.createElement('span');
+      when.className = 'hb-history-when';
+      when.textContent = historyWhen(row.created_at);
+
+      const test = document.createElement('span');
+      test.className = 'hb-history-test';
+      test.textContent = TEST_LABELS[row.test] || row.test;
+
+      const score = document.createElement('span');
+      score.className = 'hb-board-score';
+      score.textContent = historyScore(row);
+
+      li.append(when, test, score);
+      historyRows.append(li);
+    });
+  }
+
+  async function loadHistory(force = false) {
+    if (!historyStatus || !historyRows) return;
+    // 直接打开 #history 时，账号信息可能还没读完，等一下
+    if (!cloud.ready) {
+      await new Promise((resolve) => {
+        const startedAt = Date.now();
+        const timer = setInterval(() => {
+          if (cloud.ready || Date.now() - startedAt > 6000) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    }
+    const client = window.iysSupabase;
+
+    if (!cloud.ready || !client) {
+      historyStatus.hidden = false;
+      historyStatus.textContent = 'Sign in to see your scores.';
+      if (historyBoard) historyBoard.hidden = true;
+      return;
+    }
+
+    if (history.loaded && !force) {
+      renderHistory();
+      return;
+    }
+
+    // 日期框默认今天，这样 Day / Month / Year 一选就有结果
+    if (historyDate && !historyDate.value) {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      historyDate.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
+    history.token += 1;
+    const token = history.token;
+    historyStatus.hidden = false;
+    historyStatus.textContent = 'Loading…';
+
+    try {
+      const { data: sessionData } = await client.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) {
+        historyStatus.textContent = 'Sign in to see your scores.';
+        return;
+      }
+
+      const { data, error } = await client
+        .from('benchmark_scores')
+        .select('test, value, detail, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      if (token !== history.token || activeView !== 'history') return;
+
+      history.rows = data || [];
+      history.loaded = true;
+      renderHistory();
+    } catch (error) {
+      if (token !== history.token) return;
+      historyStatus.hidden = false;
+      historyStatus.textContent = 'Could not load your scores. Try again.';
+      console.warn('[benchmark] 历史成绩加载失败：', error?.message || error);
+    }
+  }
+
+  historySearch?.addEventListener('input', renderHistory);
+  historyDate?.addEventListener('change', () => {
+    if (!historyDate.value) return;
+    const chips = historyRange?.querySelectorAll('[data-history-range]') || [];
+    const anySelected = [...chips].some((chip) => chip.dataset.historyRange !== 'all' && chip.classList.contains('is-selected'));
+    if (!anySelected && chips[1]) {
+      chips.forEach((chip) => chip.classList.toggle('is-selected', chip.dataset.historyRange === 'day'));
+    }
+    renderHistory();
+  });
+  historyRange?.querySelectorAll('[data-history-range]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      historyRange.querySelectorAll('[data-history-range]').forEach((other) => {
+        other.classList.toggle('is-selected', other === chip);
+      });
+      renderHistory();
+    });
+  });
+
   // ============================================================ 排行榜
 
   const lbRows = $('[data-lb-rows]');
@@ -1286,12 +1477,13 @@
   typingStartNewPassage();
   showView(hashView() || 'home');
 
-  initCloud()
+  cloudInitPromise = initCloud()
     .then(async () => {
       if (cloud.ready) await loadCloudBests();
       refreshBests();
       updateClickBest();
       updateAccountNote();
+      if (activeView === 'history') await loadHistory(true);
     })
     .catch((error) => console.warn('[benchmark] 初始化账号失败', error));
 

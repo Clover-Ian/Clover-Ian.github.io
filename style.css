@@ -2512,3 +2512,57 @@ article.legal-policy h2 {
 .hb-target:hover {
     transform: translate(-50%, -50%) scale(1.06);
 }
+
+/* ---------------------------------------------------------------- 我的成绩 */
+
+.hb-history-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.hb-history-search {
+    flex: 1 1 240px;
+    margin-top: 0;
+}
+
+.hb-history-dates {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.hb-history-date {
+    width: auto;
+    margin-top: 0;
+    padding: 9px 14px;
+    font-size: 14px;
+}
+
+.hb-history-range {
+    margin: 0;
+}
+
+.hb-history-head,
+.hb-history-row {
+    grid-template-columns: minmax(160px, 220px) 1fr auto;
+}
+
+.hb-history-when {
+    color: var(--hb-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hb-history-test {
+    color: var(--hb-ink);
+    font-size: 15px;
+}
+
+.hb-history .hb-board-rows {
+    max-height: 62vh;
+    overflow-y: auto;
+}

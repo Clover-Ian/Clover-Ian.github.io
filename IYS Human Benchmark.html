@@ -19,6 +19,7 @@
             <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
             <div class="nav-links">
                 <button type="button" class="account-nav-link" data-open="leaderboard">Leaderboard</button>
+                <button type="button" class="account-nav-link" data-open="history">My scores</button>
                 <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
                 <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
             </div>
@@ -351,6 +352,44 @@
                 </div>
                 <ol class="hb-board-rows" data-lb-rows></ol>
                 <p class="hb-board-status" data-lb-status role="status">Loading…</p>
+            </div>
+        </section>
+
+        <!-- ================= 我的成绩 ================= -->
+        <section class="hb-view" id="view-history" aria-labelledby="hb-history-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-history-title">My scores</h2>
+                <p class="hb-sub">Every run saved to your account, newest first.</p>
+            </div>
+
+            <div class="hb-history-bar">
+                <label class="hb-sr-only" for="hb-history-search">Search your scores</label>
+                <input id="hb-history-search" class="hb-input hb-history-search" data-history-search
+                       type="search" autocomplete="off" placeholder="Search test or score">
+
+                <div class="hb-history-dates">
+                    <label class="hb-sr-only" for="hb-history-date">Pick a date</label>
+                    <input id="hb-history-date" class="hb-input hb-history-date" data-history-date type="date">
+
+                    <div class="hb-duration hb-history-range" role="group" aria-label="Date range">
+                        <button type="button" class="hb-chip is-selected" data-history-range="all">All</button>
+                        <button type="button" class="hb-chip" data-history-range="day">Day</button>
+                        <button type="button" class="hb-chip" data-history-range="month">Month</button>
+                        <button type="button" class="hb-chip" data-history-range="year">Year</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="hb-board-status" data-history-status role="status">Loading…</p>
+
+            <div class="hb-board hb-history" data-history-board hidden>
+                <div class="hb-board-head hb-history-head" aria-hidden="true">
+                    <span>When</span>
+                    <span>Test</span>
+                    <span>Score</span>
+                </div>
+                <ol class="hb-board-rows" data-history-rows></ol>
             </div>
         </section>
 
