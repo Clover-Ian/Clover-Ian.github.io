@@ -361,9 +361,9 @@
   });
 
   function reactionTeardown() {
-    clearTimeout(reaction.timer);
-    reaction.state = 'idle';
-    reactionSetStage('idle');
+    // 离开页面就彻底重置：只把 state 改回 idle 会保留上一轮的 results，
+    // 再进来就会从第 6 轮开始
+    reactionReset();
   }
 
   // ============================================================ 点击测试
