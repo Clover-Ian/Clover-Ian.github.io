@@ -456,6 +456,40 @@ h3 {
     margin-bottom: 12px;
 }
 
+/* IYM 独占一整行，宽度等于上面三张加起来；内容改成横向排，避免大片空白 */
+.iym-card {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 44px 56px;
+    text-align: left;
+}
+
+.iym-card .feature-card-icon {
+    margin-bottom: 0;
+}
+
+.iym-card-text {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+}
+
+@media (max-width: 700px) {
+    .iym-card {
+        flex-direction: column;
+        gap: 16px;
+        padding: 36px 24px;
+        text-align: center;
+    }
+
+    .iym-card-text {
+        justify-items: center;
+    }
+}
+
 .feature-card-icon {
     display: block;
     width: 88px;
@@ -1053,7 +1087,41 @@ article.legal-policy h2 {
         padding: 38px 24px;
     }
 
-    .feature-card-icon {
+    /* IYM 独占一整行，宽度等于上面三张加起来；内容改成横向排，避免大片空白 */
+.iym-card {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 44px 56px;
+    text-align: left;
+}
+
+.iym-card .feature-card-icon {
+    margin-bottom: 0;
+}
+
+.iym-card-text {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+}
+
+@media (max-width: 700px) {
+    .iym-card {
+        flex-direction: column;
+        gap: 16px;
+        padding: 36px 24px;
+        text-align: center;
+    }
+
+    .iym-card-text {
+        justify-items: center;
+    }
+}
+
+.feature-card-icon {
         width: 72px;
         height: 72px;
         margin-bottom: 16px;
