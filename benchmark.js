@@ -748,8 +748,10 @@
       saveScoreToCloud('numbers', reached);
       // 每次都写一条：榜单只显示每人最好的一次，
       // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
-      saveScoreToBoard('numbers', reached);
-      if (numState) numState.textContent = record ? 'New best saved.' : '';
+      saveScoreToBoard('numbers', reached).then((err) => {
+        if (!numState) return;
+        numState.textContent = err ? `Leaderboard write failed: ${err}` : (record ? 'New best saved.' : 'Saved.');
+      });
     }
     updateNumberBests();
   }
@@ -880,8 +882,10 @@
       saveScoreToCloud('sequence', reached);
       // 每次都写一条：榜单只显示每人最好的一次，
       // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
-      saveScoreToBoard('sequence', reached);
-      if (seqState) seqState.textContent = record ? 'New best saved.' : '';
+      saveScoreToBoard('sequence', reached).then((err) => {
+        if (!seqState) return;
+        seqState.textContent = err ? `Leaderboard write failed: ${err}` : (record ? 'New best saved.' : 'Saved.');
+      });
     }
     updateSequenceBests();
   }
@@ -1008,8 +1012,10 @@
       saveScoreToCloud('aim', Math.round(average));
       // 每次都写一条：榜单只显示每人最好的一次，
       // 但如果只在破纪录时写，之前没写进去的成绩就永远补不上了
-      saveScoreToBoard('aim', Math.round(average));
-      if (aimState) aimState.textContent = record ? 'New best saved.' : '';
+      saveScoreToBoard('aim', Math.round(average)).then((err) => {
+        if (!aimState) return;
+        aimState.textContent = err ? `Leaderboard write failed: ${err}` : (record ? 'New best saved.' : 'Saved.');
+      });
     }
     updateAimBest();
   }
@@ -1108,7 +1114,7 @@
   /** 把一条成绩写进共享表，供排行榜读取；表不存在时静默跳过 */
   async function saveScoreToBoard(test, value, extra = {}) {
     const client = window.iysSupabase;
-    if (!client || !cloud.ready) return;
+    if (!client || !cloud.ready) return '未登录，成绩没有写进排行榜';
     try {
       const { data } = await client.auth.getSession();
       const user = data?.session?.user;
@@ -1122,9 +1128,14 @@
         value,
         detail: { name, avatar: user.user_metadata?.avatar_url || null, ...extra },
       });
-      if (error) console.warn('[benchmark] 排行榜写入失败：', error.message);
+      if (error) {
+        console.warn('[benchmark] 排行榜写入失败：', error.message);
+        return error.message;
+      }
+      return null;
     } catch (error) {
       console.warn('[benchmark] 排行榜写入失败：', error?.message || error);
+      return error?.message || String(error);
     }
   }
 
