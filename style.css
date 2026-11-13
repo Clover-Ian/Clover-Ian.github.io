@@ -1974,6 +1974,11 @@ article.legal-policy h2 {
     margin-top: 20px;
 }
 
+/* display:flex 会盖掉 hidden 属性 */
+.hb-actions[hidden] {
+    display: none;
+}
+
 /* 点击测速：开始/重开按钮放在点击区域下面，结束后才出现 */
 .hb-click-actions {
     margin: 16px 0 0;

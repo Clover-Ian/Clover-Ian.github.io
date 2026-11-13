@@ -208,11 +208,12 @@
                 <p class="hb-sub">Level <span data-num-level>1</span> · <span data-num-digits>1</span> digit</p>
             </div>
 
-            <div class="hb-stage hb-stage--numbers" data-num-stage>
+            <div class="hb-stage hb-stage--numbers" data-num-stage tabindex="0" role="button"
+                 aria-label="Click to start">
                 <div class="hb-stage-inner">
                     <p class="hb-stage-title" data-num-title>Remember the number</p>
                     <p class="hb-num-display" data-num-display hidden>0</p>
-                    <p class="hb-stage-copy" data-num-copy>Click Start. The number disappears when you have to type it.</p>
+                    <p class="hb-stage-copy" data-num-copy>Click the box to start. The number disappears when you have to type it.</p>
                 </div>
             </div>
 
@@ -223,8 +224,8 @@
                 <button class="hb-button hb-button--primary" type="submit">Submit</button>
             </form>
 
-            <div class="hb-actions">
-                <button type="button" class="hb-button hb-button--primary" data-num-start>Start</button>
+            <div class="hb-actions" data-num-actions hidden>
+                <button type="button" class="hb-button hb-button--primary" data-num-start>Start again</button>
                 <span class="hb-save-state" data-num-state role="status"></span>
             </div>
 
@@ -264,10 +265,10 @@
                 <button type="button" class="hb-cell" data-cell="8" aria-label="Cell 9"></button>
             </div>
 
-            <p class="hb-seq-status" data-seq-status>Click Start to watch the first square.</p>
+            <p class="hb-seq-status" data-seq-status>Click a square to start.</p>
 
-            <div class="hb-actions">
-                <button type="button" class="hb-button hb-button--primary" data-seq-start>Start</button>
+            <div class="hb-actions" data-seq-actions hidden>
+                <button type="button" class="hb-button hb-button--primary" data-seq-start>Start again</button>
                 <span class="hb-save-state" data-seq-state role="status"></span>
             </div>
 
@@ -299,8 +300,8 @@
                 <p class="hb-aim-hint" data-aim-hint>Click anywhere in this box to start.</p>
             </div>
 
-            <div class="hb-actions">
-                <button type="button" class="hb-button" data-aim-start>Restart</button>
+            <div class="hb-actions" data-aim-actions hidden>
+                <button type="button" class="hb-button hb-button--primary" data-aim-start>Restart</button>
                 <span class="hb-save-state" data-aim-state role="status"></span>
             </div>
 

@@ -680,6 +680,8 @@
   const numState = $('[data-num-state]');
 
   const numbers = { level: 1, answer: '', timer: 0, playing: false };
+  const numStage = $('[data-num-stage]');
+  const numActions = $('[data-num-actions]');
 
   function randomNumber(length) {
     let out = '';
@@ -701,11 +703,12 @@
     if (numDisplay) numDisplay.hidden = true;
     if (numForm) numForm.hidden = true;
     if (numTitle) numTitle.textContent = 'Remember the number';
-    if (numCopy) numCopy.textContent = 'Click Start. The number disappears when you have to type it.';
+    if (numCopy) numCopy.textContent = 'Click the box to start. The number disappears when you have to type it.';
     if (numLevelEl) numLevelEl.textContent = '1';
     if (numDigitsEl) numDigitsEl.textContent = '1';
     if (numCurrent) numCurrent.textContent = '—';
     if (numState) numState.textContent = '';
+    if (numActions) numActions.hidden = true;
     updateNumberBests();
   }
 
@@ -718,6 +721,7 @@
     if (numCurrent) numCurrent.textContent = String(numbers.level);
     if (numTitle) numTitle.textContent = 'Remember the number';
     if (numCopy) numCopy.textContent = '';
+    if (numActions) numActions.hidden = true;
     if (numDisplay) { numDisplay.textContent = numbers.answer; numDisplay.hidden = false; }
     if (numForm) numForm.hidden = true;
 
@@ -742,6 +746,7 @@
     if (numTitle) numTitle.textContent = perfect ? 'Perfect run' : 'Game over';
     if (numCopy) numCopy.textContent = `You remembered ${reached} digit${reached === 1 ? '' : 's'}.`;
     if (numCurrent) numCurrent.textContent = String(reached);
+    if (numActions) numActions.hidden = false;
 
     if (cloud.ready) {
       const record = isRecord('numbers', reached);
@@ -786,6 +791,15 @@
     numbersRound();
   });
 
+  // 跟反应测试一样：点舞台就开始
+  numStage?.addEventListener('pointerdown', (event) => {
+    if (numbers.playing) return;
+    if (event.target.closest('[data-num-actions]')) return;
+    event.preventDefault();
+    numbers.level = 1;
+    numbersRound();
+  });
+
   // ============================================================ 记忆顺序
 
   const SEQ_MAX = 50;
@@ -799,6 +813,7 @@
   const seqState = $('[data-seq-state]');
 
   const sequence = { level: 1, seq: [], index: 0, accepting: false, running: false, timers: [] };
+  const seqActions = $('[data-seq-actions]');
 
   function seqClearTimers() {
     sequence.timers.forEach((id) => clearTimeout(id));
@@ -824,11 +839,12 @@
     sequence.running = false;
     seqLock(false);
     seqCells.forEach((cell) => cell.classList.remove('is-active', 'is-right', 'is-wrong'));
-    if (seqStatus) seqStatus.textContent = 'Click Start to watch the first square.';
+    if (seqStatus) seqStatus.textContent = 'Click a square to start.';
     if (seqLevelEl) seqLevelEl.textContent = '1';
     if (seqLengthEl) seqLengthEl.textContent = '1';
     if (seqCurrent) seqCurrent.textContent = '—';
     if (seqState) seqState.textContent = '';
+    if (seqActions) seqActions.hidden = true;
     updateSequenceBests();
   }
 
@@ -876,6 +892,7 @@
     const reached = sequence.level - 1;
     if (seqStatus) seqStatus.textContent = `Game over — you reached level ${reached}.`;
     if (seqCurrent) seqCurrent.textContent = String(reached);
+    if (seqActions) seqActions.hidden = false;
 
     if (cloud.ready) {
       const record = isRecord('sequence', reached);
@@ -901,6 +918,8 @@
 
   seqCells.forEach((cell, index) => {
     cell.addEventListener('click', () => {
+      // 还没开始：点任意格子就开局（跟反应测试点屏幕开始一个道理）
+      if (!sequence.running) { sequenceStart(); return; }
       if (!sequence.accepting) return;
       if (index !== sequence.seq[sequence.index]) {
         cell.classList.add('is-wrong');
@@ -925,7 +944,7 @@
     });
   });
 
-  $('[data-seq-start]')?.addEventListener('click', () => {
+  function sequenceStart() {
     sequenceReset();
     sequence.running = true;
     sequence.seq = [Math.floor(Math.random() * 9)];
@@ -933,7 +952,9 @@
     if (seqLengthEl) seqLengthEl.textContent = '1';
     if (seqCurrent) seqCurrent.textContent = '1';
     sequencePlay();
-  });
+  }
+
+  $('[data-seq-start]')?.addEventListener('click', sequenceStart);
 
   // ============================================================ 目标点击
 
@@ -946,6 +967,7 @@
   const aimState = $('[data-aim-state]');
 
   const aim = { hits: 0, times: [], targetAt: 0, playing: false, finished: false };
+  const aimActions = $('[data-aim-actions]');
 
   function updateAimBest() {
     const best = bestOf('aim');
@@ -967,6 +989,7 @@
     if (aimHitsEl) aimHitsEl.textContent = '0';
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
+    if (aimActions) aimActions.hidden = true;
     updateAimBest();
   }
 
@@ -1002,6 +1025,7 @@
   function aimFinish() {
     aim.playing = false;
     aim.finished = true;
+    if (aimActions) aimActions.hidden = false;
     const total = aim.times.reduce((sum, value) => sum + value, 0);
     const average = aim.times.length ? total / aim.times.length : 0;
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
@@ -1036,6 +1060,7 @@
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
     if (aimHint) aimHint.hidden = true;
+    if (aimActions) aimActions.hidden = true;
     aimSpawn();
   }
 
