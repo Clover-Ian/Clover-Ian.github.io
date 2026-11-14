@@ -7,11 +7,11 @@
     <title>IYS Arcade</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261115g">
+    <link rel="stylesheet" href="style.css?v=20261115h">
     <script src="supabase.js" defer></script>
     <script src="supabase-config.js" defer></script>
-    <script src="account-nav.js?v=20261115g" defer></script>
-    <script src="benchmark.js?v=20261115g" defer></script>
+    <script src="account-nav.js?v=20261115h" defer></script>
+    <script src="benchmark.js?v=20261115h" defer></script>
 </head>
 <body class="benchmark-page">
     <header class="site-header hb-header">
@@ -245,10 +245,7 @@
                 <button class="hb-button hb-button--primary" type="submit">Submit</button>
             </form>
 
-            <div class="hb-actions" data-num-actions hidden>
-                <button type="button" class="hb-button hb-button--primary" data-num-start>Start again</button>
-                <span class="hb-save-state" data-num-state role="status"></span>
-            </div>
+            <p class="hb-status-line" data-num-state role="status"></p>
 
             <div class="hb-result-row">
                 <div class="hb-stat">
@@ -288,10 +285,7 @@
 
             <p class="hb-seq-status" data-seq-status>Click a square to start.</p>
 
-            <div class="hb-actions" data-seq-actions hidden>
-                <button type="button" class="hb-button hb-button--primary" data-seq-start>Start again</button>
-                <span class="hb-save-state" data-seq-state role="status"></span>
-            </div>
+            <p class="hb-status-line" data-seq-state role="status"></p>
 
             <div class="hb-result-row">
                 <div class="hb-stat">
@@ -321,10 +315,7 @@
                 <p class="hb-aim-hint" data-aim-hint>Click anywhere in this box to start.</p>
             </div>
 
-            <div class="hb-actions" data-aim-actions hidden>
-                <button type="button" class="hb-button hb-button--primary" data-aim-start>Restart</button>
-                <span class="hb-save-state" data-aim-state role="status"></span>
-            </div>
+            <p class="hb-status-line" data-aim-state role="status"></p>
 
             <div class="hb-result-row">
                 <div class="hb-stat">
@@ -375,7 +366,7 @@
                 </div>
             </div>
 
-            <p class="hb-circle-state" data-circle-state role="status"></p>
+            <p class="hb-status-line" data-circle-state role="status"></p>
         </section>
 
         <!-- ================= 排行榜 ================= -->
