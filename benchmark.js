@@ -1554,7 +1554,7 @@
   // ============================================================ IYM 广告
 
   const adPanel = $('[data-iym-ad]');
-  let adTimer = 0;
+
 
   // 从 IYM AutoClicker 页面点过来时会带 ?iym=member，这里记住"已经在用"
   try {
@@ -1584,13 +1584,10 @@
   function showIymAd() {
     if (!adPanel || iymAdHiddenByPreference()) return;
     adPanel.classList.add('is-visible');
-    clearTimeout(adTimer);
-    adTimer = setTimeout(hideIymAd, 9000);
   }
 
   function hideIymAd() {
     if (!adPanel) return;
-    clearTimeout(adTimer);
     adPanel.classList.remove('is-visible');
   }
 

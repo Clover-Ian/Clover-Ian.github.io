@@ -2722,7 +2722,7 @@ article.legal-policy h2 {
     align-items: center;
     gap: 14px;
     margin: 0 0 18px;
-    padding: 14px 16px;
+    padding: 14px 44px 14px 16px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.9);
@@ -2748,6 +2748,7 @@ article.legal-policy h2 {
     max-height: 220px;
     padding-top: 14px;
     padding-bottom: 14px;
+    padding-right: 44px;
     margin-bottom: 18px;
     pointer-events: auto;
 }
