@@ -1098,6 +1098,16 @@
     aim: 'Aim Trainer',
   };
 
+  // 搜索时额外认这些词，比如 numbers / digits 都能找到 Number Memory
+  const TEST_KEYWORDS = {
+    reaction: 'reaction time',
+    click: 'click clicks speed',
+    typing: 'typing wpm words',
+    numbers: 'number numbers digits memory',
+    sequence: 'sequence sequences simon memory',
+    aim: 'aim target targets trainer',
+  };
+
   function historyScore(row) {
     const detail = row.detail || {};
     if (row.test === 'click') {
@@ -1117,15 +1127,48 @@
       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
+  /** 把搜索内容拆成若干条件：日期（任何写法）或普通文字，全部满足才算匹配 */
+  function parseHistoryQuery(raw) {
+    return raw.toLowerCase().split(/\s+/).filter(Boolean).map((token) => {
+      const parts = token.split(/[./\-]/).filter(Boolean);
+      const allNumeric = parts.length > 0 && parts.every((part) => /^\d+$/.test(part));
+      const isDate = (parts.length > 1 && allNumeric)
+        || (parts.length === 1 && /^\d{4}$/.test(parts[0]));
+      return isDate ? { type: 'date', parts: parts.map(Number) } : { type: 'text', raw: token };
+    });
+  }
+
+  /** 2026-11-12 / 2026.11.12 / 12/11/2026 / 11-12 / 2026-11 都能对上 */
+  function historyDateMatches(parts, date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const withYear = parts.find((value) => value > 31);
+    if (withYear !== undefined && withYear !== year) return false;
+
+    const rest = parts.filter((value) => value !== withYear);
+    if (rest.length === 0) return true;
+    if (rest.length === 1) return rest[0] === month || rest[0] === day;
+    if (rest.length === 2) {
+      return (rest[0] === month && rest[1] === day)
+        || (rest[0] === day && rest[1] === month);
+    }
+    return false;
+  }
+
   function renderHistory() {
     if (!historyRows || !historyStatus) return;
 
     const term = (historySearch?.value || '').trim().toLowerCase();
-    const rows = term
+    const conditions = term ? parseHistoryQuery(term) : [];
+    const rows = conditions.length
       ? history.rows.filter((row) => {
+        const date = new Date(row.created_at);
         const when = historyWhen(row.created_at);
-        const haystack = `${when} ${when.replace(/[-:]/g, ' ')} ${TEST_LABELS[row.test] || row.test} ${historyScore(row)}`.toLowerCase();
-        return haystack.includes(term);
+        const haystack = `${when} ${when.replace(/[-:]/g, ' ')} ${TEST_LABELS[row.test] || row.test} ${TEST_KEYWORDS[row.test] || ''} ${historyScore(row)}`.toLowerCase();
+        return conditions.every((cond) => (cond.type === 'date'
+          ? historyDateMatches(cond.parts, date)
+          : haystack.includes(cond.raw)));
       })
       : history.rows;
 
