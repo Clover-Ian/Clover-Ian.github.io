@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Three quick tests for reaction time, clicking speed, and typing speed. Runs entirely in your browser.">
-    <title>Human Benchmark | IYS</title>
+    <title>IYS Human Lab</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261115a">
+    <link rel="stylesheet" href="style.css?v=20261115b">
     <script src="supabase.js" defer></script>
     <script src="supabase-config.js" defer></script>
-    <script src="account-nav.js?v=20261115a" defer></script>
-    <script src="benchmark.js?v=20261115a" defer></script>
+    <script src="account-nav.js?v=20261115b" defer></script>
+    <script src="benchmark.js?v=20261115b" defer></script>
 </head>
 <body class="benchmark-page">
     <header class="site-header hb-header">
@@ -39,10 +39,10 @@
         <section class="hb-view is-active" id="view-home" aria-labelledby="hb-title">
             <div class="hb-hero">
                 <p class="hb-eyebrow">Interactive tests</p>
-                <h1 id="hb-title">Human Benchmark</h1>
+                <h1 id="hb-title">IYS Human Lab</h1>
                 <p class="hb-lede">
-                    How fast are you, really? Six short tests — reaction time, click speed, typing,
-                    numbers, sequences and aim. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
+                    How fast are you, really? Seven short tests — reaction time, click speed, typing,
+                    numbers, sequences, aim and a steady hand. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
                 </p>
             </div>
 
@@ -88,6 +88,19 @@
                     <span class="hb-card-copy">Thirty targets. Hit each one as fast as you can.</span>
                     <span class="hb-card-best" data-best="aim">Not tested yet</span>
                 </button>
+
+                <button type="button" class="hb-card" data-open="circle">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke-dasharray="2.4 3"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+                    <span class="hb-card-title">Circle Drawing</span>
+                    <span class="hb-card-copy">One stroke, one loop. Scored by how round it is.</span>
+                    <span class="hb-card-best" data-best="circle">Not tested yet</span>
+                </button>
+
+                <div class="hb-card hb-card--soon" aria-label="More tests coming">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    <span class="hb-card-title">Expect more</span>
+                    <span class="hb-card-copy">New tests are on the way.</span>
+                </div>
 
             </div>
 
@@ -329,6 +342,44 @@
             </div>
         </section>
 
+        <!-- ================= 画圆 ================= -->
+        <section class="hb-view" id="view-circle" aria-labelledby="hb-circle-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-circle-title">Circle Drawing</h2>
+                <p class="hb-sub">One stroke · one closed loop · at least 90 px across</p>
+            </div>
+
+            <div class="hb-circle-stage" data-circle-stage>
+                <canvas class="hb-circle-canvas" data-circle-canvas aria-label="Drawing area"></canvas>
+                <p class="hb-circle-hint" data-circle-hint>Press and drag to draw a circle</p>
+            </div>
+
+            <p class="hb-circle-note" data-circle-note>
+                Keep the loop closed, don’t lift your finger, and stay away from the middle.
+            </p>
+
+            <div class="hb-actions" data-circle-actions hidden>
+                <button type="button" class="hb-button hb-button--primary" data-circle-start>Start again</button>
+                <span class="hb-save-state" data-circle-state role="status"></span>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Roundness</span>
+                    <span class="hb-stat-value" data-circle-score>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-circle-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Radius</span>
+                    <span class="hb-stat-value" data-circle-radius>—</span>
+                </div>
+            </div>
+        </section>
+
         <!-- ================= 排行榜 ================= -->
         <section class="hb-view" id="view-leaderboard" aria-labelledby="hb-board-title">
             <div class="hb-view-head">
@@ -344,6 +395,7 @@
                 <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="numbers">Numbers</button>
                 <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="sequence">Sequence</button>
                 <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="aim">Aim</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="circle">Circle</button>
             </div>
 
             <div class="hb-duration hb-lb-duration" data-lb-duration hidden role="group" aria-label="Click duration">

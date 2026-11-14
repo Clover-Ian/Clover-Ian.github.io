@@ -152,6 +152,7 @@
     numbers: $('#view-numbers'),
     sequence: $('#view-sequence'),
     aim: $('#view-aim'),
+    circle: $('#view-circle'),
     leaderboard: $('#view-leaderboard'),
     history: $('#view-history'),
   };
@@ -171,6 +172,7 @@
     if (activeView === 'numbers') numbersTeardown();
     if (activeView === 'sequence') sequenceTeardown();
     if (activeView === 'aim') aimTeardown();
+    if (activeView === 'circle') circleTeardown();
 
     Object.entries(views).forEach(([key, node]) => {
       node.classList.toggle('is-active', key === name);
@@ -184,6 +186,7 @@
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     if (name === 'leaderboard') loadLeaderboard();
     if (name === 'history') loadHistory(true);
+    if (name === 'circle') sizeCircleCanvas();
     if (name === 'typing') {
       if (typing.startedAt && !typing.finished) typingResumeClock();
       else typingStartNewPassage();
@@ -206,7 +209,7 @@
 
     const label = (element, text) => { if (element) element.textContent = text; };
     if (!cloud.ready) {
-      ['reaction', 'click', 'typing', 'numbers', 'sequence', 'aim'].forEach((key) => {
+      ['reaction', 'click', 'typing', 'numbers', 'sequence', 'aim', 'circle'].forEach((key) => {
         label($(`[data-best="${key}"]`), 'Sign in to save scores');
       });
       return;
@@ -224,6 +227,10 @@
     label($('[data-best="numbers"]'), numbersBest ? `Best level ${Math.round(numbersBest)}` : 'Not tested yet');
     label($('[data-best="sequence"]'), sequenceBest ? `Best level ${Math.round(sequenceBest)}` : 'Not tested yet');
     label($('[data-best="aim"]'), aimBest ? `Best ${Math.round(aimBest)} ms` : 'Not tested yet');
+
+    const circleBest = bestOf('circle');
+    label($('[data-best="circle"]'), circleBest ? `Best ${Math.round(circleBest)}%` : 'Not tested yet');
+    updateCircleBests();
     updateNumberBests();
     updateSequenceBests();
     updateAimBest();
@@ -1096,6 +1103,7 @@
     numbers: 'Number Memory',
     sequence: 'Sequence Memory',
     aim: 'Aim Trainer',
+    circle: 'Circle Drawing',
   };
 
   // 搜索时额外认这些词，比如 numbers / digits 都能找到 Number Memory
@@ -1106,6 +1114,7 @@
     numbers: 'number numbers digits memory',
     sequence: 'sequence sequences simon memory',
     aim: 'aim target targets trainer',
+    circle: 'circle drawing round roundness hand',
   };
 
   function historyScore(row) {
@@ -1274,6 +1283,223 @@
 
   historySearch?.addEventListener('input', renderHistory);
 
+
+  // ============================================================ 画圆
+
+  const CIRCLE_MIN_RADIUS = 45;
+
+  const circleCanvas = $('[data-circle-canvas]');
+  const circleStage = $('[data-circle-stage]');
+  const circleHint = $('[data-circle-hint]');
+  const circleNote = $('[data-circle-note]');
+  const circleScoreEl = $('[data-circle-score]');
+  const circleBestEl = $('[data-circle-best]');
+  const circleRadiusEl = $('[data-circle-radius]');
+  const circleState = $('[data-circle-state]');
+  const circleActions = $('[data-circle-actions]');
+
+  const circle = { points: [], drawing: false, finished: false, result: null };
+
+  function circleContext() {
+    return circleCanvas ? circleCanvas.getContext('2d') : null;
+  }
+
+  function sizeCircleCanvas() {
+    if (!circleCanvas) return;
+    const rect = circleCanvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const dpr = window.devicePixelRatio || 1;
+    circleCanvas.width = Math.round(rect.width * dpr);
+    circleCanvas.height = Math.round(rect.height * dpr);
+    circleRedraw();
+  }
+
+  function circlePointFromEvent(event) {
+    const rect = circleCanvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
+
+  function circleRedraw() {
+    const ctx = circleContext();
+    if (!ctx || !circleCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = circleCanvas.width / dpr;
+    const h = circleCanvas.height / dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    if (!circle.points.length) return;
+
+    // 用户这条线
+    ctx.beginPath();
+    ctx.moveTo(circle.points[0].x, circle.points[0].y);
+    for (const point of circle.points.slice(1)) ctx.lineTo(point.x, point.y);
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = circle.result
+      ? (circle.result.accuracy >= 90 ? '#1f9d55' : circle.result.accuracy >= 70 ? '#b7791f' : '#c53030')
+      : '#1d1d1f';
+    ctx.stroke();
+
+    // 评分后画一个理想圆做对比
+    if (circle.result?.center) {
+      ctx.beginPath();
+      ctx.setLineDash([5, 6]);
+      ctx.arc(circle.result.center.x, circle.result.center.y, circle.result.radius, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(29, 29, 31, 0.25)';
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function updateCircleBests() {
+    const best = bestOf('circle');
+    if (circleBestEl) circleBestEl.textContent = best ? `${Math.round(best)}%` : '—';
+  }
+
+  function circleReset() {
+    circle.points = [];
+    circle.drawing = false;
+    circle.finished = false;
+    circle.result = null;
+    if (circleHint) {
+      circleHint.hidden = false;
+      circleHint.textContent = 'Press and drag to draw a circle';
+    }
+    if (circleNote) circleNote.hidden = false;
+    if (circleActions) circleActions.hidden = true;
+    if (circleScoreEl) circleScoreEl.textContent = '—';
+    if (circleRadiusEl) circleRadiusEl.textContent = '—';
+    if (circleState) circleState.textContent = '';
+    circleRedraw();
+    updateCircleBests();
+  }
+
+  function evaluateCircle(points) {
+    if (points.length < 30) return { ok: false, reason: 'Draw the whole circle in one stroke.' };
+
+    const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+    const radii = points.map((p) => Math.hypot(p.x - cx, p.y - cy));
+    const meanR = radii.reduce((a, b) => a + b, 0) / radii.length;
+
+    if (meanR < CIRCLE_MIN_RADIUS) return { ok: false, reason: 'Too small — draw a bigger circle.' };
+
+    const tooClose = radii.filter((r) => r < meanR * 0.45).length;
+    if (tooClose > points.length * 0.25) return { ok: false, reason: 'Keep away from the middle of the circle.' };
+
+    let maxGap = 0;
+    let previous = null;
+    for (const point of points) {
+      const angle = Math.atan2(point.y - cy, point.x - cx);
+      if (previous !== null) {
+        let delta = Math.abs(angle - previous);
+        if (delta > Math.PI) delta = Math.PI * 2 - delta;
+        if (delta > maxGap) maxGap = delta;
+      }
+      previous = angle;
+    }
+    if (maxGap > Math.PI / 3) return { ok: false, reason: 'Close the loop — go all the way round.' };
+
+    const first = points[0];
+    const last = points[points.length - 1];
+    if (Math.hypot(first.x - last.x, first.y - last.y) / meanR > 0.6) {
+      return { ok: false, reason: 'Finish near where you started.' };
+    }
+
+    const rms = Math.sqrt(radii.reduce((sum, r) => sum + (r - meanR) ** 2, 0) / radii.length);
+    const accuracy = Math.max(0, Math.min(100, Math.round(100 * (1 - (rms / meanR) * 2.4))));
+    return { ok: true, accuracy, radius: meanR, center: { x: cx, y: cy } };
+  }
+
+  function circleFinish() {
+    circle.drawing = false;
+    const result = evaluateCircle(circle.points);
+    if (!result.ok) {
+      circle.result = null;
+      circleRedraw();
+      if (circleHint) {
+        circleHint.hidden = false;
+        circleHint.textContent = result.reason;
+      }
+      if (circleScoreEl) circleScoreEl.textContent = '—';
+      if (circleState) circleState.textContent = '';
+      if (circleActions) circleActions.hidden = false;
+      return;
+    }
+
+    circle.finished = true;
+    circle.result = result;
+    circleRedraw();
+
+    if (circleHint) circleHint.hidden = true;
+    if (circleNote) circleNote.hidden = true;
+    if (circleScoreEl) circleScoreEl.textContent = `${result.accuracy}%`;
+    if (circleRadiusEl) circleRadiusEl.textContent = `${Math.round(result.radius)} px`;
+    if (circleActions) circleActions.hidden = false;
+
+    if (cloud.ready) {
+      const record = isRecord('circle', result.accuracy);
+      saveScoreToCloud('circle', result.accuracy).then(() => {
+        updateCircleBests();
+        refreshBests();
+      });
+      saveScoreToBoard('circle', result.accuracy);
+      if (circleState) circleState.textContent = record ? 'New best saved.' : 'Saved.';
+    } else if (circleState) {
+      circleState.textContent = '';
+    }
+    updateCircleBests();
+  }
+
+  function circleTeardown() {
+    circle.drawing = false;
+  }
+
+  if (circleCanvas) {
+    circleCanvas.addEventListener('pointerdown', (event) => {
+      if (circle.finished) return;
+      event.preventDefault();
+      circleCanvas.setPointerCapture?.(event.pointerId);
+      circle.points = [circlePointFromEvent(event)];
+      circle.drawing = true;
+      circle.result = null;
+      if (circleHint) circleHint.hidden = true;
+      if (circleActions) circleActions.hidden = true;
+      circleRedraw();
+    });
+
+    circleCanvas.addEventListener('pointermove', (event) => {
+      if (!circle.drawing) return;
+      event.preventDefault();
+      const point = circlePointFromEvent(event);
+      const last = circle.points[circle.points.length - 1];
+      if (last && Math.hypot(point.x - last.x, point.y - last.y) < 1.5) return;
+      circle.points.push(point);
+      circleRedraw();
+    });
+
+    const stop = (event) => {
+      if (!circle.drawing) return;
+      event.preventDefault();
+      circleFinish();
+    };
+    circleCanvas.addEventListener('pointerup', stop);
+    circleCanvas.addEventListener('pointercancel', stop);
+    circleCanvas.addEventListener('pointerleave', (event) => {
+      if (circle.drawing) stop(event);
+    });
+
+    window.addEventListener('resize', sizeCircleCanvas);
+  }
+
+  $('[data-circle-start]')?.addEventListener('click', () => {
+    circleReset();
+  });
+
   // ============================================================ 排行榜
 
   const lbRows = $('[data-lb-rows]');
@@ -1331,6 +1557,7 @@
     if (test === 'reaction' || test === 'aim') return `${Math.round(value)} ms`;
     if (test === 'typing') return `${Math.round(value)} WPM`;
     if (test === 'numbers' || test === 'sequence') return `Level ${Math.round(value)}`;
+    if (test === 'circle') return `${Math.round(value)}%`;
     return `${Math.round(value)}`;
   }
 
@@ -1480,7 +1707,9 @@
   numbersReset();
   sequenceReset();
   aimReset();
+  circleReset();
   refreshBests();
+  sizeCircleCanvas();
   typingStartNewPassage();
   showView(hashView() || 'home');
 
