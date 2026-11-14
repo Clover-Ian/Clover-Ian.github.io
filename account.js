@@ -60,6 +60,33 @@
     return '';
   }
 
+  /** true = 这个邮箱已经注册过；null = 查不了 */
+  async function emailExists(candidate) {
+    if (!client || !candidate) return null;
+    try {
+      const { data, error } = await client.rpc('email_exists', { candidate });
+      if (error) {
+        console.warn('[account] 邮箱查询失败：', error.message);
+        return null;
+      }
+      return data === true;
+    } catch (error) {
+      console.warn('[account] 邮箱查询异常：', error);
+      return null;
+    }
+  }
+
+  function showAccountExists() {
+    showMessage(
+      'An account with this email already exists. '
+      + '<a href="IYS Account Sign In.html">Sign in</a> instead — or email '
+      + '<a href="mailto:iys-ian@outlook.com?subject=IYS%20account%20help">iys-ian@outlook.com</a> '
+      + 'if you need help.',
+      'error',
+      true,
+    );
+  }
+
   /** true = 已被占用；null = 查不了（表还没建好，别挡住注册） */
   async function isUsernameTaken(name) {
     if (!client) return null;
@@ -170,6 +197,14 @@
           setBusy(false);
           return;
         }
+        const existing = await emailExists(email);
+        if (existing === true) {
+          showAccountExists();
+          emailInput?.focus();
+          setBusy(false);
+          return;
+        }
+
         const taken = await isUsernameTaken(displayName);
         if (taken === true) {
           showMessage('That name is already taken. Please pick another one.');
@@ -193,14 +228,7 @@
 
         // Supabase 为了防邮箱探测，重复邮箱会返回一个 identities 为空的假用户
         if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-          showMessage(
-            'An account with this email already exists. '
-            + '<a href="IYS Account Sign In.html">Sign in</a> instead — or email '
-            + '<a href="mailto:iys-ian@outlook.com?subject=IYS%20account%20help">iys-ian@outlook.com</a> '
-            + 'if you need help.',
-            'error',
-            true,
-          );
+          showAccountExists();
           setBusy(false);
           return;
         }
@@ -282,6 +310,21 @@
           verifyButton.textContent = 'Verify email';
         }
         verifyCode?.select();
+      }
+    });
+  }
+
+  // 注册页：邮箱填完就查有没有注册过
+  const emailInput = form.querySelector('input[name="email"]');
+  if (mode === 'signup' && emailInput) {
+    emailInput.addEventListener('blur', async () => {
+      const value = emailInput.value.trim();
+      if (!value || !value.includes('@')) return;
+      const exists = await emailExists(value);
+      if (exists === true) {
+        showAccountExists();
+      } else {
+        clearMessage();
       }
     });
   }
