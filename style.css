@@ -2714,3 +2714,136 @@ article.legal-policy h2 {
     text-align: center;
     min-height: 18px;
 }
+
+/* ---------------------------------------------------------------- IYM 广告 */
+
+.hb-ad {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 34px rgba(30, 24, 60, 0.12);
+    transform: translateY(-14px);
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.3s ease,
+                max-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                padding 0.45s ease,
+                margin 0.45s ease;
+}
+
+.hb-ad.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+    max-height: 220px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    pointer-events: auto;
+}
+
+.hb-ad-icon {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 11px;
+}
+
+.hb-ad-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.hb-ad-title {
+    margin: 0 0 3px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--hb-ink);
+}
+
+.hb-ad-copy {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--hb-muted);
+}
+
+.hb-ad-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex: none;
+}
+
+.hb-ad-cta {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.hb-ad-cta:hover {
+    background: #000;
+}
+
+.hb-ad-hide {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--hb-muted);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.hb-ad-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    padding: 2px 6px;
+    border: 0;
+    background: none;
+    color: var(--hb-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .hb-ad {
+        flex-wrap: wrap;
+    }
+
+    .hb-ad-actions {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+.iym-ad-note {
+    max-width: var(--content-width);
+    margin: 0 auto 40px;
+    padding: 0 24px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.iym-ad-note a {
+    color: var(--blue);
+}

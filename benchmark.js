@@ -187,6 +187,8 @@
     if (name === 'leaderboard') loadLeaderboard();
     if (name === 'history') loadHistory(true);
     if (name === 'circle') sizeCircleCanvas();
+    if (name === 'click') showIymAd();
+    else hideIymAd();
     if (name === 'typing') {
       if (typing.startedAt && !typing.finished) typingResumeClock();
       else typingStartNewPassage();
@@ -1546,6 +1548,55 @@
   }
 
   // 直接在画布上再画一笔就是新的一轮，不需要按钮
+
+
+  // ============================================================ IYM 广告
+
+  const AD_HIDDEN_KEY = 'iym-ad-hidden';
+  const adPanel = $('[data-iym-ad]');
+  let adTimer = 0;
+
+  // 从 IYM AutoClicker 页面点过来时会带 ?iym=member，这里记住"已经在用"
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('iym') === 'member') {
+      localStorage.setItem('iym-autoclicker-member', '1');
+      params.delete('iym');
+      const query = params.toString();
+      window.history.replaceState(null, '', window.location.pathname
+        + (query ? `?${query}` : '') + window.location.hash);
+    }
+  } catch (error) {
+    console.warn('[benchmark] 广告偏好读取失败', error);
+  }
+
+  function iymAdHiddenByPreference() {
+    try {
+      return localStorage.getItem(AD_HIDDEN_KEY) === '1'
+        || localStorage.getItem('iym-autoclicker-member') === '1';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function showIymAd() {
+    if (!adPanel || iymAdHiddenByPreference()) return;
+    adPanel.classList.add('is-visible');
+    clearTimeout(adTimer);
+    adTimer = setTimeout(hideIymAd, 9000);
+  }
+
+  function hideIymAd() {
+    if (!adPanel) return;
+    clearTimeout(adTimer);
+    adPanel.classList.remove('is-visible');
+  }
+
+  $('[data-iym-ad-close]')?.addEventListener('click', hideIymAd);
+  $('[data-iym-ad-hide]')?.addEventListener('click', () => {
+    try { localStorage.setItem(AD_HIDDEN_KEY, '1'); } catch (error) { /* 忽略 */ }
+    hideIymAd();
+  });
 
   // ============================================================ 排行榜
 
