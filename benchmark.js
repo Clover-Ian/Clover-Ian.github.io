@@ -1319,6 +1319,25 @@
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
 
+
+  /** 画圆用的品牌渐变：左半粉、右半蓝，中间过渡 */
+  function circleStrokeStyle(ctx) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    for (const point of circle.points) {
+      if (point.x < minX) minX = point.x;
+      if (point.x > maxX) maxX = point.x;
+    }
+    if (!Number.isFinite(minX) || maxX - minX < 1) return '#f07acb';
+
+    const gradient = ctx.createLinearGradient(minX, 0, maxX, 0);
+    gradient.addColorStop(0.00, '#f07acb');   // 粉
+    gradient.addColorStop(0.35, '#f07acb');
+    gradient.addColorStop(0.65, '#5fb2f5');   // 蓝
+    gradient.addColorStop(1.00, '#5fb2f5');
+    return gradient;
+  }
+
   function circleRedraw() {
     const ctx = circleContext();
     if (!ctx || !circleCanvas) return;
@@ -1331,16 +1350,14 @@
 
     if (!circle.points.length) return;
 
-    // 用户这条线
+    // 用户这条线：左粉右蓝、中间渐变
     ctx.beginPath();
     ctx.moveTo(circle.points[0].x, circle.points[0].y);
     for (const point of circle.points.slice(1)) ctx.lineTo(point.x, point.y);
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = circle.result
-      ? (circle.result.accuracy >= 90 ? '#1f9d55' : circle.result.accuracy >= 70 ? '#b7791f' : '#c53030')
-      : '#1d1d1f';
+    ctx.strokeStyle = circleStrokeStyle(ctx);
     ctx.stroke();
 
     // 评分后画一个理想圆做对比
