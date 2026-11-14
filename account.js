@@ -37,9 +37,10 @@
     invalid_token: 'That code is not right. Check it and try again.',
   };
 
-  function showMessage(message, type = 'error') {
+  function showMessage(message, type = 'error', html = false) {
     if (!feedback) return;
-    feedback.textContent = message;
+    if (html) feedback.innerHTML = message;
+    else feedback.textContent = message;
     feedback.classList.toggle('is-success', type === 'success');
     feedback.hidden = false;
   }
@@ -49,6 +50,49 @@
     feedback.hidden = true;
     feedback.textContent = '';
     feedback.classList.remove('is-success');
+  }
+
+  function usernameProblem(name) {
+    if (!name) return 'Please choose a name.';
+    if (name.length < 2) return 'Names need at least 2 characters.';
+    if (name.length > 24) return 'Names can be at most 24 characters.';
+    if (!/^[\p{L}\p{N} ._-]+$/u.test(name)) return 'Use letters, numbers, spaces, dots, dashes or underscores.';
+    return '';
+  }
+
+  /** true = 已被占用；null = 查不了（表还没建好，别挡住注册） */
+  async function isUsernameTaken(name) {
+    if (!client) return null;
+    try {
+      const { data, error } = await client
+        .from('profiles')
+        .select('username')
+        .ilike('username', name)
+        .limit(1);
+      if (error) {
+        console.warn('[account] 用户名查询失败：', error.message);
+        return null;
+      }
+      return Array.isArray(data) && data.length > 0;
+    } catch (error) {
+      console.warn('[account] 用户名查询异常：', error);
+      return null;
+    }
+  }
+
+  /** 登录后把用户名写进 profiles（已有就跳过） */
+  async function saveProfile(user) {
+    if (!client || !user) return;
+    const name = String(user.user_metadata?.display_name ?? '').trim();
+    if (!name) return;
+    try {
+      const { data } = await client.from('profiles').select('id').eq('id', user.id).limit(1);
+      if (Array.isArray(data) && data.length) return;
+      const { error } = await client.from('profiles').insert({ id: user.id, username: name });
+      if (error) console.warn('[account] 写入 profiles 失败：', error.message);
+    } catch (error) {
+      console.warn('[account] 写入 profiles 异常：', error);
+    }
   }
 
   function showVerifyMessage(message, type = 'error') {
@@ -119,6 +163,21 @@
     try {
       if (mode === 'signup') {
         const displayName = String(values.name ?? '').trim();
+        const problem = usernameProblem(displayName);
+        if (problem) {
+          showMessage(problem);
+          form.querySelector('input[name="name"]')?.focus();
+          setBusy(false);
+          return;
+        }
+        const taken = await isUsernameTaken(displayName);
+        if (taken === true) {
+          showMessage('That name is already taken. Please pick another one.');
+          form.querySelector('input[name="name"]')?.focus();
+          setBusy(false);
+          return;
+        }
+
         const options = {
           // 明确指定邮件确认后的落地页，避免依赖 Supabase 的 Site URL。
           emailRedirectTo: new URL('index.html', window.location.href).href,
@@ -132,15 +191,31 @@
         });
         if (error) throw error;
 
+        // Supabase 为了防邮箱探测，重复邮箱会返回一个 identities 为空的假用户
+        if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          showMessage(
+            'An account with this email already exists. '
+            + '<a href="IYS Account Sign In.html">Sign in</a> instead — or email '
+            + '<a href="mailto:iys-ian@outlook.com?subject=IYS%20account%20help">iys-ian@outlook.com</a> '
+            + 'if you need help.',
+            'error',
+            true,
+          );
+          setBusy(false);
+          return;
+        }
+
         if (!data.session) {
           // Supabase 这边开启了邮箱确认：拿不到会话，进入输码步骤
           showVerifyStep(email);
           setBusy(false);
           return;
         }
+        await saveProfile(data.user);
       } else {
-        const { error } = await client.auth.signInWithPassword({ email, password });
+        const { data: signIn, error } = await client.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await saveProfile(signIn?.user);
       }
 
       showMessage(
@@ -188,12 +263,13 @@
       }
 
       try {
-        const { error } = await client.auth.verifyOtp({
+        const { data: verified, error } = await client.auth.verifyOtp({
           email: pendingEmail,
           token: code,
           type: 'signup',
         });
         if (error) throw error;
+        await saveProfile(verified?.user);
 
         showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
         window.setTimeout(() => {
@@ -207,6 +283,33 @@
         }
         verifyCode?.select();
       }
+    });
+  }
+
+  // 注册页：边输名字边查重
+  const nameInput = form.querySelector('input[name="name"]');
+  const nameHint = document.querySelector('[data-name-hint]');
+  if (mode === 'signup' && nameInput && nameHint) {
+    let typingTimer = 0;
+    nameInput.addEventListener('input', () => {
+      window.clearTimeout(typingTimer);
+      const value = nameInput.value.trim();
+      nameHint.hidden = true;
+      if (!value) return;
+
+      const problem = usernameProblem(value);
+      if (problem) {
+        nameHint.textContent = problem;
+        nameHint.hidden = false;
+        return;
+      }
+      typingTimer = window.setTimeout(async () => {
+        const taken = await isUsernameTaken(value);
+        if (taken === true) {
+          nameHint.textContent = 'That name is already taken.';
+          nameHint.hidden = false;
+        }
+      }, 400);
     });
   }
 

@@ -2584,3 +2584,62 @@ article.legal-policy h2 {
     text-decoration: none;
     cursor: default;
 }
+
+/* 注册页用户名提示 */
+.account-hint {
+    margin: -2px 0 6px;
+    color: #b3261e;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Human Benchmark：未登录提示条 */
+.hb-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 22px;
+    padding: 14px 18px;
+    border: 1px solid #f0d3a0;
+    border-radius: 16px;
+    background: #fff8ec;
+    color: #6b4a12;
+}
+
+.hb-banner[hidden] {
+    display: none;
+}
+
+.hb-banner p {
+    margin: 0;
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.hb-banner-icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f0b429;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    flex: none;
+}
+
+.hb-banner-link {
+    flex: none;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.hb-banner-link:hover {
+    background: #000;
+}

@@ -37,7 +37,8 @@
 
             <form class="account-form" data-account-form="signup">
                 <label for="signup-name">Name</label>
-                <input id="signup-name" name="name" type="text" autocomplete="name" required>
+                <input id="signup-name" name="name" type="text" autocomplete="name" maxlength="24" required aria-describedby="signup-name-hint">
+                <p class="account-hint" id="signup-name-hint" data-name-hint hidden></p>
 
                 <label for="signup-email">Email address</label>
                 <input id="signup-email" name="email" type="email" autocomplete="email" required>

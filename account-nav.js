@@ -124,6 +124,20 @@
     }
     updateUserLabel();
 
+    // 老用户首次登录时补一条 profiles，保证查重能覆盖到他们
+    (async () => {
+      const name = displayNameOf(user);
+      if (!name) return;
+      try {
+        const { data: rows } = await client.from('profiles').select('id').eq('id', user.id).limit(1);
+        if (!Array.isArray(rows) || rows.length === 0) {
+          await client.from('profiles').insert({ id: user.id, username: name });
+        }
+      } catch (profileError) {
+        console.warn('[account] profiles 初始化失败：', profileError);
+      }
+    })();
+
     const menu = document.createElement('div');
     menu.className = 'account-menu';
     menu.hidden = true;
@@ -257,10 +271,39 @@
 
       try {
         const name = usernameInput.value.trim();
+        if (name.length < 2) {
+          showFeedback(usernameFeedback, 'Names need at least 2 characters.');
+          usernameSubmit.disabled = false;
+          return;
+        }
+
+        // 重名检查（跳过自己）
+        try {
+          const { data: clash } = await client
+            .from('profiles')
+            .select('id, username')
+            .ilike('username', name)
+            .limit(1);
+          if (Array.isArray(clash) && clash.length && clash[0].id !== user.id) {
+            showFeedback(usernameFeedback, 'That name is already taken. Please pick another one.');
+            usernameSubmit.disabled = false;
+            return;
+          }
+        } catch (lookupError) {
+          console.warn('[account] 用户名查重失败：', lookupError);
+        }
+
         const { data, error } = await client.auth.updateUser({ data: { display_name: name } });
         if (error) throw error;
         user = data.user ?? user;
         updateUserLabel();
+
+        // 同步 profiles
+        try {
+          await client.from('profiles').update({ username: name }).eq('id', user.id);
+        } catch (profileError) {
+          console.warn('[account] profiles 更新失败：', profileError);
+        }
         usernameForm.querySelector('.account-email-current').textContent =
           `Current username: ${displayNameOf(user)}`;
         showFeedback(usernameFeedback, 'Your username has been updated.', 'success');

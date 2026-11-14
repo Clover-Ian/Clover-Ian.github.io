@@ -7,11 +7,11 @@
     <title>Human Benchmark | IYS</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261114e">
+    <link rel="stylesheet" href="style.css?v=20261115a">
     <script src="supabase.js" defer></script>
     <script src="supabase-config.js" defer></script>
-    <script src="account-nav.js?v=20261114e" defer></script>
-    <script src="benchmark.js?v=20261114e" defer></script>
+    <script src="account-nav.js?v=20261115a" defer></script>
+    <script src="benchmark.js?v=20261115a" defer></script>
 </head>
 <body class="benchmark-page">
     <header class="site-header hb-header">
@@ -27,6 +27,13 @@
     </header>
 
     <main class="hb-main">
+
+        <div class="hb-banner" data-signin-banner hidden role="status">
+            <span class="hb-banner-icon" aria-hidden="true">!</span>
+            <p><strong>You're not signed in.</strong> Your scores won't be saved and won't appear on the leaderboard.</p>
+            <a class="hb-banner-link" href="IYS Account Sign In.html">Sign in</a>
+        </div>
+
 
         <!-- ================= 首页：三个测试入口 ================= -->
         <section class="hb-view is-active" id="view-home" aria-labelledby="hb-title">

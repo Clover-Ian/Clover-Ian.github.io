@@ -1490,6 +1490,8 @@
       refreshBests();
       updateClickBest();
       updateAccountNote();
+      const banner = $('[data-signin-banner]');
+      if (banner) banner.hidden = cloud.ready;
       if (activeView === 'history') await loadHistory(true);
     })
     .catch((error) => console.warn('[benchmark] 初始化账号失败', error));
