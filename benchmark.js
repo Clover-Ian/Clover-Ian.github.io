@@ -1296,7 +1296,6 @@
   const circleBestEl = $('[data-circle-best]');
   const circleRadiusEl = $('[data-circle-radius]');
   const circleState = $('[data-circle-state]');
-  const circleActions = $('[data-circle-actions]');
 
   const circle = { points: [], drawing: false, finished: false, result: null };
 
@@ -1384,8 +1383,8 @@
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // 评分后画一个理想圆做对比
-    if (circle.result?.center) {
+    // 评分后画一个理想圆做对比（画得很准时就不画，免得互相叠着看不清）
+    if (circle.result?.center && circle.result.accuracy < 95) {
       ctx.beginPath();
       ctx.setLineDash([4, 7]);
       ctx.arc(circle.result.center.x, circle.result.center.y, circle.result.radius, 0, Math.PI * 2);
@@ -1422,7 +1421,6 @@
       circleHint.textContent = 'Press and drag to draw a circle';
     }
     if (circleNote) circleNote.hidden = false;
-    if (circleActions) circleActions.hidden = true;
     if (circleScoreEl) circleScoreEl.textContent = '—';
     if (circleRadiusEl) circleRadiusEl.textContent = '—';
     if (circleState) circleState.textContent = '';
@@ -1487,7 +1485,6 @@
       }
       if (circleScoreEl) circleScoreEl.textContent = '—';
       if (circleState) circleState.textContent = '';
-      if (circleActions) circleActions.hidden = false;
       return;
     }
 
@@ -1499,8 +1496,6 @@
     if (circleNote) circleNote.hidden = true;
     if (circleScoreEl) circleScoreEl.textContent = `${result.accuracy}%`;
     if (circleRadiusEl) circleRadiusEl.textContent = `${Math.round(result.radius)} px`;
-    if (circleActions) circleActions.hidden = false;
-
     if (cloud.ready) {
       const record = isRecord('circle', result.accuracy);
       saveScoreToCloud('circle', result.accuracy).then(() => {
@@ -1521,14 +1516,17 @@
 
   if (circleCanvas) {
     circleCanvas.addEventListener('pointerdown', (event) => {
-      if (circle.finished) return;
       event.preventDefault();
       circleCanvas.setPointerCapture?.(event.pointerId);
       circle.points = [circlePointFromEvent(event)];
       circle.drawing = true;
+      circle.finished = false;
       circle.result = null;
       if (circleHint) circleHint.hidden = true;
-      if (circleActions) circleActions.hidden = true;
+      if (circleNote) circleNote.hidden = true;
+      if (circleScoreEl) circleScoreEl.textContent = '—';
+      if (circleRadiusEl) circleRadiusEl.textContent = '—';
+      if (circleState) circleState.textContent = '';
       circleRedraw();
     });
 
@@ -1556,9 +1554,7 @@
     window.addEventListener('resize', sizeCircleCanvas);
   }
 
-  $('[data-circle-start]')?.addEventListener('click', () => {
-    circleReset();
-  });
+  // 直接在画布上再画一笔就是新的一轮，不需要按钮
 
   // ============================================================ 排行榜
 

@@ -2706,3 +2706,11 @@ article.legal-policy h2 {
     font-size: 13px;
     text-align: center;
 }
+
+.hb-circle-state {
+    margin: 12px 0 0;
+    color: var(--hb-muted);
+    font-size: 13px;
+    text-align: center;
+    min-height: 18px;
+}

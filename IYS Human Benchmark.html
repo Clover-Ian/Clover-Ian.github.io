@@ -7,11 +7,11 @@
     <title>IYS Arcade</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261115f">
+    <link rel="stylesheet" href="style.css?v=20261115g">
     <script src="supabase.js" defer></script>
     <script src="supabase-config.js" defer></script>
-    <script src="account-nav.js?v=20261115f" defer></script>
-    <script src="benchmark.js?v=20261115f" defer></script>
+    <script src="account-nav.js?v=20261115g" defer></script>
+    <script src="benchmark.js?v=20261115g" defer></script>
 </head>
 <body class="benchmark-page">
     <header class="site-header hb-header">
@@ -359,10 +359,6 @@
                 Keep the loop closed, don’t lift your finger, and draw around the dot in the middle.
             </p>
 
-            <div class="hb-actions" data-circle-actions hidden>
-                <button type="button" class="hb-button hb-button--primary" data-circle-start>Start again</button>
-                <span class="hb-save-state" data-circle-state role="status"></span>
-            </div>
 
             <div class="hb-result-row">
                 <div class="hb-stat">
@@ -378,6 +374,8 @@
                     <span class="hb-stat-value" data-circle-radius>—</span>
                 </div>
             </div>
+
+            <p class="hb-circle-state" data-circle-state role="status"></p>
         </section>
 
         <!-- ================= 排行榜 ================= -->
