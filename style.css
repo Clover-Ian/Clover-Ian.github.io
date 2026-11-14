@@ -2566,3 +2566,21 @@ article.legal-policy h2 {
     max-height: 62vh;
     overflow-y: auto;
 }
+
+/* 产品状态标签：暂不提供下载等 */
+.pill {
+    display: inline-block;
+    padding: 5px 12px;
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+    border-radius: 999px;
+    color: var(--muted, #6b6b72);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.text-link.is-muted {
+    color: var(--muted, #6b6b72);
+    text-decoration: none;
+    cursor: default;
+}
