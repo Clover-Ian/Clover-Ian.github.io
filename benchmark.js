@@ -1376,6 +1376,17 @@
       ctx.strokeStyle = 'rgba(29, 29, 31, 0.16)';
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // 圆心（黑点）
+      ctx.beginPath();
+      ctx.arc(circle.result.center.x, circle.result.center.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#1d1d1f';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(circle.result.center.x, circle.result.center.y, 7, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(29, 29, 31, 0.25)';
+      ctx.stroke();
     }
   }
 
