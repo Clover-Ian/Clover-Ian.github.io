@@ -2685,11 +2685,13 @@ article.legal-policy h2 {
     position: absolute;
     inset: 0;
     display: grid;
-    place-items: center;
+    align-items: end;
+    justify-items: center;
     margin: 0;
-    padding: 24px;
+    padding: 0 24px 26px;
     color: var(--hb-muted);
-    font-size: 15px;
+    font-size: 14px;
+    text-align: center;
     pointer-events: none;
 }
 

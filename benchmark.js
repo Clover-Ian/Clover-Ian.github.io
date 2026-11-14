@@ -1314,6 +1314,11 @@
     circleRedraw();
   }
 
+  function circleCenter() {
+    const rect = circleCanvas.getBoundingClientRect();
+    return { x: rect.width / 2, y: rect.height / 2 };
+  }
+
   function circlePointFromEvent(event) {
     const rect = circleCanvas.getBoundingClientRect();
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
@@ -1347,6 +1352,18 @@
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
+
+    // 圆心一直显示在画面正中
+    const fixed = circleCenter();
+    ctx.beginPath();
+    ctx.arc(fixed.x, fixed.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#1d1d1f';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(fixed.x, fixed.y, 7, 0, Math.PI * 2);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(29, 29, 31, 0.25)';
+    ctx.stroke();
 
     if (!circle.points.length) return;
 
@@ -1416,12 +1433,20 @@
   function evaluateCircle(points) {
     if (points.length < 30) return { ok: false, reason: 'Draw the whole circle in one stroke.' };
 
-    const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
-    const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+    const { x: cx, y: cy } = circleCenter();
     const radii = points.map((p) => Math.hypot(p.x - cx, p.y - cy));
     const meanR = radii.reduce((a, b) => a + b, 0) / radii.length;
 
     if (meanR < CIRCLE_MIN_RADIUS) return { ok: false, reason: 'Too small — draw a bigger circle.' };
+
+    const minR = Math.min(...radii);
+    const maxR = Math.max(...radii);
+    const centroidX = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const centroidY = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+    const offset = Math.hypot(centroidX - cx, centroidY - cy);
+    if (maxR / Math.max(minR, 1) > 2.4 || offset > meanR * 0.45) {
+      return { ok: false, reason: 'Draw around the dot — keep it in the middle.' };
+    }
 
     const tooClose = radii.filter((r) => r < meanR * 0.45).length;
     if (tooClose > points.length * 0.25) return { ok: false, reason: 'Keep away from the middle of the circle.' };
@@ -1447,7 +1472,7 @@
 
     const rms = Math.sqrt(radii.reduce((sum, r) => sum + (r - meanR) ** 2, 0) / radii.length);
     const accuracy = Math.max(0, Math.min(100, Math.round(100 * (1 - (rms / meanR) * 2.4))));
-    return { ok: true, accuracy, radius: meanR, center: { x: cx, y: cy } };
+    return { ok: true, accuracy, radius: meanR, center: circleCenter() };
   }
 
   function circleFinish() {
