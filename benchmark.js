@@ -751,7 +751,8 @@
 
     const reached = perfect ? NUM_MAX : numbers.level - 1;
     if (numTitle) numTitle.textContent = perfect ? 'Perfect run' : 'Game over';
-    if (numCopy) numCopy.textContent = `You remembered ${reached} digit${reached === 1 ? '' : 's'}.`;
+    if (numCopy) numCopy.textContent =
+      `You remembered ${reached} digit${reached === 1 ? '' : 's'}. Click to try again.`;
     if (numCurrent) numCurrent.textContent = String(reached);
 
     if (cloud.ready) {
@@ -887,9 +888,12 @@
     seqClearTimers();
     sequence.running = false;
     sequence.accepting = false;
-    seqLock(true);
+    // 解锁，否则按钮是 disabled，点不动也就没法重开
+    seqLock(false);
     const reached = sequence.level - 1;
-    if (seqStatus) seqStatus.textContent = `Game over — you reached level ${reached}.`;
+    if (seqStatus) seqStatus.textContent = reached > 0
+      ? `Game over — you cleared ${reached} step${reached === 1 ? '' : 's'}. Click any square to try again.`
+      : 'Game over. Click any square to try again.';
     if (seqCurrent) seqCurrent.textContent = String(reached);
 
     if (cloud.ready) {
@@ -1023,7 +1027,10 @@
     const total = aim.times.reduce((sum, value) => sum + value, 0);
     const average = aim.times.length ? total / aim.times.length : 0;
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
-    if (aimHint) { aimHint.hidden = false; aimHint.textContent = `Done — ${Math.round(average)} ms per target.`; }
+    if (aimHint) {
+      aimHint.hidden = false;
+      aimHint.textContent = `Done — ${Math.round(average)} ms per target. Click anywhere to try again.`;
+    }
 
     if (cloud.ready) {
       const record = isRecord('aim', Math.round(average));
@@ -1473,7 +1480,10 @@
     circle.result = result;
     circleRedraw();
 
-    if (circleHint) circleHint.hidden = true;
+    if (circleHint) {
+      circleHint.hidden = false;
+      circleHint.textContent = 'Draw again to try another circle.';
+    }
     if (circleNote) circleNote.hidden = true;
     if (circleScoreEl) circleScoreEl.textContent = `${result.accuracy}%`;
     if (circleRadiusEl) circleRadiusEl.textContent = `${Math.round(result.radius)} px`;
