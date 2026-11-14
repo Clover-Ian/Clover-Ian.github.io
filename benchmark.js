@@ -1331,10 +1331,10 @@
     if (!Number.isFinite(minX) || maxX - minX < 1) return '#f07acb';
 
     const gradient = ctx.createLinearGradient(minX, 0, maxX, 0);
-    gradient.addColorStop(0.00, '#f07acb');   // 粉
-    gradient.addColorStop(0.35, '#f07acb');
-    gradient.addColorStop(0.65, '#5fb2f5');   // 蓝
-    gradient.addColorStop(1.00, '#5fb2f5');
+    gradient.addColorStop(0.00, '#ffe7ff');   // 品牌粉（最深就是它）
+    gradient.addColorStop(0.35, '#ffe7ff');
+    gradient.addColorStop(0.65, '#dcf1ff');   // 品牌蓝
+    gradient.addColorStop(1.00, '#dcf1ff');
     return gradient;
   }
 
@@ -1354,19 +1354,26 @@
     ctx.beginPath();
     ctx.moveTo(circle.points[0].x, circle.points[0].y);
     for (const point of circle.points.slice(1)) ctx.lineTo(point.x, point.y);
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 9;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = circleStrokeStyle(ctx);
+    // 浅色的品牌色需要一点极轻的投影，才在白底上立得住
+    ctx.shadowColor = 'rgba(96, 84, 140, 0.22)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 1;
     ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
     // 评分后画一个理想圆做对比
     if (circle.result?.center) {
       ctx.beginPath();
-      ctx.setLineDash([5, 6]);
+      ctx.setLineDash([4, 7]);
       ctx.arc(circle.result.center.x, circle.result.center.y, circle.result.radius, 0, Math.PI * 2);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(29, 29, 31, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(29, 29, 31, 0.16)';
       ctx.stroke();
       ctx.setLineDash([]);
     }
