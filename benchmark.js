@@ -1083,8 +1083,6 @@
   // ============================================================ 我的成绩
 
   const historySearch = $('[data-history-search]');
-  const historyDate = $('[data-history-date]');
-  const historyRange = $('.hb-history-range');
   const historyStatus = $('[data-history-status]');
   const historyRows = $('[data-history-rows]');
   const historyBoard = $('[data-history-board]');
@@ -1119,45 +1117,35 @@
       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
-  function historyMatchesDate(row) {
-    if (!historyRange) return true;
-    const mode = historyRange.querySelector('.is-selected')?.dataset.historyRange || 'all';
-    if (mode === 'all') return true;
-    if (!historyDate || !historyDate.value) return true;
-
-    const picked = historyDate.value; // yyyy-mm-dd
-    const d = new Date(row.created_at);
-    const pad = (n) => String(n).padStart(2, '0');
-    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    if (mode === 'day') return day === picked;
-    if (mode === 'month') return day.slice(0, 7) === picked.slice(0, 7);
-    if (mode === 'year') return day.slice(0, 4) === picked.slice(0, 4);
-    return true;
-  }
-
   function renderHistory() {
     if (!historyRows || !historyStatus) return;
 
     const term = (historySearch?.value || '').trim().toLowerCase();
-    const rows = history.rows.filter((row) => {
-      if (!historyMatchesDate(row)) return false;
-      if (!term) return true;
-      const haystack = `${TEST_LABELS[row.test] || row.test} ${historyScore(row)} ${historyWhen(row.created_at)}`.toLowerCase();
-      return haystack.includes(term);
-    });
+    const rows = term
+      ? history.rows.filter((row) => {
+        const when = historyWhen(row.created_at);
+        const haystack = `${when} ${when.replace(/[-:]/g, ' ')} ${TEST_LABELS[row.test] || row.test} ${historyScore(row)}`.toLowerCase();
+        return haystack.includes(term);
+      })
+      : history.rows;
 
     historyRows.innerHTML = '';
     if (!rows.length) {
       historyStatus.hidden = false;
       historyStatus.textContent = history.rows.length
-        ? 'No scores match this filter.'
+        ? 'No scores match that search.'
         : 'No scores yet. Play a test and it will show up here.';
       if (historyBoard) historyBoard.hidden = true;
       return;
     }
 
-    historyStatus.hidden = true;
     if (historyBoard) historyBoard.hidden = false;
+    if (term) {
+      historyStatus.hidden = false;
+      historyStatus.textContent = `${rows.length} of ${history.rows.length} scores`;
+    } else {
+      historyStatus.hidden = true;
+    }
 
     rows.slice(0, 500).forEach((row) => {
       const li = document.createElement('li');
@@ -1208,13 +1196,6 @@
       return;
     }
 
-    // 日期框默认今天，这样 Day / Month / Year 一选就有结果
-    if (historyDate && !historyDate.value) {
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      historyDate.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    }
-
     history.token += 1;
     const token = history.token;
     historyStatus.hidden = false;
@@ -1249,23 +1230,6 @@
   }
 
   historySearch?.addEventListener('input', renderHistory);
-  historyDate?.addEventListener('change', () => {
-    if (!historyDate.value) return;
-    const chips = historyRange?.querySelectorAll('[data-history-range]') || [];
-    const anySelected = [...chips].some((chip) => chip.dataset.historyRange !== 'all' && chip.classList.contains('is-selected'));
-    if (!anySelected && chips[1]) {
-      chips.forEach((chip) => chip.classList.toggle('is-selected', chip.dataset.historyRange === 'day'));
-    }
-    renderHistory();
-  });
-  historyRange?.querySelectorAll('[data-history-range]').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      historyRange.querySelectorAll('[data-history-range]').forEach((other) => {
-        other.classList.toggle('is-selected', other === chip);
-      });
-      renderHistory();
-    });
-  });
 
   // ============================================================ 排行榜
 

@@ -2524,26 +2524,26 @@ article.legal-policy h2 {
 }
 
 .hb-history-search {
-    flex: 1 1 240px;
+    flex: 1 1 auto;
     margin-top: 0;
+    padding: 16px 22px;
+    border-radius: 16px;
+    font-size: 16px;
 }
 
-.hb-history-dates {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
+.hb-history-hint {
+    margin: 10px 2px 18px;
+    color: var(--hb-muted);
+    font-size: 13px;
 }
 
-.hb-history-date {
-    width: auto;
-    margin-top: 0;
-    padding: 9px 14px;
-    font-size: 14px;
-}
-
-.hb-history-range {
-    margin: 0;
+.hb-history-hint span {
+    padding: 2px 7px;
+    border: 1px solid var(--hb-line);
+    border-radius: 7px;
+    color: var(--hb-ink);
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .hb-history-head,
