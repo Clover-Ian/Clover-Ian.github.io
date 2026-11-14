@@ -21,7 +21,7 @@
 
   // ------------------------------------------------------------ 云端成绩（Supabase）
 
-  const cloud = { client: null, userId: null, ready: false };
+  const cloud = { client: null, userId: null, user: null, ready: false };
   let cloudInitPromise = null;
   const cloudBest = {}; // 云端每个测试的最好成绩；点击测试按时长分开：click:10 / click:60
 
@@ -37,6 +37,7 @@
       if (!user) return;
       cloud.client = client;
       cloud.userId = user.id;
+      cloud.user = user;
       cloud.ready = true;
     } catch (error) {
       console.warn('[benchmark] 读取会话失败', error);
@@ -1552,7 +1553,6 @@
 
   // ============================================================ IYM 广告
 
-  const AD_HIDDEN_KEY = 'iym-ad-hidden';
   const adPanel = $('[data-iym-ad]');
   let adTimer = 0;
 
@@ -1570,13 +1570,15 @@
     console.warn('[benchmark] 广告偏好读取失败', error);
   }
 
+  /** 已经在用 IYM AutoClicker 的人不显示广告（账号里有标记就跳过） */
   function iymAdHiddenByPreference() {
     try {
-      return localStorage.getItem(AD_HIDDEN_KEY) === '1'
-        || localStorage.getItem('iym-autoclicker-member') === '1';
+      if (localStorage.getItem('iym-autoclicker-member') === '1') return true;
     } catch (error) {
-      return false;
+      // 忽略
     }
+    const meta = cloud.user?.user_metadata;
+    return Boolean(meta?.iym_member || meta?.autoclicker_member || meta?.iym_autoclicker);
   }
 
   function showIymAd() {
@@ -1593,10 +1595,6 @@
   }
 
   $('[data-iym-ad-close]')?.addEventListener('click', hideIymAd);
-  $('[data-iym-ad-hide]')?.addEventListener('click', () => {
-    try { localStorage.setItem(AD_HIDDEN_KEY, '1'); } catch (error) { /* 忽略 */ }
-    hideIymAd();
-  });
 
   // ============================================================ 排行榜
 
@@ -1819,6 +1817,12 @@
       updateAccountNote();
       const banner = $('[data-signin-banner]');
       if (banner) banner.hidden = cloud.ready;
+
+      // 账号信息读完后再判断一次广告（会员就不显示）
+      if (activeView === 'click') {
+        if (iymAdHiddenByPreference()) hideIymAd();
+        else showIymAd();
+      }
       if (activeView === 'history') await loadHistory(true);
     })
     .catch((error) => console.warn('[benchmark] 初始化账号失败', error));
