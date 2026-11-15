@@ -1742,14 +1742,25 @@
     lbStatus.hidden = true;
     const me = cloud.userId;
 
+    // 成绩相同就并列名次，下一名跳号（1, 1, 3）
+    let lastLabel = null;
+    let lastRank = 0;
+
     top.forEach((row, index) => {
+      const label = formatScore(row.test, Number(row.value));
+      if (label !== lastLabel) {
+        lastRank = index + 1;
+        lastLabel = label;
+      }
+
       const item = document.createElement('li');
       item.className = 'hb-board-row';
       if (me && row.user_id === me) item.classList.add('is-me');
+      item.dataset.rank = String(lastRank);
 
       const rank = document.createElement('span');
       rank.className = 'hb-board-rank';
-      rank.textContent = String(index + 1);
+      rank.textContent = String(lastRank);
 
       const display = row.detail?.name || 'Player';
       const name = document.createElement('span');
@@ -1763,7 +1774,7 @@
 
       const score = document.createElement('span');
       score.className = 'hb-board-score';
-      score.textContent = formatScore(row.test, Number(row.value));
+      score.textContent = label;
 
       item.append(rank, name, score);
       lbRows.appendChild(item);
