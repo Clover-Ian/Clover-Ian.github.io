@@ -38,7 +38,10 @@ as $$
            a.activated_at,
            a.user_id,
            u.email::text,
-           coalesce(p.username, split_part(u.email::text, '@', 1)),
+           coalesce(p.username,
+                    u.raw_user_meta_data->>'display_name',
+                    u.raw_user_meta_data->>'username',
+                    '—'),
            coalesce(u.raw_user_meta_data->>'avatar_url',
                     u.raw_user_meta_data->>'picture'),
            coalesce(n.note, '')
