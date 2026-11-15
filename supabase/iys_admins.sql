@@ -14,6 +14,9 @@ alter table public.key_notes enable row level security;
 -- 故意不建 policy：匿名读写都不行，只能走下面的函数
 
 -- 管理视图：所有人的激活记录 + 备注
+-- 返回列变了，先删旧的再建，否则 create or replace 会报错
+drop function if exists public.admin_activations(text);
+
 create or replace function public.admin_activations(passcode text)
 returns table (
     license_key  text,
