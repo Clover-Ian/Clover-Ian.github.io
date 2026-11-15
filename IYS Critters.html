@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IYS Critters — adopt a small handmade creature, keep it alive, and see how its story ends. In development.">
+    <title>IYS Critters | IYS</title>
+    <link rel="icon" type="image/png" href="IYS Website.png">
+    <link rel="apple-touch-icon" href="IYS Website.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="supabase.js" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="account-nav.js" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a class="current" href="IYS Website.html" aria-current="page">Website</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-hero critter-hero">
+            <div class="critter-art" aria-hidden="true">
+                <svg viewBox="0 0 240 240" role="img" aria-label="A small handmade creature">
+                    <path class="critter-body" d="M119 26c45 1 82 30 84 74 2 42-31 76-82 78C68 180 36 148 35 103 34 60 73 25 119 26Z"/>
+                    <path class="critter-ear" d="M78 38c-8-14-4-26 6-28 11-2 18 8 18 22"/>
+                    <path class="critter-ear" d="M158 36c9-13 20-15 26-7 6 9 0 20-11 27"/>
+                    <ellipse class="critter-eye" cx="96" cy="106" rx="11" ry="13"/>
+                    <ellipse class="critter-eye" cx="146" cy="104" rx="11" ry="13"/>
+                    <circle class="critter-shine" cx="92" cy="101" r="3.4"/>
+                    <circle class="critter-shine" cx="142" cy="99" r="3.4"/>
+                    <path class="critter-mouth" d="M112 130c5 7 12 7 17 0"/>
+                    <path class="critter-foot" d="M84 176c-9 6-9 16 0 18 8 2 13-6 12-16"/>
+                    <path class="critter-foot" d="M154 176c9 6 9 16 0 18-8 2-13-6-12-16"/>
+                    <path class="critter-spark" d="M189 66c6-3 8-9 5-14"/>
+                    <path class="critter-spark" d="M52 82c-7-2-10-8-7-14"/>
+                </svg>
+            </div>
+
+            <p class="eyebrow">In development</p>
+            <h1>IYS Critters</h1>
+            <p class="hero-copy">
+                Adopt a small handmade creature. Feed it, talk to it, keep an eye on it —
+                and one day find out how its story ends.
+            </p>
+            <p class="critter-status">
+                <span class="pill">Not open yet</span>
+                <button type="button" class="button-link is-disabled" disabled aria-disabled="true">Coming soon — not playable yet</button>
+            </p>
+            <p class="critter-fine">You'll need an IYS account. Nothing to download.</p>
+        </section>
+
+        <section class="critter-grid content-width">
+            <article class="detail-card">
+                <h3>One, or a few.</h3>
+                <p>Design your own from scratch, or pick one of the ready-made kinds. Every creature is generated from its own seed, so no two look the same. You can keep several at once — they share the same little world.</p>
+            </article>
+            <article class="detail-card">
+                <h3>Two kinds of life.</h3>
+                <p>Some arrive with a deadline: thirty days until they have to go back to their planet. Others stay as long as you keep them alive. Both can be lost.</p>
+            </article>
+            <article class="detail-card">
+                <h3>They do their own thing.</h3>
+                <p>Leave them alone and they'll make their own choices — play games all night, sulk, rearrange your things, forget to eat. You'll only find out when you come back.</p>
+            </article>
+            <article class="detail-card">
+                <h3>A week is a long time.</h3>
+                <p>If you don't visit for more than a week, they don't make it. No countdown warning after the fact — just a note on the door.</p>
+            </article>
+            <article class="detail-card">
+                <h3>How it ends.</h3>
+                <p>When a creature leaves or dies, the site plays its ending: a hand-drawn animated scene on the left, their story scrolling on the right, and a piano piece recorded for the occasion.</p>
+            </article>
+            <article class="detail-card">
+                <h3>Still being drawn.</h3>
+                <p>The creatures are being drawn by hand, the readings are being written, and the piano is still being practised. When it's ready, this page will open the door.</p>
+            </article>
+        </section>
+
+        <section class="critter-cta content-width">
+            <p>Want to know when it opens?</p>
+            <a class="text-link" href="mailto:iys-ian@outlook.com?subject=IYS%20Critters">Email IYS <span aria-hidden="true">→</span></a>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Questions? <a href="mailto:iys-ian@outlook.com">Email IYS</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
