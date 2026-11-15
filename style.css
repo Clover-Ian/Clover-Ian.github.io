@@ -2856,9 +2856,12 @@ article.legal-policy h2 {
 }
 
 .critter-art {
-    width: 176px;
-    height: 176px;
-    margin: 0 auto 18px;
+    display: block;
+    width: 216px;
+    height: 216px;
+    margin: 0 auto 14px;
+    border-radius: 32px;
+    box-shadow: 0 20px 46px rgba(70, 50, 130, 0.16);
 }
 
 .critter-art svg {
