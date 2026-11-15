@@ -1,30 +1,11 @@
--- IYS Pro（发号器）的管理员视图
--- 只有名单里的账号能一次看到所有用户的激活记录；其它账号调这个函数拿到空表。
--- 在 Supabase → SQL Editor 执行一次，可以重复执行。
+-- IYS Pro（发号器）的只读管理接口
+-- 一次性执行即可；以后每有人买、每有人激活，记录都会被 activate_license() 自动写进来，
+-- 不需要再动 SQL。
+--
+-- 口令写死在 App 里，用口令而不是登录来换取全部激活记录。
+-- 换口令：改下面两处的 iys-pro-xxxxxxxx，再把 App 里的 AdminPasscode.swift 改成同一个值。
 
-create table if not exists public.iys_admins (
-    user_id    uuid primary key references auth.users (id) on delete cascade,
-    note       text,
-    created_at timestamptz not null default now()
-);
-
-alter table public.iys_admins enable row level security;
--- 故意不建任何 policy：客户端读不到这张表，只能通过下面的函数判断
-
-create or replace function public.is_iys_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public, auth
-as $$
-    select exists (select 1 from public.iys_admins where user_id = auth.uid());
-$$;
-
-grant execute on function public.is_iys_admin() to authenticated;
-
--- 管理员专用：所有人的激活记录 + 账号信息
-create or replace function public.admin_activations()
+create or replace function public.admin_activations(passcode text)
 returns table (
     license_key  text,
     product      text,
@@ -50,8 +31,13 @@ as $$
       from public.license_activations a
       join auth.users u on u.id = a.user_id
       left join public.profiles p on p.id = a.user_id
-     where public.is_iys_admin()
+     where passcode = 'iys-pro-8074ed5a77cfe853'
      order by a.activated_at desc;
 $$;
 
-grant execute on function public.admin_activations() to authenticated;
+grant execute on function public.admin_activations(text) to anon, authenticated;
+
+-- 老版本基于登录的管理函数不再需要，可留可删
+drop function if exists public.admin_activations();
+drop function if exists public.is_iys_admin();
+drop table if exists public.iys_admins;
