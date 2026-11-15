@@ -2975,3 +2975,61 @@ article.legal-policy h2 {
     border: 1px solid var(--line);
     opacity: 1;
 }
+
+/* ---------------------------------------------------------------- 订阅时长选择 */
+
+.buy-plans {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 0 0 22px;
+}
+
+.buy-plan {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.buy-plan:hover {
+    border-color: #b9c6d8;
+    transform: translateY(-1px);
+}
+
+.buy-plan.is-selected {
+    border-color: var(--blue);
+    background: #f4f9ff;
+    box-shadow: 0 0 0 3px rgb(0 113 227 / 12%);
+}
+
+.buy-plan-days {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg);
+}
+
+.buy-plan-price {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+}
+
+.buy-plan-note {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+@media (max-width: 520px) {
+    .buy-plans {
+        grid-template-columns: 1fr;
+    }
+}

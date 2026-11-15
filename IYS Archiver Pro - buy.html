@@ -45,12 +45,25 @@
                 <header class="buy-price-head">
                     <p class="eyebrow">Pro license</p>
                     <h2 id="buy-plan-heading" class="buy-price-line">
-                        <span class="buy-price">$5</span>
+                        <span class="buy-price" data-price-label>$1</span>
                         <span class="buy-price-meta">USD</span>
-                        <span class="buy-price-meta">one-time</span>
+                        <span class="buy-price-meta" data-days-label>7 days</span>
                     </h2>
-                    <p class="buy-price-sub">One key, one IYS account, no expiry. Press the button and tell us where to send it — we reply with the key and a payment link.</p>
+                    <p class="buy-price-sub">Pick a period. One key, one IYS account; when it runs out, buy another. Press the button and tell us where to send it — we reply with the key and a payment link.</p>
                 </header>
+
+                <div class="buy-plans" role="radiogroup" aria-label="License period">
+                    <button type="button" class="buy-plan is-selected" data-plan data-days="7 days" data-price="$1" aria-pressed="true">
+                        <span class="buy-plan-days">7 days</span>
+                        <span class="buy-plan-price">$1</span>
+                        <span class="buy-plan-note">short trial</span>
+                    </button>
+                    <button type="button" class="buy-plan" data-plan data-days="30 days" data-price="$5" aria-pressed="false">
+                        <span class="buy-plan-days">One month</span>
+                        <span class="buy-plan-price">$5</span>
+                        <span class="buy-plan-note">30 days</span>
+                    </button>
+                </div>
 
                 <ul class="buy-checklist">
                     <li>7Z, TAR, TAR.GZ, TAR.BZ2, TAR.XZ, TAR.ZST</li>
@@ -62,9 +75,41 @@
                     <li>Cyberpunk theme</li>
                 </ul>
 
-                <a class="buy-cta" href="mailto:iys-ian@outlook.com?subject=IYS%20Archiver%20Pro%20key&amp;body=Hello%2C%0A%0AI%27d%20like%20an%20IYS%20Archiver%20Pro%20key.%0A%0AmacOS%20version%3A%20%0AIYS%20account%20email%3A%20%0A">
-                    Email me a key
+                <a class="buy-cta" data-buy href="mailto:iys-ian@outlook.com?subject=IYS%20Archiver%20Pro%20key%20%E2%80%94%207%20days&amp;body=Hello%2C%0A%0AI%27d%20like%20an%20IYS%20Archiver%20Pro%20key%20for%207%20days%20(%241).%0A%0AmacOS%20version%3A%20%0AIYS%20account%20email%3A%20%0A">
+                    Email me a key — 7 days, $1
                 </a>
+
+                <script>
+                (function () {
+                    var plans = Array.prototype.slice.call(document.querySelectorAll('[data-plan]'));
+                    var cta = document.querySelector('[data-buy]');
+                    var priceLabel = document.querySelector('[data-price-label]');
+                    var daysLabel = document.querySelector('[data-days-label]');
+
+                    function choose(plan) {
+                        plans.forEach(function (item) {
+                            var on = item === plan;
+                            item.classList.toggle('is-selected', on);
+                            item.setAttribute('aria-pressed', String(on));
+                        });
+                        var days = plan.dataset.days;
+                        var price = plan.dataset.price;
+                        if (priceLabel) priceLabel.textContent = price;
+                        if (daysLabel) daysLabel.textContent = days;
+                        if (cta) {
+                            var body = 'Hello,\n\nI\'d like an IYS Archiver Pro key for ' + days + ' (' + price + ').\n\nmacOS version: \nIYS account email: \n';
+                            cta.textContent = 'Email me a key — ' + days + ', ' + price;
+                            cta.href = 'mailto:iys-ian@outlook.com'
+                                + '?subject=' + encodeURIComponent('IYS Archiver Pro key — ' + days)
+                                + '&body=' + encodeURIComponent(body);
+                        }
+                    }
+
+                    plans.forEach(function (plan) {
+                        plan.addEventListener('click', function () { choose(plan); });
+                    });
+                })();
+                </script>
 
                 <p class="buy-fineprint">
                     Keys are issued by hand. Replies take up to a week, and the key is tied to
@@ -151,7 +196,7 @@
                 </details>
                 <details>
                     <summary>Is this a subscription?</summary>
-                    <p>No. It is a one-time purchase and the key does not expire.</p>
+                    <p>No. You buy one period — 7 days for $1, or one month for $5. When it runs out, buy another key; nothing renews on its own.</p>
                 </details>
                 <details>
                     <summary>Why by email instead of a checkout page?</summary>
