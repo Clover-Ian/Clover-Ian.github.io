@@ -9,3 +9,6 @@ server/data/
 server/.env
 .ssh/
 .supabase-token
+
+# 本地原型，先不上线
+IYS Critters Play.html
