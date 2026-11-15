@@ -42,26 +42,37 @@
         <!-- ================= 价格卡 ================= -->
         <section class="buy-section content-width" aria-labelledby="buy-plan-heading">
             <div class="buy-price-card">
+                <p class="buy-promo">Launch offer · 50% off everything until 15 April 2027</p>
+
                 <header class="buy-price-head">
                     <p class="eyebrow">Pro license</p>
                     <h2 id="buy-plan-heading" class="buy-price-line">
-                        <span class="buy-price" data-price-label>$1</span>
+                        <span class="buy-price-compare" data-was>$1</span>
+                        <span class="buy-price" data-price-label>$0.50</span>
                         <span class="buy-price-meta">USD</span>
                         <span class="buy-price-meta" data-days-label>7 days</span>
                     </h2>
-                    <p class="buy-price-sub">Pick a period. One key, one IYS account; when it runs out, buy another. Press the button and tell us where to send it — we reply with the key and a payment link.</p>
+                    <p class="buy-price-sub">Half price while the offer lasts. One key, one IYS account; when the period runs out, buy another. Press the button and tell us where to send it — we reply with the key and a payment link.</p>
                 </header>
 
                 <div class="buy-plans" role="radiogroup" aria-label="License period">
-                    <button type="button" class="buy-plan is-selected" data-plan data-days="7 days" data-price="$1" aria-pressed="true">
+                    <button type="button" class="buy-plan is-selected" data-plan data-days="7 days" data-was="$1" data-price="$0.50" aria-pressed="true">
                         <span class="buy-plan-days">7 days</span>
-                        <span class="buy-plan-price">$1</span>
+                        <span class="buy-plan-price">$0.50</span>
+                        <span class="buy-plan-was">$1</span>
                         <span class="buy-plan-note">short trial</span>
                     </button>
-                    <button type="button" class="buy-plan" data-plan data-days="30 days" data-price="$5" aria-pressed="false">
+                    <button type="button" class="buy-plan" data-plan data-days="30 days" data-was="$4" data-price="$2" aria-pressed="false">
                         <span class="buy-plan-days">One month</span>
-                        <span class="buy-plan-price">$5</span>
-                        <span class="buy-plan-note">30 days</span>
+                        <span class="buy-plan-price">$2</span>
+                        <span class="buy-plan-was">$4</span>
+                        <span class="buy-plan-note">most popular</span>
+                    </button>
+                    <button type="button" class="buy-plan" data-plan data-days="365 days" data-was="$40" data-price="$20" aria-pressed="false">
+                        <span class="buy-plan-days">One year</span>
+                        <span class="buy-plan-price">$20</span>
+                        <span class="buy-plan-was">$40</span>
+                        <span class="buy-plan-note">best value</span>
                     </button>
                 </div>
 
@@ -75,8 +86,8 @@
                     <li>Cyberpunk theme</li>
                 </ul>
 
-                <a class="buy-cta" data-buy href="mailto:iys-ian@outlook.com?subject=IYS%20Archiver%20Pro%20key%20%E2%80%94%207%20days&amp;body=Hello%2C%0A%0AI%27d%20like%20an%20IYS%20Archiver%20Pro%20key%20for%207%20days%20(%241).%0A%0AmacOS%20version%3A%20%0AIYS%20account%20email%3A%20%0A">
-                    Email me a key — 7 days, $1
+                <a class="buy-cta" data-buy href="mailto:iys-ian@outlook.com?subject=IYS%20Archiver%20Pro%20key%20%E2%80%94%207%20days&amp;body=Hello%2C%0A%0AI%27d%20like%20an%20IYS%20Archiver%20Pro%20key%20for%207%20days%20(%240.50).%0A%0AmacOS%20version%3A%20%0AIYS%20account%20email%3A%20%0A">
+                    Email me a key — 7 days, $0.50
                 </a>
 
                 <script>
@@ -84,6 +95,7 @@
                     var plans = Array.prototype.slice.call(document.querySelectorAll('[data-plan]'));
                     var cta = document.querySelector('[data-buy]');
                     var priceLabel = document.querySelector('[data-price-label]');
+                    var wasLabel = document.querySelector('[data-was]');
                     var daysLabel = document.querySelector('[data-days-label]');
 
                     function choose(plan) {
@@ -94,7 +106,9 @@
                         });
                         var days = plan.dataset.days;
                         var price = plan.dataset.price;
+                        var was = plan.dataset.was;
                         if (priceLabel) priceLabel.textContent = price;
+                        if (wasLabel) wasLabel.textContent = was;
                         if (daysLabel) daysLabel.textContent = days;
                         if (cta) {
                             var body = 'Hello,\n\nI\'d like an IYS Archiver Pro key for ' + days + ' (' + price + ').\n\nmacOS version: \nIYS account email: \n';
@@ -196,7 +210,7 @@
                 </details>
                 <details>
                     <summary>Is this a subscription?</summary>
-                    <p>No. You buy one period — 7 days for $1, or one month for $5. When it runs out, buy another key; nothing renews on its own.</p>
+                    <p>No. You buy one period — 7 days, one month or one year — and nothing renews on its own. During the launch offer every period is half price: $0.50, $2 or $20 instead of $1, $4 or $40.</p>
                 </details>
                 <details>
                     <summary>Why by email instead of a checkout page?</summary>
