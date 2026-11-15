@@ -1742,14 +1742,14 @@
     lbStatus.hidden = true;
     const me = cloud.userId;
 
-    // 成绩相同就并列名次，下一名跳号（1, 1, 3）
+    // 成绩相同就并列名次，名次连续（1, 1, 1, 2, 2, 3）
     let lastLabel = null;
     let lastRank = 0;
 
-    top.forEach((row, index) => {
+    top.forEach((row) => {
       const label = formatScore(row.test, Number(row.value));
       if (label !== lastLabel) {
-        lastRank = index + 1;
+        lastRank += 1;
         lastLabel = label;
       }
 
