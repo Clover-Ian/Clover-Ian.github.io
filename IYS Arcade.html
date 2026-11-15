@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three quick tests for reaction time, clicking speed, and typing speed. Runs entirely in your browser.">
+    <title>IYS Arcade</title>
+    <link rel="icon" type="image/png" href="IYS.png">
+    <link rel="apple-touch-icon" href="IYS.png">
+    <link rel="stylesheet" href="style.css?v=20261116c">
+    <script src="supabase.js" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="account-nav.js?v=20261116c" defer></script>
+    <script src="benchmark.js?v=20261116c" defer></script>
+</head>
+<body class="benchmark-page">
+    <header class="site-header hb-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <button type="button" class="account-nav-link" data-open="leaderboard">Leaderboard</button>
+                <button type="button" class="account-nav-link" data-open="history">My scores</button>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="hb-main">
+
+
+        <div class="hb-banner" data-signin-banner hidden role="status">
+            <span class="hb-banner-icon" aria-hidden="true">!</span>
+            <p><strong>You're not signed in.</strong> Your scores won't be saved and won't appear on the leaderboard.</p>
+            <a class="hb-banner-link" href="IYS Account Sign In.html">Sign in</a>
+        </div>
+
+
+        <!-- ================= 首页：三个测试入口 ================= -->
+        <section class="hb-view is-active" id="view-home" aria-labelledby="hb-title">
+            <div class="hb-hero">
+                <p class="hb-eyebrow">Interactive tests</p>
+                <h1 id="hb-title">IYS Arcade</h1>
+                <p class="hb-lede">
+                    How fast are you, really? Seven short tests — reaction time, click speed, typing,
+                    numbers, sequences, aim and a steady hand. Your scores are saved to your IYS account, so please remember to sign in before the game begins. 
+                </p>
+            </div>
+
+            <div class="hb-cards">
+                <button type="button" class="hb-card" data-open="reaction">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 9.5-12H13z"/></svg>
+                    <span class="hb-card-title">Reaction Time</span>
+                    <span class="hb-card-copy">Click the moment the screen turns green. Five rounds, averaged.</span>
+                    <span class="hb-card-best" data-best="reaction">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="click">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+                    <span class="hb-card-title">Click Speed</span>
+                    <span class="hb-card-copy">How many clicks can you land in ten seconds?</span>
+                    <span class="hb-card-best" data-best="click">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="typing">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M6.5 13.5h.01M17 13.5h.01M9.5 16h5"/></svg>
+                    <span class="hb-card-title">Typing Speed</span>
+                    <span class="hb-card-copy">Type a random passage. Copy and paste are disabled.</span>
+                    <span class="hb-card-best" data-best="typing">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="numbers">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 3 7.5 21M16.5 3 15 21M4 8.5h16M3 15.5h16"/></svg>
+                    <span class="hb-card-title">Number Memory</span>
+                    <span class="hb-card-copy">One digit, then two, then three — how far can you go?</span>
+                    <span class="hb-card-best" data-best="numbers">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="sequence">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1.2"/><rect x="9.5" y="3" width="5" height="5" rx="1.2"/><rect x="16" y="3" width="5" height="5" rx="1.2"/><rect x="3" y="9.5" width="5" height="5" rx="1.2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.2"/><rect x="16" y="9.5" width="5" height="5" rx="1.2"/><rect x="3" y="16" width="5" height="5" rx="1.2"/><rect x="9.5" y="16" width="5" height="5" rx="1.2"/><rect x="16" y="16" width="5" height="5" rx="1.2"/></svg>
+                    <span class="hb-card-title">Sequence Memory</span>
+                    <span class="hb-card-copy">Watch the squares light up, then repeat the order.</span>
+                    <span class="hb-card-best" data-best="sequence">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="aim">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>
+                    <span class="hb-card-title">Aim Trainer</span>
+                    <span class="hb-card-copy">Thirty targets. Hit each one as fast as you can.</span>
+                    <span class="hb-card-best" data-best="aim">Not tested yet</span>
+                </button>
+
+                <button type="button" class="hb-card" data-open="circle">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke-dasharray="2.4 3"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+                    <span class="hb-card-title">Circle Drawing</span>
+                    <span class="hb-card-copy">One stroke, one loop. Scored by how round it is.</span>
+                    <span class="hb-card-best" data-best="circle">Not tested yet</span>
+                </button>
+
+                <div class="hb-card hb-card--soon" aria-label="More tests coming">
+                    <svg class="hb-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    <span class="hb-card-title">Expect more</span>
+                    <span class="hb-card-copy">New tests are on the way.</span>
+                </div>
+
+            </div>
+
+            <p class="hb-note">
+                Browsers are not laboratory equipment. Display refresh and input lag both add a few
+                milliseconds — treat these as relative scores, not clinical measurements.
+            </p>
+        </section>
+
+        <!-- ================= 反应测试 ================= -->
+        <section class="hb-view" id="view-reaction" aria-labelledby="hb-reaction-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-reaction-title">Reaction Time</h2>
+                <p class="hb-sub">Round <span data-reaction-round>0</span> of 5</p>
+            </div>
+
+            <div class="hb-stage hb-stage--reaction" data-reaction-stage>
+                <div class="hb-stage-inner">
+                    <p class="hb-stage-title" data-reaction-title>Click to start</p>
+                    <p class="hb-stage-copy" data-reaction-copy>Five rounds. Wait for green, then click as fast as you can.</p>
+                </div>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Last</span>
+                    <span class="hb-stat-value" data-reaction-last>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Average</span>
+                    <span class="hb-stat-value" data-reaction-average>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-reaction-best>—</span>
+                </div>
+            </div>
+
+            <ol class="hb-rounds" data-reaction-rounds aria-label="Round results"></ol>
+        </section>
+
+        <!-- ================= 点击速度 ================= -->
+        <section class="hb-view" id="view-click" aria-labelledby="hb-click-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-click-title">Click Speed</h2>
+                <p class="hb-sub">Click as many times as you can before time runs out.</p>
+            </div>
+
+        <div class="hb-ad" data-iym-ad role="complementary" aria-label="IYM AutoClicker">
+            <img class="hb-ad-icon" src="IYM AutoClicker.png" alt="" aria-hidden="true">
+            <div class="hb-ad-text">
+                <p class="hb-ad-title">IYM AutoClicker</p>
+                <p class="hb-ad-copy">Clicking your fingers off? Let it click for you — safe mode, precise intervals, and a few extras for members.</p>
+            </div>
+            <div class="hb-ad-actions">
+                <a class="hb-ad-cta" href="IYM AutoClicker Pro.html">Take a look</a>
+            </div>
+            <button type="button" class="hb-ad-close" data-iym-ad-close aria-label="Close">✕</button>
+        </div>
+
+            <div class="hb-duration" role="group" aria-label="Test duration">
+                <button type="button" class="hb-chip is-selected" data-duration="10">10 seconds</button>
+                <button type="button" class="hb-chip" data-duration="60">60 seconds</button>
+            </div>
+
+            <div class="hb-stage hb-stage--click" data-click-stage tabindex="0" role="button"
+                 aria-label="Click as fast as you can">
+                <div class="hb-stage-inner">
+                    <p class="hb-click-count" data-click-count>0</p>
+                    <p class="hb-stage-copy" data-click-copy>Click anywhere in this box to start</p>
+                </div>
+            </div>
+
+            <div class="hb-actions hb-click-actions" data-click-actions hidden>
+                <button type="button" class="hb-button hb-button--primary" data-click-restart>Try again</button>
+            </div>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Time left</span>
+                    <span class="hb-stat-value" data-click-time>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Clicks / second</span>
+                    <span class="hb-stat-value" data-click-cps>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-click-best>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 打字速度 ================= -->
+        <section class="hb-view" id="view-typing" aria-labelledby="hb-typing-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-typing-title">Typing Speed</h2>
+                <p class="hb-sub">Copy and paste are disabled. The timer starts when you begin typing.</p>
+            </div>
+
+            <div class="hb-passage" data-typing-passage aria-hidden="true"></div>
+
+            <label class="hb-sr-only" for="hb-typing-input">Type the passage above</label>
+            <textarea id="hb-typing-input" class="hb-input" data-typing-input
+                      autocomplete="off" autocorrect="off" autocapitalize="off"
+                      spellcheck="false" rows="4" placeholder="Start typing here…"></textarea>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Time</span>
+                    <span class="hb-stat-value" data-typing-time>0.0s</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Words / minute</span>
+                    <span class="hb-stat-value" data-typing-wpm>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Accuracy</span>
+                    <span class="hb-stat-value" data-typing-accuracy>—</span>
+                </div>
+            </div>
+
+            <div class="hb-actions">
+                <button type="button" class="hb-button hb-button--primary" data-typing-restart>New passage</button>
+                <span class="hb-save-state" data-save-state role="status"></span>
+            </div>
+        </section>
+
+
+        <!-- ================= 记数字 ================= -->
+        <section class="hb-view" id="view-numbers" aria-labelledby="hb-numbers-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-numbers-title">Number Memory</h2>
+                <p class="hb-sub">Level <span data-num-level>1</span> · <span data-num-digits>1</span> digit</p>
+            </div>
+
+            <div class="hb-stage hb-stage--numbers" data-num-stage tabindex="0" role="button"
+                 aria-label="Click to start">
+                <div class="hb-stage-inner">
+                    <p class="hb-stage-title" data-num-title>Remember the number</p>
+                    <p class="hb-num-display" data-num-display hidden>0</p>
+                    <p class="hb-stage-copy" data-num-copy>Click the box to start. The number disappears when you have to type it.</p>
+                </div>
+            </div>
+
+            <form class="hb-num-form" data-num-form hidden>
+                <label class="hb-sr-only" for="hb-num-input">Type the number you saw</label>
+                <input id="hb-num-input" class="hb-input" data-num-input type="text"
+                       inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Type the number">
+                <button class="hb-button hb-button--primary" type="submit">Submit</button>
+            </form>
+
+            <p class="hb-status-line" data-num-state role="status"></p>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Level</span>
+                    <span class="hb-stat-value" data-num-current>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-num-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Digits</span>
+                    <span class="hb-stat-value" data-num-digits-best>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 记忆顺序 ================= -->
+        <section class="hb-view" id="view-sequence" aria-labelledby="hb-sequence-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-sequence-title">Sequence Memory</h2>
+                <p class="hb-sub">Level <span data-seq-level>1</span> · <span data-seq-length>1</span> step</p>
+            </div>
+
+            <div class="hb-seq-grid" data-seq-grid role="group" aria-label="Sequence grid">
+                <button type="button" class="hb-cell" data-cell="0" aria-label="Cell 1"></button>
+                <button type="button" class="hb-cell" data-cell="1" aria-label="Cell 2"></button>
+                <button type="button" class="hb-cell" data-cell="2" aria-label="Cell 3"></button>
+                <button type="button" class="hb-cell" data-cell="3" aria-label="Cell 4"></button>
+                <button type="button" class="hb-cell" data-cell="4" aria-label="Cell 5"></button>
+                <button type="button" class="hb-cell" data-cell="5" aria-label="Cell 6"></button>
+                <button type="button" class="hb-cell" data-cell="6" aria-label="Cell 7"></button>
+                <button type="button" class="hb-cell" data-cell="7" aria-label="Cell 8"></button>
+                <button type="button" class="hb-cell" data-cell="8" aria-label="Cell 9"></button>
+            </div>
+
+            <p class="hb-seq-status" data-seq-status>Click a square to start.</p>
+
+            <p class="hb-status-line" data-seq-state role="status"></p>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Level</span>
+                    <span class="hb-stat-value" data-seq-current>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-seq-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Steps</span>
+                    <span class="hb-stat-value" data-seq-steps>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 目标点击 ================= -->
+        <section class="hb-view" id="view-aim" aria-labelledby="hb-aim-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-aim-title">Aim Trainer</h2>
+                <p class="hb-sub">Hit <span data-aim-total>30</span> targets. Average time is your score.</p>
+            </div>
+
+            <div class="hb-aim-stage" data-aim-stage>
+                <p class="hb-aim-hint" data-aim-hint>Click anywhere in this box to start.</p>
+            </div>
+
+            <p class="hb-status-line" data-aim-state role="status"></p>
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Hits</span>
+                    <span class="hb-stat-value" data-aim-hits>0</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Average</span>
+                    <span class="hb-stat-value" data-aim-average>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-aim-best>—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 画圆 ================= -->
+        <section class="hb-view" id="view-circle" aria-labelledby="hb-circle-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-circle-title">Circle Drawing</h2>
+                <p class="hb-sub">One stroke · one loop around the centre dot</p>
+            </div>
+
+            <div class="hb-circle-stage" data-circle-stage>
+                <canvas class="hb-circle-canvas" data-circle-canvas aria-label="Drawing area"></canvas>
+                <p class="hb-circle-hint" data-circle-hint>Press and drag to draw a circle</p>
+            </div>
+
+            <p class="hb-circle-note" data-circle-note>
+                Keep the loop closed, don’t lift your finger, and draw around the dot in the middle.
+            </p>
+
+
+            <div class="hb-result-row">
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Roundness</span>
+                    <span class="hb-stat-value" data-circle-score>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Best</span>
+                    <span class="hb-stat-value" data-circle-best>—</span>
+                </div>
+                <div class="hb-stat">
+                    <span class="hb-stat-label">Radius</span>
+                    <span class="hb-stat-value" data-circle-radius>—</span>
+                </div>
+            </div>
+
+            <p class="hb-status-line" data-circle-state role="status"></p>
+        </section>
+
+        <!-- ================= 排行榜 ================= -->
+        <section class="hb-view" id="view-leaderboard" aria-labelledby="hb-board-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-board-title">Leaderboard</h2>
+                <p class="hb-sub">Best scores from everyone who is signed in.</p>
+            </div>
+
+            <div class="hb-tabs" role="tablist" aria-label="Leaderboard category">
+                <button type="button" class="hb-tab is-selected" role="tab" aria-selected="true" data-lb-test="reaction">Reaction</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="click">Click Speed</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="typing">Typing</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="numbers">Numbers</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="sequence">Sequence</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="aim">Aim</button>
+                <button type="button" class="hb-tab" role="tab" aria-selected="false" data-lb-test="circle">Circle</button>
+            </div>
+
+            <div class="hb-duration hb-lb-duration" data-lb-duration hidden role="group" aria-label="Click duration">
+                <button type="button" class="hb-chip is-selected" data-lb-seconds="10">10 seconds</button>
+                <button type="button" class="hb-chip" data-lb-seconds="60">60 seconds</button>
+            </div>
+
+            <div class="hb-board">
+                <div class="hb-board-head" aria-hidden="true">
+                    <span>#</span>
+                    <span>Player</span>
+                    <span>Score</span>
+                </div>
+                <ol class="hb-board-rows" data-lb-rows></ol>
+                <p class="hb-board-status" data-lb-status role="status">Loading…</p>
+            </div>
+        </section>
+
+        <!-- ================= 我的成绩 ================= -->
+        <section class="hb-view" id="view-history" aria-labelledby="hb-history-title">
+            <div class="hb-view-head">
+                <button type="button" class="hb-text-button" data-home>← All tests</button>
+                <h2 id="hb-history-title">My scores</h2>
+                <p class="hb-sub">Every run saved to your account, newest first.</p>
+            </div>
+
+            <div class="hb-history-bar">
+                <label class="hb-sr-only" for="hb-history-search">Search your scores</label>
+                <input id="hb-history-search" class="hb-input hb-history-search" data-history-search
+                       type="search" autocomplete="off" placeholder="Search a date, a test, or a score — mix them freely">
+            </div>
+            <p class="hb-history-hint">Try <span>2012.8.15</span>, or combine conditions: <span>2012-08 numbers</span> — separate terms with spaces.</p>
+
+            <p class="hb-board-status" data-history-status role="status">Loading…</p>
+
+            <div class="hb-board hb-history" data-history-board hidden>
+                <div class="hb-board-head hb-history-head" aria-hidden="true">
+                    <span>When</span>
+                    <span>Test</span>
+                    <span>Score</span>
+                </div>
+                <ol class="hb-board-rows" data-history-rows></ol>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer hb-footer">
+        <div class="footer-inner">
+            <p><a href="index.html">← Back to IYS</a></p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
