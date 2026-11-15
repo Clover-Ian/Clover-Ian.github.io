@@ -240,7 +240,6 @@ grant execute on function public.set_key_note(text, text, text) to anon, authent
 
 -- ---------- 5. 清理旧东西 ----------
 drop function if exists public.is_iys_admin();
-drop function if exists public.iys_admins_placeholder();
 drop table if exists public.iys_admins;
 
 -- ---------- 6. 邮箱确认（按需保留）----------
