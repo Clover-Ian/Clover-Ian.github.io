@@ -430,7 +430,8 @@ returns table (
     created_at      timestamptz,
     confirmed_at    timestamptz,
     last_sign_in_at timestamptz,
-    username        text
+    username        text,
+    avatar_url      text
 )
 language plpgsql
 stable
@@ -448,7 +449,12 @@ begin
            u.created_at,
            u.email_confirmed_at,
            u.last_sign_in_at,
-           coalesce(pr.username, '')
+           coalesce(nullif(pr.username, u.email::text),
+                    nullif(u.raw_user_meta_data->>'display_name', u.email::text),
+                    u.raw_user_meta_data->>'username',
+                    ''),
+           coalesce(u.raw_user_meta_data->>'avatar_url',
+                    u.raw_user_meta_data->>'picture')
       from auth.users u
       left join public.profiles pr on pr.id = u.id
      order by u.created_at desc
@@ -500,3 +506,62 @@ end;
 $$;
 
 grant execute on function public.admin_delete_user(text, uuid) to anon, authenticated;
+
+-- ---------- 11. 管理员与公告 ----------
+create table if not exists public.admins (
+    user_id  uuid primary key references auth.users (id) on delete cascade,
+    added_at timestamptz not null default now()
+);
+
+create table if not exists public.announcements (
+    id          uuid primary key default gen_random_uuid(),
+    title       text not null,
+    body        text not null,
+    level       text not null default 'info',      -- info | update | important
+    published   boolean not null default true,
+    author_id   uuid references auth.users (id) on delete set null,
+    created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now()
+);
+
+alter table public.admins enable row level security;
+alter table public.announcements enable row level security;
+
+create or replace function public.is_admin(p_uid uuid default auth.uid())
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+    select exists (select 1 from public.admins a where a.user_id = p_uid);
+$$;
+
+grant execute on function public.is_admin(uuid) to anon, authenticated;
+
+-- admins 表只给管理员看
+drop policy if exists admins_read on public.admins;
+create policy admins_read on public.admins
+    for select using (public.is_admin(auth.uid()));
+
+-- 公告：所有人可读已发布的，管理员可读写全部
+drop policy if exists announcements_read on public.announcements;
+create policy announcements_read on public.announcements
+    for select using (published or public.is_admin(auth.uid()));
+
+drop policy if exists announcements_insert on public.announcements;
+create policy announcements_insert on public.announcements
+    for insert with check (public.is_admin(auth.uid()));
+
+drop policy if exists announcements_update on public.announcements;
+create policy announcements_update on public.announcements
+    for update using (public.is_admin(auth.uid()));
+
+drop policy if exists announcements_delete on public.announcements;
+create policy announcements_delete on public.announcements
+    for delete using (public.is_admin(auth.uid()));
+
+-- 把 iys-ian@outlook.com 设为管理员（账号还没注册时这句不生效，注册后重跑一次即可）
+insert into public.admins (user_id)
+select id from auth.users where lower(email) = 'iys-ian@outlook.com'
+on conflict (user_id) do nothing;

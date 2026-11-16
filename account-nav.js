@@ -190,6 +190,21 @@
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
 
+    // 管理员多一个入口
+    (async () => {
+      try {
+        const { data: isAdmin } = await client.rpc('is_admin');
+        if (isAdmin !== true) return;
+        const staffLink = document.createElement('a');
+        staffLink.href = 'IYS Admin.html';
+        staffLink.className = 'account-menu-staff';
+        staffLink.textContent = 'Staff · Announcements';
+        menu.insertBefore(staffLink, menuUser.nextSibling);
+      } catch (staffError) {
+        console.warn('[account] 管理员检查失败：', staffError);
+      }
+    })();
+
     menu.append(
       menuUser,
       changePhotoButton,
