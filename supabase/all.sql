@@ -267,10 +267,10 @@ alter table public.issued_keys enable row level security;
 -- 发号登记（IYS Pro 用口令调用）
 create or replace function public.register_key(
     passcode text,
-    license_key text,
+    key_text text,
     apps text[],
-    days int,
-    note text default ''
+    days_count int,
+    note_text text default ''
 )
 returns boolean
 language plpgsql
@@ -284,11 +284,13 @@ begin
     end if;
 
     insert into public.issued_keys (license_key, products, days, note)
-    values (upper(license_key), apps, days, coalesce(note, ''))
+    values (upper(key_text), apps, days_count, coalesce(note_text, ''))
     on conflict (license_key) do update
         set products = excluded.products,
             days     = excluded.days,
-            note     = case when excluded.note = '' then public.issued_keys.note else excluded.note end;
+            note     = case when excluded.note = ''
+                            then public.issued_keys.note
+                            else excluded.note end;
 
     return true;
 end;
@@ -297,7 +299,7 @@ $$;
 grant execute on function public.register_key(text, text, text[], int, text) to anon, authenticated;
 
 -- 作废一把 key
-create or replace function public.revoke_key(passcode text, license_key text)
+create or replace function public.revoke_key(passcode text, key_text text)
 returns boolean
 language plpgsql
 stable
@@ -308,7 +310,11 @@ begin
     if passcode <> 'iys-pro-8074ed5a77cfe853' then
         return false;
     end if;
-    update public.issued_keys set revoked = true where license_key = upper(license_key);
+
+    update public.issued_keys
+       set revoked = true
+     where license_key = upper(key_text);
+
     return true;
 end;
 $$;
