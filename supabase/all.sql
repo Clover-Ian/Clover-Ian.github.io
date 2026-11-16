@@ -218,7 +218,6 @@ drop function if exists public.set_key_note(text, text, text);
 create or replace function public.set_key_note(p_passcode text, p_key text, p_note text)
 returns boolean
 language plpgsql
-stable
 security definer
 set search_path = public
 as $$
@@ -264,7 +263,6 @@ create or replace function public.register_key(
 )
 returns boolean
 language plpgsql
-stable
 security definer
 set search_path = public
 as $$
@@ -291,7 +289,6 @@ grant execute on function public.register_key(text, text, text[], int, text) to 
 create or replace function public.revoke_key(p_passcode text, p_key text)
 returns boolean
 language plpgsql
-stable
 security definer
 set search_path = public
 as $$
