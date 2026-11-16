@@ -99,7 +99,6 @@ create table if not exists public.license_activations (
     primary key (license_key, product)
 );
 
--- 老版本是单主键，迁移成复合主键
 do $$
 declare cols int;
 begin
@@ -122,7 +121,6 @@ create policy "license read own" on public.license_activations
 revoke insert, update, delete on public.license_activations from anon, authenticated;
 grant select on public.license_activations to authenticated;
 
--- 备注表
 create table if not exists public.key_notes (
     license_key text primary key,
     note        text not null default '',
@@ -131,7 +129,7 @@ create table if not exists public.key_notes (
 
 alter table public.key_notes enable row level security;
 
--- ---------- 5. 旧版密钥：本地签名 + 账号绑定 ----------
+-- ---------- 5. 旧版密钥 ----------
 create or replace function public.activate_license(candidate text, app text default 'archiver')
 returns text
 language plpgsql
@@ -174,6 +172,7 @@ grant execute on function public.activate_license(text, text) to authenticated;
 
 -- ---------- 6. IYS Pro：管理视图 ----------
 drop function if exists public.admin_activations(text);
+drop function if exists public.set_key_note(text, text, text);
 
 create or replace function public.admin_activations(passcode text)
 returns table (
@@ -213,8 +212,6 @@ $$;
 
 grant execute on function public.admin_activations(text) to anon, authenticated;
 
-drop function if exists public.set_key_note(text, text, text);
-
 create or replace function public.set_key_note(p_passcode text, p_key text, p_note text)
 returns boolean
 language plpgsql
@@ -250,9 +247,9 @@ create table if not exists public.issued_keys (
 
 alter table public.issued_keys enable row level security;
 
--- 参数名改过几版，先删再建
 drop function if exists public.register_key(text, text, text[], integer, text);
 drop function if exists public.revoke_key(text, text);
+drop function if exists public.verify_key(text, text);
 
 create or replace function public.register_key(
     p_passcode text,
