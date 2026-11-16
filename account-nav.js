@@ -120,8 +120,6 @@
       label.className = 'account-nav-name';
       label.textContent = name;
       userLabel.replaceChildren(buildAvatar(user, 24), label);
-      // replaceChildren 会把红点一起清掉，这里装回去
-      if (badgeEl) userLabel.append(badgeEl);
       userLabel.title = `Signed in as ${user.email || name}`;
       userLabel.setAttribute('aria-label', `Account options for ${name}`);
       renderMenuUser();
@@ -133,8 +131,6 @@
     badgeEl = badge;
     badge.className = 'account-badge';
     badge.hidden = true;
-    userLabel.append(badge);
-    userLabel.classList.add('has-badge');
 
     async function refreshBadge() {
       try {
@@ -243,6 +239,7 @@
       menuStatus,
     );
     accountMenu.append(userLabel, menu);
+    if (badgeEl) accountMenu.append(badgeEl);
     signInLink.replaceWith(accountMenu);
     signUpLink.remove();
 

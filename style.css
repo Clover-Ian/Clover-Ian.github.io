@@ -3175,11 +3175,20 @@ article.legal-policy h2 {
 /* ---------- 收件箱 ---------- */
 
 /* 收件箱占满整页：卡片拉高，对话区自己滚动，输入框固定在底部 */
-.inbox-card {
-    width: min(100%, 860px);
+.inbox-page .account-section {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    min-height: calc(100dvh - 72px);
+    align-items: stretch;
+}
+
+.inbox-page .inbox-card {
+    width: min(100%, 980px);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - 220px);
+    min-height: 0;
+    height: calc(100dvh - 136px);
 }
 
 .inbox-gate {
@@ -3256,29 +3265,12 @@ article.legal-policy h2 {
     min-height: 76px;
 }
 
-/* 头像按钮上的未读红点 */
-.account-menu-container .account-nav-user.has-badge {
-    position: relative;
-    padding-right: 4px;
-    /* 按钮本身要允许红点溢出，否则会被 overflow:hidden 切掉 */
-    overflow: visible;
-}
-
-/* 名字过长时只省略文字本身，头像保持原尺寸 */
-.account-menu-container .account-nav-name {
-    display: inline-block;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-
-/* 头像不要被拉伸 */
-.account-menu-container .account-nav-user .avatar {
-    width: 24px;
-    height: 24px;
-    flex: none;
+/* 头像按钮上的未读红点：挂在容器上，按钮布局完全不变 */
+.account-menu-container .account-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 30;
 }
 
 .account-badge {
