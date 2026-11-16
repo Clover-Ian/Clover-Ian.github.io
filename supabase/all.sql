@@ -246,3 +246,150 @@ drop table if exists public.iys_admins;
 update auth.users set email_confirmed_at = now()
  where email in ('13580428669@163.com', 'qqandniangao@outlook.com')
    and email_confirmed_at is null;
+
+-- ============================================================
+-- 7. 服务端发号 + 在线校验（更安全的方案）
+--    IYS Pro 发号时把 key 写进 issued_keys，App 每次校验都问服务器。
+--    这样即使有人从 App 里抠出签名密钥，自己造的 key 也不在库里，一律无效。
+-- ============================================================
+
+create table if not exists public.issued_keys (
+    license_key text primary key,
+    products    text[] not null default '{}',
+    days        int    not null default 30,
+    note        text   not null default '',
+    revoked     boolean not null default false,
+    created_at  timestamptz not null default now()
+);
+
+alter table public.issued_keys enable row level security;
+
+-- 发号登记（IYS Pro 用口令调用）
+create or replace function public.register_key(
+    passcode text,
+    license_key text,
+    apps text[],
+    days int,
+    note text default ''
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+    if passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    insert into public.issued_keys (license_key, products, days, note)
+    values (upper(license_key), apps, days, coalesce(note, ''))
+    on conflict (license_key) do update
+        set products = excluded.products,
+            days     = excluded.days,
+            note     = case when excluded.note = '' then public.issued_keys.note else excluded.note end;
+
+    return true;
+end;
+$$;
+
+grant execute on function public.register_key(text, text, text[], int, text) to anon, authenticated;
+
+-- 作废一把 key
+create or replace function public.revoke_key(passcode text, license_key text)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+    if passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+    update public.issued_keys set revoked = true where license_key = upper(license_key);
+    return true;
+end;
+$$;
+
+grant execute on function public.revoke_key(text, text) to anon, authenticated;
+
+-- App 校验：第一次调用就把 key 绑到当前账号并记录激活时间
+create or replace function public.verify_key(candidate text, app text default 'archiver')
+returns table (
+    status       text,
+    days         int,
+    activated_at timestamptz,
+    expires_at   timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    me      uuid := auth.uid();
+    clean   text := upper(regexp_replace(candidate, '\s', '', 'g'));
+    entry   public.issued_keys%rowtype;
+    row_product text;
+    owner   uuid;
+    started timestamptz;
+    ends    timestamptz;
+begin
+    if me is null then
+        return query select 'sign_in_required'::text, 0, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    select * into entry from public.issued_keys where license_key = clean;
+    if entry.license_key is null then
+        return query select 'unknown'::text, 0, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    if entry.revoked then
+        return query select 'revoked'::text, entry.days, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    if not (app = any(entry.products)) then
+        return query select 'wrong_app'::text, entry.days, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    -- 谁先激活就归谁
+    select user_id, activated_at into owner, started
+      from public.license_activations
+     where license_key = clean and product = app;
+
+    if owner is null then
+        insert into public.license_activations (license_key, user_id, product)
+        values (clean, me, app)
+        on conflict (license_key, product) do nothing;
+
+        select user_id, activated_at into owner, started
+          from public.license_activations
+         where license_key = clean and product = app;
+    end if;
+
+    if owner <> me then
+        return query select 'taken'::text, entry.days, started, null::timestamptz;
+        return;
+    end if;
+
+    if entry.days = 0 then
+        ends := null;                       -- 永久
+    else
+        ends := started + make_interval(days => entry.days);
+    end if;
+
+    if ends is not null and ends < now() then
+        return query select 'expired'::text, entry.days, started, ends;
+        return;
+    end if;
+
+    return query select 'ok'::text, entry.days, started, ends;
+end;
+$$;
+
+grant execute on function public.verify_key(text, text) to authenticated;
