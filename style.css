@@ -3113,6 +3113,8 @@ article.legal-policy h2 {
     font-size: 13px;
     line-height: 1.5;
     color: var(--muted);
+    /* 保留作者输入的换行 */
+    white-space: pre-wrap;
 }
 
 .announcement-close {
