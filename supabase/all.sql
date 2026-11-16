@@ -321,7 +321,6 @@ language plpgsql
 security definer
 set search_path = public
 as $$
-#variable_conflict use_variable
 declare
     me      uuid := auth.uid();
     clean   text := upper(regexp_replace(candidate, '\s', '', 'g'));
