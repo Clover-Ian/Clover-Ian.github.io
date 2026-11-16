@@ -613,7 +613,10 @@ begin
         return false;
     end if;
 
-    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    select u.id into target
+      from auth.users u
+     where lower(u.email) = lower(trim(p_email))
+     limit 1;
     if target is null then
         return false;
     end if;
@@ -644,14 +647,16 @@ create policy user_messages_insert on public.user_messages
 -- 管理员可以读某个用户的全部消息
 drop function if exists public.admin_thread(text, text);
 
+drop function if exists public.admin_thread(text, text);
+
 create or replace function public.admin_thread(p_passcode text, p_email text)
 returns table (
-    id           uuid,
-    sender       text,
-    title        text,
-    body         text,
-    created_at   timestamptz,
-    read_by_user boolean
+    msg_id        uuid,
+    msg_sender    text,
+    msg_title     text,
+    msg_body      text,
+    msg_created   timestamptz,
+    msg_read      boolean
 )
 language plpgsql
 stable
@@ -665,13 +670,22 @@ begin
         return;
     end if;
 
-    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    select u.id into target
+      from auth.users u
+     where lower(u.email) = lower(trim(p_email))
+     limit 1;
+
     if target is null then
         return;
     end if;
 
     return query
-    select m.id, m.sender, m.title, m.body, m.created_at, m.read_by_user
+    select m.id,
+           m.sender::text,
+           coalesce(m.title, ''),
+           m.body,
+           m.created_at,
+           m.read_by_user
       from public.user_messages m
      where m.user_id = target
      order by m.created_at asc
@@ -738,7 +752,10 @@ begin
         return false;
     end if;
 
-    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    select u.id into target
+      from auth.users u
+     where lower(u.email) = lower(trim(p_email))
+     limit 1;
     if target is null then
         return false;
     end if;
@@ -828,3 +845,14 @@ end;
 $$;
 
 grant execute on function public.admin_delete_announcement(text, uuid) to anon, authenticated;
+
+-- ---------- 15. 补上表级授权（否则网站用 anon key 读不到） ----------
+grant usage on schema public to anon, authenticated;
+
+grant select on public.announcements to anon, authenticated;
+grant select, insert, update, delete on public.announcements to authenticated;
+
+grant select, insert, update on public.user_messages to authenticated;
+grant select on public.user_messages to anon;
+
+grant select on public.admins to authenticated;
