@@ -157,6 +157,13 @@
       : defaultLabel;
   }
 
+  /** Supabase 用 email_not_confirmed 表示"还没验证邮箱" */
+  function isUnconfirmedEmail(error) {
+    if (!error) return false;
+    if (error.code === 'email_not_confirmed') return true;
+    return /email not confirmed|not confirmed/i.test(String(error.message ?? ''));
+  }
+
   function messageForError(error) {
     if (error instanceof TypeError) {
       return 'Could not reach the account service. Check your connection and try again.';
@@ -242,6 +249,23 @@
         await saveProfile(data.user);
       } else {
         const { data: signIn, error } = await client.auth.signInWithPassword({ email, password });
+
+        // 邮箱没确认：不报错，直接跳到输码这一步，并补发一封验证邮件
+        if (error && isUnconfirmedEmail(error)) {
+          pendingEmail = email;
+          showVerifyStep(email);
+          setBusy(false);
+          showVerifyMessage('This email still needs confirmation. Sending a new code…', 'success');
+          try {
+            const { error: resendError } = await client.auth.resend({ type: 'signup', email });
+            if (resendError) throw resendError;
+            showVerifyMessage('Enter the 8-digit code we just sent to your email.', 'success');
+          } catch (resendFailure) {
+            showVerifyMessage(`Your email still needs confirmation. ${messageForError(resendFailure)}`);
+          }
+          return;
+        }
+
         if (error) throw error;
         await saveProfile(signIn?.user);
       }
