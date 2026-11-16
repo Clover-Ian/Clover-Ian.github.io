@@ -856,3 +856,42 @@ grant select, insert, update on public.user_messages to authenticated;
 grant select on public.user_messages to anon;
 
 grant select on public.admins to authenticated;
+
+-- ---------- 16. 标记"用户发来的消息"为已读 ----------
+drop function if exists public.admin_mark_read(text, text);
+
+create or replace function public.admin_mark_read(p_passcode text, p_email text)
+returns integer
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    target  uuid;
+    touched integer;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return 0;
+    end if;
+
+    select u.id into target
+      from auth.users u
+     where lower(u.email) = lower(trim(p_email))
+     limit 1;
+
+    if target is null then
+        return 0;
+    end if;
+
+    update public.user_messages
+       set read_by_admin = true
+     where user_id = target
+       and sender = 'user'
+       and read_by_admin = false;
+
+    get diagnostics touched = row_count;
+    return touched;
+end;
+$$;
+
+grant execute on function public.admin_mark_read(text, text) to anon, authenticated;

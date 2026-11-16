@@ -70,12 +70,16 @@
     thread.hidden = false;
     form.hidden = false;
 
-    // 把管理员发来的标记成已读
+    // 把管理员发来的标记成已读（网站端）
     const unread = data.filter((item) => item.sender === 'admin' && !item.read_by_user).map((item) => item.id);
     if (unread.length) {
       await client.from('user_messages')
         .update({ read_by_user: true })
         .in('id', unread);
+      // 让头像菜单上的 "Inbox · N new" 立刻更新
+      document.querySelectorAll('.account-menu-staff').forEach((el) => {
+        if (el.getAttribute('href') === 'IYS Inbox.html') el.textContent = 'Inbox';
+      });
     }
 
     thread.scrollTop = thread.scrollHeight;
