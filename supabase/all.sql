@@ -213,21 +213,22 @@ $$;
 
 grant execute on function public.admin_activations(text) to anon, authenticated;
 
-create or replace function public.set_key_note(passcode text, license_key text, note text)
+drop function if exists public.set_key_note(text, text, text);
+
+create or replace function public.set_key_note(p_passcode text, p_key text, p_note text)
 returns boolean
 language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-#variable_conflict use_variable
 begin
-    if passcode <> 'iys-pro-8074ed5a77cfe853' then
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
         return false;
     end if;
 
     insert into public.key_notes (license_key, note, updated_at)
-    values (upper(license_key), coalesce(note, ''), now())
+    values (upper(p_key), coalesce(p_note, ''), now())
     on conflict (license_key) do update
         set note = excluded.note,
             updated_at = now();
@@ -255,11 +256,11 @@ drop function if exists public.register_key(text, text, text[], integer, text);
 drop function if exists public.revoke_key(text, text);
 
 create or replace function public.register_key(
-    passcode text,
-    license_key text,
-    apps text[],
-    days int,
-    note text default ''
+    p_passcode text,
+    p_key text,
+    p_apps text[],
+    p_days int,
+    p_note text default ''
 )
 returns boolean
 language plpgsql
@@ -267,14 +268,13 @@ stable
 security definer
 set search_path = public
 as $$
-#variable_conflict use_variable
 begin
-    if passcode <> 'iys-pro-8074ed5a77cfe853' then
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
         return false;
     end if;
 
     insert into public.issued_keys (license_key, products, days, note)
-    values (upper(license_key), apps, days, coalesce(note, ''))
+    values (upper(p_key), p_apps, p_days, coalesce(p_note, ''))
     on conflict (license_key) do update
         set products = excluded.products,
             days     = excluded.days,
@@ -288,22 +288,21 @@ $$;
 
 grant execute on function public.register_key(text, text, text[], int, text) to anon, authenticated;
 
-create or replace function public.revoke_key(passcode text, license_key text)
+create or replace function public.revoke_key(p_passcode text, p_key text)
 returns boolean
 language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-#variable_conflict use_variable
 begin
-    if passcode <> 'iys-pro-8074ed5a77cfe853' then
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
         return false;
     end if;
 
     update public.issued_keys
        set revoked = true
-     where license_key = upper(license_key);
+     where license_key = upper(p_key);
 
     return true;
 end;
