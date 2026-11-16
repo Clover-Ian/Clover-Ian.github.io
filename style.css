@@ -3277,19 +3277,12 @@ article.legal-policy h2 {
     min-height: 76px;
 }
 
-/* 头像按钮上的未读红点：挂在容器上，按钮布局完全不变 */
-.account-menu-container .account-badge {
+/* 未读红点：挂在 .account-menu-container 上，按钮布局完全不变 */
+.account-badge {
     position: absolute;
     top: -6px;
     right: -6px;
     z-index: 30;
-}
-
-.account-badge {
-    position: absolute;
-    top: -7px;
-    right: -8px;
-    z-index: 2;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
