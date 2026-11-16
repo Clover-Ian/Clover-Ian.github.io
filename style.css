@@ -3285,3 +3285,17 @@ article.legal-policy h2 {
 .account-badge[hidden] {
     display: none;
 }
+
+.account-menu-inbox {
+    display: block;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--blue);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+}
+
+.account-menu-inbox:hover {
+    background: var(--surface);
+}

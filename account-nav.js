@@ -220,7 +220,14 @@
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
 
+    const inboxLink = document.createElement('a');
+    inboxLink.href = 'IYS Inbox.html';
+    inboxLink.className = 'account-menu-inbox';
+    inboxLink.textContent = 'Inbox';
+    inboxLink.addEventListener('click', () => setMenuOpen(false));
+
     menu.append(
+      inboxLink,
       menuUser,
       changePhotoButton,
       changeUsernameButton,
