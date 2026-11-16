@@ -417,3 +417,86 @@ drop table if exists public.iys_admins;
 update auth.users set email_confirmed_at = now()
  where email in ('13580428669@163.com', 'qqandniangao@outlook.com')
    and email_confirmed_at is null;
+
+-- ---------- 10. IYS User：账号管理 ----------
+drop function if exists public.admin_list_users(text);
+drop function if exists public.admin_confirm_user(text, text);
+drop function if exists public.admin_delete_user(text, uuid);
+
+create or replace function public.admin_list_users(p_passcode text)
+returns table (
+    id              uuid,
+    email           text,
+    created_at      timestamptz,
+    confirmed_at    timestamptz,
+    last_sign_in_at timestamptz,
+    username        text
+)
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
+    select u.id,
+           u.email::text,
+           u.created_at,
+           u.email_confirmed_at,
+           u.last_sign_in_at,
+           coalesce(pr.username, '')
+      from auth.users u
+      left join public.profiles pr on pr.id = u.id
+     order by u.created_at desc
+     limit 500;
+end;
+$$;
+
+grant execute on function public.admin_list_users(text) to anon, authenticated;
+
+create or replace function public.admin_confirm_user(p_passcode text, p_email text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    update auth.users
+       set email_confirmed_at = now()
+     where lower(email) = lower(trim(p_email))
+       and email_confirmed_at is null;
+
+    return found;
+end;
+$$;
+
+grant execute on function public.admin_confirm_user(text, text) to anon, authenticated;
+
+create or replace function public.admin_delete_user(p_passcode text, p_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    removed int;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    delete from auth.users where id = p_id;
+    get diagnostics removed = row_count;
+    return removed > 0;
+end;
+$$;
+
+grant execute on function public.admin_delete_user(text, uuid) to anon, authenticated;
