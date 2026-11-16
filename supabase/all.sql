@@ -177,7 +177,7 @@ grant execute on function public.activate_license(text, text) to authenticated;
 drop function if exists public.admin_activations(text);
 drop function if exists public.set_key_note(text, text, text);
 
-create or replace function public.admin_activations(passcode text)
+create or replace function public.admin_activations(p_passcode text)
 returns table (
     license_key  text,
     product      text,
@@ -186,31 +186,45 @@ returns table (
     email        text,
     name         text,
     avatar_url   text,
-    note         text
+    note         text,
+    days         int,
+    expires_at   timestamptz
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public, auth
 as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
     select a.license_key,
            a.product,
            a.activated_at,
            a.user_id,
            u.email::text,
-           coalesce(nullif(p.username, u.email::text),
+           coalesce(nullif(pr.username, u.email::text),
                     nullif(u.raw_user_meta_data->>'display_name', u.email::text),
                     u.raw_user_meta_data->>'username',
                     '—'),
            coalesce(u.raw_user_meta_data->>'avatar_url',
                     u.raw_user_meta_data->>'picture'),
-           coalesce(n.note, '')
+           coalesce(n.note, ''),
+           k.days,
+           case when k.days is null then null
+                when k.days = 0 then null
+                else a.activated_at + make_interval(days => k.days) end
       from public.license_activations a
       join auth.users u on u.id = a.user_id
-      left join public.profiles p on p.id = a.user_id
+      left join public.profiles pr on pr.id = a.user_id
       left join public.key_notes n on n.license_key = a.license_key
-     where passcode = 'iys-pro-8074ed5a77cfe853'
-     order by a.activated_at desc;
+      left join public.issued_keys k on k.license_key = a.license_key
+     order by a.activated_at desc
+     limit 500;
+end;
 $$;
 
 grant execute on function public.admin_activations(text) to anon, authenticated;
