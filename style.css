@@ -2272,24 +2272,7 @@ article.legal-policy h2 {
 .nav-links .account-nav-user {
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 6px;
-    padding: 4px 12px 4px 5px;
-}
-
-.nav-links .account-nav-user .avatar {
-    width: 22px;
-    height: 22px;
-    flex: 0 0 22px;
-}
-
-.nav-links .account-nav-user > span:last-child {
-    display: inline-block;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: left;
+    gap: 8px;
 }
 
 .nav-links .account-nav-user > span {
@@ -3204,15 +3187,20 @@ article.legal-policy h2 {
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    height: calc(100dvh - 136px);
+    height: calc(100dvh - 120px);
     overflow: hidden;
+    padding-bottom: 24px;
 }
 
-/* 也让旧版浏览器有个兜底 */
 .inbox-page .inbox-thread {
+    flex: 1 1 auto;
+    min-height: 0;       /* 关键：允许它被压缩，否则会顶出卡片 */
     max-height: none;
     overflow-y: auto;
+}
+
+.inbox-page .inbox-form {
+    flex: 0 0 auto;
 }
 
 .inbox-gate {
