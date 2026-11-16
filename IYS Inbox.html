@@ -7,11 +7,41 @@
     <title>IYS — Inbox</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css">
-    <script src="supabase.js" defer></script>
-    <script src="supabase-config.js" defer></script>
-    <script src="account-nav.js" defer></script>
-    <script src="inbox.js" defer></script>
+    <link rel="stylesheet" href="style.css?v=20261116b">
+    <style>
+        /* 收件箱专用布局：写在页面里，不依赖外部 CSS 缓存 */
+        body.inbox-page .account-section {
+            padding: 32px 0 40px;
+            align-items: stretch;
+        }
+        body.inbox-page .inbox-card {
+            width: min(100%, 980px);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: calc(100dvh - 150px);
+            overflow: hidden;
+            padding-bottom: 28px;
+        }
+        body.inbox-page .inbox-thread {
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
+        }
+        body.inbox-page .inbox-form {
+            flex: 0 0 auto;
+            margin-top: 0;
+        }
+        body.inbox-page .account-submit {
+            margin-bottom: 0;
+        }
+    </style>
+
+    <script src="supabase.js?v=20261116b" defer></script>
+    <script src="supabase-config.js?v=20261116b" defer></script>
+    <script src="account-nav.js?v=20261116b" defer></script>
+    <script src="inbox.js?v=20261116b" defer></script>
 </head>
 <body class="corner-background inbox-page">
     <header class="site-header">

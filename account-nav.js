@@ -112,7 +112,6 @@
     userLabel.setAttribute('aria-expanded', 'false');
 
     let renderMenuUser = () => {};
-    let badgeEl = null;
 
     function updateUserLabel() {
       const name = displayNameOf(user);
@@ -125,49 +124,6 @@
       renderMenuUser();
     }
     updateUserLabel();
-
-    // 未读消息红点（显示在头像按钮右上角）
-    const badge = document.createElement('span');
-    badgeEl = badge;
-    badge.className = 'account-badge';
-    badge.hidden = true;
-
-    async function refreshBadge() {
-      try {
-        const { count } = await client
-          .from('user_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('sender', 'admin')
-          .eq('read_by_user', false);
-        const unread = count ?? 0;
-        badge.hidden = unread === 0;
-        badge.textContent = unread > 99 ? '99+' : String(unread);
-        userLabel.setAttribute('aria-label',
-          unread > 0
-            ? `Account options for ${displayNameOf(user)}, ${unread} unread message${unread === 1 ? '' : 's'}`
-            : `Account options for ${displayNameOf(user)}`);
-      } catch (badgeError) {
-        console.warn('[account] 未读红点失败：', badgeError);
-      }
-    }
-    refreshBadge();
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) refreshBadge();
-    });
-
-    // 老用户首次登录时补一条 profiles，保证查重能覆盖到他们
-    (async () => {
-      const name = displayNameOf(user);
-      if (!name) return;
-      try {
-        const { data: rows } = await client.from('profiles').select('id').eq('id', user.id).limit(1);
-        if (!Array.isArray(rows) || rows.length === 0) {
-          await client.from('profiles').insert({ id: user.id, username: name });
-        }
-      } catch (profileError) {
-        console.warn('[account] profiles 初始化失败：', profileError);
-      }
-    })();
 
     const menu = document.createElement('div');
     menu.className = 'account-menu';
@@ -238,8 +194,46 @@
       signOutButton,
       menuStatus,
     );
+    // 导航栏上的 Inbox 图标 + 未读数
+    const inboxIcon = document.createElement('a');
+    inboxIcon.href = 'IYS Inbox.html';
+    inboxIcon.className = 'nav-inbox';
+    inboxIcon.setAttribute('aria-label', 'Inbox');
+    inboxIcon.title = 'Inbox';
+    inboxIcon.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+           stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+        <path d="m4 7 8 6 8-6"></path>
+      </svg>`;
+    const inboxBadge = document.createElement('span');
+    inboxBadge.className = 'nav-inbox-badge';
+    inboxBadge.hidden = true;
+    inboxIcon.append(inboxBadge);
+
+    async function refreshInboxBadge() {
+      try {
+        const { count } = await client
+          .from('user_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('sender', 'admin')
+          .eq('read_by_user', false);
+        const unread = count ?? 0;
+        inboxBadge.hidden = unread === 0;
+        inboxBadge.textContent = unread > 99 ? '99+' : String(unread);
+        inboxIcon.setAttribute('aria-label',
+          unread > 0 ? `Inbox, ${unread} unread` : 'Inbox');
+      } catch (badgeError) {
+        console.warn('[account] 未读红点失败：', badgeError);
+      }
+    }
+    refreshInboxBadge();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshInboxBadge();
+    });
+
     accountMenu.append(userLabel, menu);
-    if (badgeEl) accountMenu.append(badgeEl);
+    accountMenu.after(inboxIcon);
     signInLink.replaceWith(accountMenu);
     signUpLink.remove();
 

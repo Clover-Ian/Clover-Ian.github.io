@@ -3277,26 +3277,46 @@ article.legal-policy h2 {
     min-height: 76px;
 }
 
-/* 未读红点：挂在 .account-menu-container 上，按钮布局完全不变 */
-.account-badge {
+/* 导航栏里的 Inbox 图标 */
+.nav-inbox {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: 10px;
+    border-radius: 999px;
+    color: var(--blue);
+    border: 1px solid rgb(0 102 204 / 28%);
+    background: #eef6ff;
+    vertical-align: middle;
+}
+
+.nav-inbox:hover {
+    border-color: var(--blue);
+    background: #e2f0ff;
+    text-decoration: none;
+}
+
+.nav-inbox-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    z-index: 30;
-    min-width: 16px;
-    height: 16px;
+    top: -5px;
+    right: -5px;
+    min-width: 17px;
+    height: 17px;
     padding: 0 4px;
     border-radius: 999px;
     background: #ff3b30;
     color: #fff;
     font-size: 10px;
     font-weight: 600;
-    line-height: 16px;
+    line-height: 17px;
     text-align: center;
     box-shadow: 0 0 0 2px #fff;
 }
 
-.account-badge[hidden] {
+.nav-inbox-badge[hidden] {
     display: none;
 }
 
