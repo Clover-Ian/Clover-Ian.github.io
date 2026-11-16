@@ -3250,12 +3250,25 @@ article.legal-policy h2 {
 .account-menu-container .account-nav-user.has-badge {
     position: relative;
     padding-right: 4px;
+    /* 按钮本身要允许红点溢出，否则会被 overflow:hidden 切掉 */
+    overflow: visible;
+}
+
+/* 名字过长时在内部省略，而不是裁掉红点 */
+.account-menu-container .account-nav-user.has-badge > span:not(.account-badge) {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
 }
 
 .account-badge {
     position: absolute;
-    top: -5px;
-    right: -6px;
+    top: -7px;
+    right: -8px;
+    z-index: 2;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
