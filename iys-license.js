@@ -57,7 +57,7 @@
     async check(key, product) {
       const clean = String(key || "").trim();
       if (!clean) return { status: "unknown" };
-      const rows = await call("verify_key", { candidate: clean, app: product || "website" });
+      const rows = await call("verify_key", { p_candidate: clean, p_app: product || "website" });
       if (Array.isArray(rows)) return rows[0] || { status: "unknown" };
       return rows || { status: "unknown" };
     },
