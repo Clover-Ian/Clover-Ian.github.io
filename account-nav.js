@@ -235,8 +235,8 @@
     accountMenu.append(userLabel, menu);
     signInLink.replaceWith(accountMenu);
     signUpLink.remove();
-    // 必须先挂到页面上，after() 才会生效（游离节点里调用会被忽略）
-    accountMenu.after(inboxIcon);
+    // 放在用户按钮的左边；必须先挂到页面上 before() 才生效
+    accountMenu.before(inboxIcon);
 
     function setMenuOpen(open) {
       menu.hidden = !open;
