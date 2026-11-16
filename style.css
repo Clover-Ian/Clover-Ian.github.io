@@ -3174,8 +3174,12 @@ article.legal-policy h2 {
 
 /* ---------- 收件箱 ---------- */
 
+/* 收件箱占满整页：卡片拉高，对话区自己滚动，输入框固定在底部 */
 .inbox-card {
-    max-width: 640px;
+    width: min(100%, 860px);
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 220px);
 }
 
 .inbox-gate {
@@ -3187,9 +3191,11 @@ article.legal-policy h2 {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: 420px;
+    flex: 1 1 auto;
+    min-height: 240px;
     overflow-y: auto;
     padding: 4px 2px 12px;
+    margin-bottom: 8px;
 }
 
 .inbox-bubble {
@@ -3234,6 +3240,10 @@ article.legal-policy h2 {
     margin-top: 5px;
     font-size: 10.5px;
     opacity: 0.6;
+}
+
+.inbox-form {
+    margin-top: auto;
 }
 
 .inbox-form textarea {
