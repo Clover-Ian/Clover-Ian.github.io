@@ -82,8 +82,28 @@
       });
     }
 
-    thread.scrollTop = thread.scrollHeight;
+    scrollToLatest();
   }
+
+  /// 对话区限制在视窗内，并滚到最新一条
+  function fitThread() {
+    if (!thread) return;
+    const rect = thread.getBoundingClientRect();
+    const bottomSpace = 160;   // 输入框 + 内边距预留
+    const available = window.innerHeight - rect.top - bottomSpace;
+    thread.style.maxHeight = `${Math.max(220, available)}px`;
+  }
+
+  function scrollToLatest() {
+    requestAnimationFrame(() => {
+      thread.scrollTop = thread.scrollHeight;
+    });
+  }
+
+  window.addEventListener('resize', () => {
+    fitThread();
+    scrollToLatest();
+  });
 
   async function init() {
     const { data: sessionData } = await client.auth.getSession();
@@ -92,6 +112,7 @@
       gate.hidden = false;
       return;
     }
+    fitThread();
     await loadThread();
   }
 
@@ -114,7 +135,8 @@
         if (error) throw error;
         field.value = '';
         setFeedback('Reply sent.', 'success');
-        await loadThread();
+        fitThread();
+    await loadThread();
       } catch (error) {
         setFeedback(error.message ?? 'Could not send your reply.');
       } finally {
