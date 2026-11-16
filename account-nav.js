@@ -124,6 +124,36 @@
     }
     updateUserLabel();
 
+    // 未读消息红点（显示在头像按钮右上角）
+    const badge = document.createElement('span');
+    badge.className = 'account-badge';
+    badge.hidden = true;
+    userLabel.append(badge);
+    userLabel.classList.add('has-badge');
+
+    async function refreshBadge() {
+      try {
+        const { count } = await client
+          .from('user_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('sender', 'admin')
+          .eq('read_by_user', false);
+        const unread = count ?? 0;
+        badge.hidden = unread === 0;
+        badge.textContent = unread > 99 ? '99+' : String(unread);
+        userLabel.setAttribute('aria-label',
+          unread > 0
+            ? `Account options for ${displayNameOf(user)}, ${unread} unread message${unread === 1 ? '' : 's'}`
+            : `Account options for ${displayNameOf(user)}`);
+      } catch (badgeError) {
+        console.warn('[account] 未读红点失败：', badgeError);
+      }
+    }
+    refreshBadge();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshBadge();
+    });
+
     // 老用户首次登录时补一条 profiles，保证查重能覆盖到他们
     (async () => {
       const name = displayNameOf(user);
@@ -189,41 +219,6 @@
     const signOutButton = document.createElement('button');
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
-
-    // 管理员多一个入口
-    (async () => {
-      try {
-        const { data: isAdmin } = await client.rpc('is_admin');
-        if (isAdmin !== true) return;
-        const staffLink = document.createElement('a');
-        staffLink.href = 'IYS Admin.html';
-        staffLink.className = 'account-menu-staff';
-        staffLink.textContent = 'Staff · Announcements';
-        menu.insertBefore(staffLink, menuUser.nextSibling);
-      } catch (staffError) {
-        console.warn('[account] 管理员检查失败：', staffError);
-      }
-    })();
-
-    const inboxLink = document.createElement('a');
-    inboxLink.href = 'IYS Inbox.html';
-    inboxLink.className = 'account-menu-staff';
-    inboxLink.textContent = 'Inbox';
-    menu.append(inboxLink);
-
-    // 未读数量
-    (async () => {
-      try {
-        const { count } = await client
-          .from('user_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('sender', 'admin')
-          .eq('read_by_user', false);
-        if (count) inboxLink.textContent = `Inbox · ${count} new`;
-      } catch (inboxError) {
-        console.warn('[account] 未读消息检查失败：', inboxError);
-      }
-    })();
 
     menu.append(
       menuUser,
@@ -332,6 +327,8 @@
         if (error) throw error;
         user = data.user ?? user;
         updateUserLabel();
+
+
 
         // 同步 profiles
         try {
@@ -769,6 +766,8 @@
 
         user = { ...user, user_metadata: { ...user.user_metadata, avatar_url: url } };
         updateUserLabel();
+
+
         showFeedback(avatarFeedback, 'Photo updated.', 'success');
         window.setTimeout(() => avatarDialog.close(), 600);
       } catch (error) {
