@@ -565,3 +565,266 @@ create policy announcements_delete on public.announcements
 insert into public.admins (user_id)
 select id from auth.users where lower(email) = 'iys-ian@outlook.com'
 on conflict (user_id) do nothing;
+
+-- ---------- 12. 定向消息（管理员 → 单个用户） ----------
+create table if not exists public.user_messages (
+    id          uuid primary key default gen_random_uuid(),
+    user_id     uuid not null references auth.users (id) on delete cascade,
+    title       text not null,
+    body        text not null,
+    read_at     timestamptz,
+    created_at  timestamptz not null default now()
+);
+
+create index if not exists user_messages_user_idx on public.user_messages (user_id, created_at desc);
+
+alter table public.user_messages enable row level security;
+
+drop policy if exists user_messages_read on public.user_messages;
+create policy user_messages_read on public.user_messages
+    for select using (user_id = auth.uid() or public.is_admin(auth.uid()));
+
+drop policy if exists user_messages_update on public.user_messages;
+create policy user_messages_update on public.user_messages
+    for update using (user_id = auth.uid() or public.is_admin(auth.uid()));
+
+drop policy if exists user_messages_delete on public.user_messages;
+create policy user_messages_delete on public.user_messages
+    for delete using (public.is_admin(auth.uid()));
+
+-- IYS User 用口令发消息（不用登录）
+drop function if exists public.admin_send_message(text, text, text, text);
+
+create or replace function public.admin_send_message(
+    p_passcode text,
+    p_email    text,
+    p_title    text,
+    p_body     text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    target uuid;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    if target is null then
+        return false;
+    end if;
+
+    insert into public.user_messages (user_id, title, body)
+    values (target, trim(p_title), trim(p_body));
+
+    return true;
+end;
+$$;
+
+grant execute on function public.admin_send_message(text, text, text, text) to anon, authenticated;
+
+-- ---------- 13. 双向对话（管理员 ↔ 用户） ----------
+alter table public.user_messages
+    add column if not exists sender text not null default 'admin',
+    add column if not exists read_by_admin boolean not null default false,
+    add column if not exists read_by_user boolean not null default false;
+
+create index if not exists user_messages_thread_idx
+    on public.user_messages (user_id, created_at);
+
+-- 用户可以回复（只能以自己的身份、sender=user）
+drop policy if exists user_messages_insert on public.user_messages;
+create policy user_messages_insert on public.user_messages
+    for insert with check (user_id = auth.uid() and sender = 'user');
+
+-- 管理员可以读某个用户的全部消息
+drop function if exists public.admin_thread(text, text);
+
+create or replace function public.admin_thread(p_passcode text, p_email text)
+returns table (
+    id           uuid,
+    sender       text,
+    title        text,
+    body         text,
+    created_at   timestamptz,
+    read_by_user boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+declare
+    target uuid;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    if target is null then
+        return;
+    end if;
+
+    return query
+    select m.id, m.sender, m.title, m.body, m.created_at, m.read_by_user
+      from public.user_messages m
+     where m.user_id = target
+     order by m.created_at asc
+     limit 200;
+end;
+$$;
+
+grant execute on function public.admin_thread(text, text) to anon, authenticated;
+
+-- 有对话的用户列表（带未读数）
+drop function if exists public.admin_threads(text);
+
+create or replace function public.admin_threads(p_passcode text)
+returns table (
+    user_id      uuid,
+    email        text,
+    username     text,
+    last_body    text,
+    last_at      timestamptz,
+    unread       bigint
+)
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
+    select m.user_id,
+           u.email::text,
+           coalesce(nullif(p.username, u.email::text), ''),
+           (select last.body from public.user_messages last
+             where last.user_id = m.user_id order by last.created_at desc limit 1),
+           max(m.created_at),
+           count(*) filter (where m.sender = 'user' and not m.read_by_admin)
+      from public.user_messages m
+      join auth.users u on u.id = m.user_id
+      left join public.profiles p on p.id = m.user_id
+     group by m.user_id, u.email, p.username
+     order by max(m.created_at) desc
+     limit 200;
+end;
+$$;
+
+grant execute on function public.admin_threads(text) to anon, authenticated;
+
+-- 管理员回复
+drop function if exists public.admin_reply(text, text, text);
+
+create or replace function public.admin_reply(p_passcode text, p_email text, p_body text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    target uuid;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+    if target is null then
+        return false;
+    end if;
+
+    insert into public.user_messages (user_id, sender, title, body)
+    values (target, 'admin', '', trim(p_body));
+
+    return true;
+end;
+$$;
+
+grant execute on function public.admin_reply(text, text, text) to anon, authenticated;
+
+-- ---------- 14. 公告的 App 接口 ----------
+drop function if exists public.admin_post_announcement(text, text, text, text);
+drop function if exists public.admin_list_announcements(text);
+drop function if exists public.admin_delete_announcement(text, uuid);
+
+create or replace function public.admin_post_announcement(
+    p_passcode text, p_title text, p_body text, p_level text default 'info'
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    insert into public.announcements (title, body, level, published)
+    values (trim(p_title), trim(p_body), coalesce(nullif(p_level, ''), 'info'), true);
+
+    return true;
+end;
+$$;
+
+grant execute on function public.admin_post_announcement(text, text, text, text) to anon, authenticated;
+
+create or replace function public.admin_list_announcements(p_passcode text)
+returns table (
+    id         uuid,
+    title      text,
+    body       text,
+    level      text,
+    published  boolean,
+    created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
+    select a.id, a.title, a.body, a.level, a.published, a.created_at
+      from public.announcements a
+     order by a.created_at desc
+     limit 100;
+end;
+$$;
+
+grant execute on function public.admin_list_announcements(text) to anon, authenticated;
+
+create or replace function public.admin_delete_announcement(p_passcode text, p_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    removed int;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    delete from public.announcements where id = p_id;
+    get diagnostics removed = row_count;
+    return removed > 0;
+end;
+$$;
+
+grant execute on function public.admin_delete_announcement(text, uuid) to anon, authenticated;

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>IYS — Inbox</title>
+    <link rel="icon" type="image/png" href="IYS.png">
+    <link rel="apple-touch-icon" href="IYS.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="supabase.js" defer></script>
+    <script src="supabase-config.js" defer></script>
+    <script src="account-nav.js" defer></script>
+    <script src="inbox.js" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="account-card inbox-card">
+            <p class="eyebrow">Messages</p>
+            <h1>Inbox.</h1>
+            <p class="account-intro">Messages from IYS appear here. You can reply directly.</p>
+
+            <p class="account-feedback" data-inbox-feedback role="alert" hidden></p>
+            <p class="inbox-gate" data-inbox-gate hidden>Sign in to see your messages.</p>
+
+            <div class="inbox-thread" data-inbox-thread hidden></div>
+
+            <form class="account-form inbox-form" data-inbox-form hidden>
+                <label for="inbox-reply">Reply</label>
+                <textarea id="inbox-reply" name="body" rows="3" maxlength="1200" required
+                          placeholder="Write a reply…"></textarea>
+                <button class="account-submit" type="submit">Send reply</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

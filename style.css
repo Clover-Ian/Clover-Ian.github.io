@@ -3266,3 +3266,88 @@ article.legal-policy h2 {
 .account-menu-staff:hover {
     background: var(--surface);
 }
+
+.announcement-bar.is-message {
+    border-color: rgba(0, 102, 204, 0.35);
+    background: rgba(0, 102, 204, 0.05);
+}
+
+.announcement-meta {
+    margin: 6px 0 0;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* ---------- 收件箱 ---------- */
+
+.inbox-card {
+    max-width: 640px;
+}
+
+.inbox-gate {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.inbox-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 4px 2px 12px;
+}
+
+.inbox-bubble {
+    max-width: 82%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.inbox-bubble.is-admin {
+    align-self: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 5px;
+}
+
+.inbox-bubble.is-user {
+    align-self: flex-end;
+    background: var(--blue);
+    color: #fff;
+    border-bottom-right-radius: 5px;
+}
+
+.inbox-bubble-title {
+    margin: 0 0 3px;
+    font-weight: 600;
+    font-size: 12.5px;
+}
+
+.inbox-bubble.is-user .inbox-bubble-title {
+    color: #fff;
+}
+
+.inbox-bubble-body {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.inbox-bubble-time {
+    display: block;
+    margin-top: 5px;
+    font-size: 10.5px;
+    opacity: 0.6;
+}
+
+.inbox-form textarea {
+    width: 100%;
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    resize: vertical;
+    min-height: 76px;
+}

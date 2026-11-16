@@ -205,6 +205,26 @@
       }
     })();
 
+    const inboxLink = document.createElement('a');
+    inboxLink.href = 'IYS Inbox.html';
+    inboxLink.className = 'account-menu-staff';
+    inboxLink.textContent = 'Inbox';
+    menu.append(inboxLink);
+
+    // 未读数量
+    (async () => {
+      try {
+        const { count } = await client
+          .from('user_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('sender', 'admin')
+          .eq('read_by_user', false);
+        if (count) inboxLink.textContent = `Inbox · ${count} new`;
+      } catch (inboxError) {
+        console.warn('[account] 未读消息检查失败：', inboxError);
+      }
+    })();
+
     menu.append(
       menuUser,
       changePhotoButton,
