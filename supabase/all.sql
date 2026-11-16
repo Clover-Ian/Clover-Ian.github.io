@@ -111,6 +111,9 @@ begin
     end if;
 end $$;
 
+create unique index if not exists license_activations_key_product_idx
+    on public.license_activations (license_key, product);
+
 alter table public.license_activations enable row level security;
 
 drop policy if exists "license read own" on public.license_activations;
@@ -304,7 +307,7 @@ $$;
 
 grant execute on function public.revoke_key(text, text) to anon, authenticated;
 
-create or replace function public.verify_key(candidate text, app text default 'archiver')
+create or replace function public.verify_key(p_candidate text, p_app text default 'archiver')
 returns table (
     status       text,
     days         int,
@@ -316,65 +319,77 @@ security definer
 set search_path = public
 as $$
 declare
-    me      uuid := auth.uid();
-    clean   text := upper(regexp_replace(candidate, '\s', '', 'g'));
-    entry   public.issued_keys%rowtype;
-    owner   uuid;
-    started timestamptz;
-    ends    timestamptz;
+    v_me      uuid := auth.uid();
+    v_key     text := upper(regexp_replace(p_candidate, '\s', '', 'g'));
+    v_days    int;
+    v_revoked boolean;
+    v_found   boolean := false;
+    v_owner   uuid;
+    v_started timestamptz;
+    v_ends    timestamptz;
 begin
-    if me is null then
+    if v_me is null then
         return query select 'sign_in_required'::text, 0, null::timestamptz, null::timestamptz;
         return;
     end if;
 
-    select * into entry from public.issued_keys where license_key = clean;
-    if entry.license_key is null then
+    select k.days, k.revoked, true
+      into v_days, v_revoked, v_found
+      from public.issued_keys k
+     where k.license_key = v_key;
+
+    if not coalesce(v_found, false) then
         return query select 'unknown'::text, 0, null::timestamptz, null::timestamptz;
         return;
     end if;
 
-    if entry.revoked then
-        return query select 'revoked'::text, entry.days, null::timestamptz, null::timestamptz;
+    if v_revoked then
+        return query select 'revoked'::text, v_days, null::timestamptz, null::timestamptz;
         return;
     end if;
 
-    if not (app = any(entry.products)) then
-        return query select 'wrong_app'::text, entry.days, null::timestamptz, null::timestamptz;
+    if not exists (
+        select 1 from public.issued_keys k
+         where k.license_key = v_key and p_app = any(k.products)
+    ) then
+        return query select 'wrong_app'::text, v_days, null::timestamptz, null::timestamptz;
         return;
     end if;
 
-    select user_id, activated_at into owner, started
-      from public.license_activations
-     where license_key = clean and product = app;
+    select a.user_id, a.activated_at
+      into v_owner, v_started
+      from public.license_activations a
+     where a.license_key = v_key and a.product = p_app
+     limit 1;
 
-    if owner is null then
+    if v_owner is null then
         insert into public.license_activations (license_key, user_id, product)
-        values (clean, me, app)
-        on conflict (license_key, product) do nothing;
+        values (v_key, v_me, p_app);
 
-        select user_id, activated_at into owner, started
-          from public.license_activations
-         where license_key = clean and product = app;
+        select a.user_id, a.activated_at
+          into v_owner, v_started
+          from public.license_activations a
+         where a.license_key = v_key and a.product = p_app
+         limit 1;
     end if;
 
-    if owner <> me then
-        return query select 'taken'::text, entry.days, started, null::timestamptz;
+    if v_owner <> v_me then
+        return query select 'taken'::text, v_days, v_started, null::timestamptz;
         return;
     end if;
 
-    if entry.days = 0 then
-        ends := null;
+    if v_days = 0 then
+        v_ends := null;
     else
-        ends := started + make_interval(days => entry.days);
+        v_ends := v_started + make_interval(days => v_days);
     end if;
 
-    if ends is not null and ends < now() then
-        return query select 'expired'::text, entry.days, started, ends;
+    if v_ends is not null and v_ends < now() then
+        return query select 'expired'::text, v_days, v_started, v_ends;
         return;
     end if;
 
-    return query select 'ok'::text, entry.days, started, ends;
+    return query select 'ok'::text, v_days, v_started, v_ends;
 end;
 $$;
 
