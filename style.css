@@ -3264,14 +3264,21 @@ article.legal-policy h2 {
     overflow: visible;
 }
 
-/* 名字过长时在内部省略，而不是裁掉红点 */
-.account-menu-container .account-nav-user.has-badge > span:not(.account-badge) {
+/* 名字过长时只省略文字本身，头像保持原尺寸 */
+.account-menu-container .account-nav-name {
     display: inline-block;
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+/* 头像不要被拉伸 */
+.account-menu-container .account-nav-user .avatar {
+    width: 24px;
+    height: 24px;
+    flex: none;
 }
 
 .account-badge {

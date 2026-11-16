@@ -112,12 +112,16 @@
     userLabel.setAttribute('aria-expanded', 'false');
 
     let renderMenuUser = () => {};
+    let badgeEl = null;
 
     function updateUserLabel() {
       const name = displayNameOf(user);
       const label = document.createElement('span');
+      label.className = 'account-nav-name';
       label.textContent = name;
       userLabel.replaceChildren(buildAvatar(user, 24), label);
+      // replaceChildren 会把红点一起清掉，这里装回去
+      if (badgeEl) userLabel.append(badgeEl);
       userLabel.title = `Signed in as ${user.email || name}`;
       userLabel.setAttribute('aria-label', `Account options for ${name}`);
       renderMenuUser();
@@ -126,6 +130,7 @@
 
     // 未读消息红点（显示在头像按钮右上角）
     const badge = document.createElement('span');
+    badgeEl = badge;
     badge.className = 'account-badge';
     badge.hidden = true;
     userLabel.append(badge);
