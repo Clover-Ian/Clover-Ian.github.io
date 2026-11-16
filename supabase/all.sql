@@ -265,6 +265,9 @@ create table if not exists public.issued_keys (
 alter table public.issued_keys enable row level security;
 
 -- 发号登记（IYS Pro 用口令调用）
+-- 参数名变过几次，先删再建，否则报 cannot change name of input parameter
+drop function if exists public.register_key(text, text, text[], integer, text);
+
 create or replace function public.register_key(
     passcode text,
     license_key text,
@@ -300,6 +303,8 @@ $$;
 grant execute on function public.register_key(text, text, text[], int, text) to anon, authenticated;
 
 -- 作废一把 key
+drop function if exists public.revoke_key(text, text);
+
 create or replace function public.revoke_key(passcode text, license_key text)
 returns boolean
 language plpgsql
