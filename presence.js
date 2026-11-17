@@ -6,7 +6,7 @@
   const client = window.iysSupabase;
   if (!client) return;
 
-  const HEARTBEAT = 60_000;   // 每分钟一次
+  const HEARTBEAT = 30_000;   // 每 30 秒一次
 
   let userID = null;
   let timer = null;
