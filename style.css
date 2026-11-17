@@ -3071,6 +3071,33 @@ article.legal-policy h2 {
 
 /* ---------- 公告条 ---------- */
 
+/* 公告列表：所有公告一起显示 */
+.announcement-list {
+    max-width: var(--content-width);
+    margin: 18px auto 0;
+    padding: 0 24px;
+    display: grid;
+    gap: 10px;
+}
+
+.announcement-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.announcement-head .announcement-title {
+    margin: 0;
+}
+
+.announcement-date {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+}
+
 .announcement-bar {
     max-width: var(--content-width);
     margin: 18px auto 0;
@@ -3081,6 +3108,11 @@ article.legal-policy h2 {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+}
+
+.announcement-list .announcement-bar {
+    margin: 0;
+    max-width: none;
 }
 
 .announcement-bar[hidden] {
