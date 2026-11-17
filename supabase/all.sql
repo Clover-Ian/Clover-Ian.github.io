@@ -1065,3 +1065,29 @@ end;
 $$;
 
 grant execute on function public.admin_list_users(text) to anon, authenticated;
+
+-- ---------- 20. 用函数记录在线状态（避开 RLS/upsert 的麻烦） ----------
+drop function if exists public.touch_presence(boolean);
+
+create or replace function public.touch_presence(p_online boolean default true)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    me uuid := auth.uid();
+begin
+    if me is null then
+        return;
+    end if;
+
+    insert into public.user_presence (user_id, last_seen, online)
+    values (me, now(), p_online)
+    on conflict (user_id) do update
+        set last_seen = now(),
+            online = p_online;
+end;
+$$;
+
+grant execute on function public.touch_presence(boolean) to authenticated;

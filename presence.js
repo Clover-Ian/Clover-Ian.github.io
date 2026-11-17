@@ -15,17 +15,10 @@
     if (!userID) return;
     if (document.visibilityState !== 'visible') return;
     try {
-      await client.from('user_presence').upsert(
-        {
-          user_id: userID,
-          last_seen: new Date().toISOString(),
-          page: location.pathname.split('/').pop() || 'index.html',
-          online: true,
-        },
-        { onConflict: 'user_id' },
-      );
+      const { error } = await client.rpc('touch_presence', { p_online: true });
+      if (error) console.warn('[presence] 上报失败：', error.message);
     } catch (error) {
-      console.warn('[presence] 上报失败：', error);
+      console.warn('[presence] 上报异常：', error);
     }
   }
 
@@ -34,8 +27,7 @@
   function markOffline() {
     if (!userID) return;
     try {
-      const url = new URL(`${window.IYS_SUPABASE_URL}/rest/v1/user_presence`);
-      url.searchParams.set('user_id', `eq.${userID}`);
+      const url = new URL(`${window.IYS_SUPABASE_URL}/rest/v1/rpc/touch_presence`);
 
       const token = sessionToken();
       const headers = {
@@ -48,7 +40,7 @@
       fetch(url.toString(), {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ online: false }),
+        body: JSON.stringify({ p_online: false }),
         keepalive: true,
       }).catch(() => {});
     } catch (error) {
