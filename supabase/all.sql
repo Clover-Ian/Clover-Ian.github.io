@@ -1018,3 +1018,50 @@ end;
 $$;
 
 grant execute on function public.admin_list_users(text) to anon, authenticated;
+
+-- ---------- 19. 在线判定：标记 + 90 秒内的心跳 ----------
+create or replace function public.admin_list_users(p_passcode text)
+returns table (
+    id              uuid,
+    email           text,
+    created_at      timestamptz,
+    confirmed_at    timestamptz,
+    last_sign_in_at timestamptz,
+    username        text,
+    avatar_url      text,
+    last_seen       timestamptz,
+    is_online       boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
+    select u.id,
+           u.email::text,
+           u.created_at,
+           u.email_confirmed_at,
+           u.last_sign_in_at,
+           coalesce(nullif(pr.username, u.email::text),
+                    nullif(u.raw_user_meta_data->>'display_name', u.email::text),
+                    u.raw_user_meta_data->>'username',
+                    ''),
+           coalesce(u.raw_user_meta_data->>'avatar_url',
+                    u.raw_user_meta_data->>'picture'),
+           p.last_seen,
+           coalesce(p.online, false) and p.last_seen > now() - interval '90 seconds'
+      from auth.users u
+      left join public.profiles pr on pr.id = u.id
+      left join public.user_presence p on p.user_id = u.id
+     order by u.created_at desc
+     limit 500;
+end;
+$$;
+
+grant execute on function public.admin_list_users(text) to anon, authenticated;

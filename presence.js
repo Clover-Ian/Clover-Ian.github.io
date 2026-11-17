@@ -29,14 +29,40 @@
     }
   }
 
-  async function markOffline() {
+  /// 关闭页面时用 keepalive 直接发 REST 请求：
+  /// 普通 fetch 会在页面卸载时被取消，导致 online 一直停在 true。
+  function markOffline() {
     if (!userID) return;
     try {
-      await client.from('user_presence')
-        .update({ online: false })
-        .eq('user_id', userID);
+      const url = new URL(`${window.IYS_SUPABASE_URL}/rest/v1/user_presence`);
+      url.searchParams.set('user_id', `eq.${userID}`);
+
+      const token = sessionToken();
+      const headers = {
+        'apikey': window.IYS_SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      fetch(url.toString(), {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ online: false }),
+        keepalive: true,
+      }).catch(() => {});
     } catch (error) {
-      /* 关闭页面时失败无所谓，服务器还有 3 分钟兜底 */
+      /* 失败也不要紧，服务器还有 90 秒兜底 */
+    }
+  }
+
+  function sessionToken() {
+    try {
+      const raw = localStorage.getItem('sb-qbkfdhmjogdwtjovqzaw-auth-token');
+      if (!raw) return null;
+      return JSON.parse(raw)?.access_token ?? null;
+    } catch {
+      return null;
     }
   }
 
