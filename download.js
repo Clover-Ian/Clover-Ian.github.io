@@ -10,7 +10,7 @@
   const SUPABASE_URL = window.IYS_SUPABASE_URL || 'https://qbkfdhmjogdwtjovqzaw.supabase.co';
   const SUPABASE_KEY = window.IYS_SUPABASE_KEY || 'sb_publishable_n04Iayrnlhn4aznjtLa0Rg_gSJqdBTS';
   const BUCKET = 'downloads';
-  const CACHE_KEY = 'iys.downloads.v1';
+  const CACHE_KEY = 'iys.downloads.v2';
   const CACHE_TTL = 5 * 60 * 1000;
 
   const cache = (() => {
@@ -72,8 +72,10 @@
       })
       .filter(Boolean);
 
-    cache[repo] = files;
-    saveCache();
+    if (files.length) {          // 空结果不缓存，避免一次失败被记住 5 分钟
+      cache[repo] = files;
+      saveCache();
+    }
     return files;
   }
 
