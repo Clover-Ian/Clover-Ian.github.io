@@ -1091,3 +1091,339 @@ end;
 $$;
 
 grant execute on function public.touch_presence(boolean) to authenticated;
+
+-- ---------- 21. 管理员改用户名 ----------
+drop function if exists public.admin_set_username(text, uuid, text);
+
+create or replace function public.admin_set_username(
+    p_passcode text,
+    p_id       uuid,
+    p_username text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    name text := trim(p_username);
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    if name = '' then
+        return false;
+    end if;
+
+    -- 头像/显示名都在 metadata 里，网站和 App 都读这里
+    update auth.users
+       set raw_user_meta_data =
+           coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('display_name', name)
+     where id = p_id;
+
+    -- profiles 里也写一份（查重用）
+    insert into public.profiles (id, username)
+    values (p_id, name)
+    on conflict (id) do update set username = excluded.username;
+
+    return true;
+exception
+    when unique_violation then
+        return false;
+end;
+$$;
+
+grant execute on function public.admin_set_username(text, uuid, text) to anon, authenticated;
+
+-- ---------- 22. 管理员直接设密码 ----------
+drop function if exists public.admin_set_password(text, uuid, text);
+
+create or replace function public.admin_set_password(
+    p_passcode text,
+    p_id       uuid,
+    p_password text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth, extensions
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    if length(p_password) < 6 then
+        return false;
+    end if;
+
+    -- 和 GoTrue 一样用 bcrypt
+    update auth.users
+       set encrypted_password = crypt(p_password, gen_salt('bf')),
+           updated_at = now()
+     where id = p_id;
+
+    return found;
+exception
+    when undefined_function then
+        -- 没装 pgcrypto 时明确失败，避免"看起来成功了"
+        return false;
+end;
+$$;
+
+grant execute on function public.admin_set_password(text, uuid, text) to anon, authenticated;
+
+-- ---------- 23. 不需要登录的密钥状态查询（用于 App 显示 expired） ----------
+drop function if exists public.key_status(text, text);
+
+create or replace function public.key_status(p_candidate text, p_app text)
+returns table (
+    st            text,
+    days          integer,
+    activated_at  timestamptz,
+    expires_at    timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+    canonical text := upper(trim(p_candidate));
+    k         record;
+    a         record;
+begin
+    select * into k from public.issued_keys i where upper(i.license_key) = canonical limit 1;
+    if k.license_key is null then
+        return;
+    end if;
+
+    if k.revoked then
+        return query select 'revoked'::text, k.days, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    select * into a
+      from public.license_activations l
+     where upper(l.license_key) = canonical
+       and l.product = p_app
+     limit 1;
+
+    if a.license_key is null then
+        return query select 'unused'::text, k.days, null::timestamptz, null::timestamptz;
+        return;
+    end if;
+
+    if k.days = 0 then
+        return query select 'active'::text, 0, a.activated_at, null::timestamptz;
+    end if;
+
+    return query
+    select case when a.activated_at + make_interval(days => k.days) > now()
+                then 'active' else 'expired' end,
+           k.days,
+           a.activated_at,
+           a.activated_at + make_interval(days => k.days);
+end;
+$$;
+
+grant execute on function public.key_status(text, text) to anon, authenticated;
+
+-- ---------- 24. 账号禁用（可填理由与期限，可随时手动解封） ----------
+create table if not exists public.user_bans (
+    user_id     uuid primary key references auth.users (id) on delete cascade,
+    reason      text,
+    banned_at   timestamptz not null default now(),
+    expires_at  timestamptz
+);
+
+alter table public.user_bans enable row level security;
+grant usage on schema public to anon, authenticated;
+
+drop function if exists public.admin_ban_user(text, uuid, text, integer, timestamptz);
+drop function if exists public.admin_unban_user(text, uuid);
+
+create or replace function public.admin_ban_user(
+    p_passcode text,
+    p_id       uuid,
+    p_reason   text        default null,
+    p_days     integer     default null,
+    p_until    timestamptz default null
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    until_ts timestamptz;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    if p_days is not null and p_days > 0 then
+        until_ts := now() + make_interval(days => p_days);
+    elsif p_until is not null then
+        until_ts := p_until;
+    else
+        -- 不填期限 = 一直禁用，手动解封为止
+        until_ts := 'infinity'::timestamptz;
+    end if;
+
+    insert into public.user_bans (user_id, reason, banned_at, expires_at)
+    values (p_id, nullif(trim(coalesce(p_reason, '')), ''), now(), until_ts)
+    on conflict (user_id) do update
+        set reason = excluded.reason,
+            banned_at = now(),
+            expires_at = excluded.expires_at;
+
+    update auth.users set banned_until = until_ts where id = p_id;
+    return true;
+end;
+$$;
+
+create or replace function public.admin_unban_user(p_passcode text, p_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    delete from public.user_bans where user_id = p_id;
+    update auth.users set banned_until = null where id = p_id;
+    return true;
+end;
+$$;
+
+grant execute on function public.admin_ban_user(text, uuid, text, integer, timestamptz) to anon, authenticated;
+grant execute on function public.admin_unban_user(text, uuid) to anon, authenticated;
+
+-- 让账号列表带上禁用信息
+drop function if exists public.admin_list_users(text);
+
+create or replace function public.admin_list_users(p_passcode text)
+returns table (
+    id              uuid,
+    email           text,
+    created_at      timestamptz,
+    confirmed_at    timestamptz,
+    last_sign_in_at timestamptz,
+    username        text,
+    avatar_url      text,
+    last_seen       timestamptz,
+    is_online       boolean,
+    banned_until    timestamptz,
+    ban_reason      text
+)
+language plpgsql
+stable
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return;
+    end if;
+
+    return query
+    select u.id,
+           u.email::text,
+           u.created_at,
+           u.email_confirmed_at,
+           u.last_sign_in_at,
+           coalesce(nullif(pr.username, u.email::text),
+                    nullif(u.raw_user_meta_data->>'display_name', u.email::text),
+                    u.raw_user_meta_data->>'username',
+                    ''),
+           coalesce(u.raw_user_meta_data->>'avatar_url',
+                    u.raw_user_meta_data->>'picture'),
+           p.last_seen,
+           coalesce(p.online, false) and p.last_seen > now() - interval '90 seconds',
+           u.banned_until,
+           b.reason
+      from auth.users u
+      left join public.profiles pr on pr.id = u.id
+      left join public.user_presence p on p.user_id = u.id
+      left join public.user_bans b on b.user_id = u.id
+     order by u.created_at desc
+     limit 500;
+end;
+$$;
+
+grant execute on function public.admin_list_users(text) to anon, authenticated;
+
+-- ---------- 25. 禁用：用有限日期，并允许用户查询自己为什么被禁 ----------
+create or replace function public.admin_ban_user(
+    p_passcode text,
+    p_id       uuid,
+    p_reason   text        default null,
+    p_days     integer     default null,
+    p_until    timestamptz default null
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+    until_ts timestamptz;
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    if p_days is not null and p_days > 0 then
+        until_ts := now() + make_interval(days => p_days);
+    elsif p_until is not null then
+        until_ts := p_until;
+    else
+        -- 不用 'infinity'：Supabase 登录服务解析不了，用 100 年后代表"永久"
+        until_ts := now() + interval '100 years';
+    end if;
+
+    insert into public.user_bans (user_id, reason, banned_at, expires_at)
+    values (p_id, nullif(trim(coalesce(p_reason, '')), ''), now(), until_ts)
+    on conflict (user_id) do update
+        set reason = excluded.reason,
+            banned_at = now(),
+            expires_at = excluded.expires_at;
+
+    update auth.users set banned_until = until_ts where id = p_id;
+    return true;
+end;
+$$;
+
+-- 让被禁的人（不需要登录）能看到原因
+drop function if exists public.ban_details(text);
+
+create or replace function public.ban_details(p_email text)
+returns table (reason text, until timestamptz)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+    select b.reason, b.expires_at
+      from public.user_bans b
+      join auth.users u on u.id = b.user_id
+     where lower(u.email) = lower(trim(p_email))
+       and b.expires_at > now()
+     limit 1;
+$$;
+
+grant execute on function public.ban_details(text) to anon, authenticated;
+
+-- 修正已经写成 infinity 的那批记录（登录服务解析不了它）
+update auth.users
+   set banned_until = now() + interval '100 years'
+ where banned_until = 'infinity'::timestamptz;
+
+update public.user_bans
+   set expires_at = now() + interval '100 years'
+ where expires_at = 'infinity'::timestamptz;

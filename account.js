@@ -157,6 +157,67 @@
       : defaultLabel;
   }
 
+  /** 账号被封禁 */
+  function isBannedError(error) {
+    if (!error) return false;
+    const code = String(error.code ?? '').toLowerCase();
+    const text = String(error.message ?? '').toLowerCase();
+    return code.includes('banned') || text.includes('banned');
+  }
+
+  /** 展示封禁说明（原因 + 申诉邮箱） */
+  async function showBanNotice(email) {
+    let reason = '';
+    let until = '';
+
+    try {
+      const { data } = await client.rpc('ban_details', { p_email: email });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        reason = row.reason ?? '';
+        if (row.until) {
+          const date = new Date(row.until);
+          const years = (date - Date.now()) / (1000 * 60 * 60 * 24 * 365);
+          until = years > 50 ? 'This ban has no end date.' : `Lifts on ${date.toLocaleString('en-GB')}.`;
+        }
+      }
+    } catch (banError) {
+      console.warn('[account] 读取封禁信息失败：', banError);
+    }
+
+    form.hidden = true;
+    if (verifyStep) verifyStep.hidden = true;
+
+    const card = document.createElement('section');
+    card.className = 'account-verify';
+    card.setAttribute('role', 'alert');
+
+    const title = document.createElement('h2');
+    title.textContent = 'This account is suspended.';
+    card.append(title);
+
+    const copy = document.createElement('p');
+    copy.className = 'account-verify-copy';
+    copy.textContent = reason
+      ? `Reason: ${reason}`
+      : 'No reason was recorded for this suspension.';
+    card.append(copy);
+
+    if (until) {
+      const when = document.createElement('p');
+      when.className = 'account-verify-copy';
+      when.textContent = until;
+      card.append(when);
+    }
+
+    const contact = document.createElement('p');
+    contact.className = 'account-verify-copy';
+    contact.innerHTML = 'If you think this is a mistake, email <a href="mailto:iys-ian@outlook.com">iys-ian@outlook.com</a>.';
+    card.append(contact);
+
+    form.parentElement.append(card);
+  }
+
   /** Supabase 用 email_not_confirmed 表示"还没验证邮箱" */
   function isUnconfirmedEmail(error) {
     if (!error) return false;
@@ -263,6 +324,13 @@
           } catch (resendFailure) {
             showVerifyMessage(`Your email still needs confirmation. ${messageForError(resendFailure)}`);
           }
+          return;
+        }
+
+        // 账号被禁用：直接展示禁用说明，而不是普通报错
+        if (error && isBannedError(error)) {
+          await showBanNotice(email);
+          setBusy(false);
           return;
         }
 
