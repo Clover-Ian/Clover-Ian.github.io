@@ -204,7 +204,18 @@
       build(host, app, await listVersions(repo), repo);
     } catch (error) {
       console.warn('[download] 读取版本失败：', error);
-      host.innerHTML = '<p class="dl-caption">Downloads are temporarily unavailable.</p>';
+      const repo = host.dataset.github;
+      host.innerHTML = '';
+      if (repo) {
+        const fallback = document.createElement('a');
+        fallback.className = 'dl-main';
+        fallback.style.borderRadius = '999px';
+        fallback.href = `https://github.com/${repo}/releases`;
+        fallback.target = '_blank';
+        fallback.rel = 'noopener noreferrer';
+        fallback.textContent = 'Download on GitHub';
+        host.append(fallback);
+      }
     }
   });
 })();
