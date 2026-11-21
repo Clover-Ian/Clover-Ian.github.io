@@ -1427,3 +1427,26 @@ update auth.users
 update public.user_bans
    set expires_at = now() + interval '100 years'
  where expires_at = 'infinity'::timestamptz;
+
+-- ---------- 26. 下载用的 Storage 桶（公开可读，只有管理员能写） ----------
+insert into storage.buckets (id, name, public)
+values ('downloads', 'downloads', true)
+on conflict (id) do update set public = true;
+
+-- 公开读取
+drop policy if exists "downloads public read" on storage.objects;
+create policy "downloads public read" on storage.objects
+    for select using (bucket_id = 'downloads');
+
+-- 只有管理员能上传/覆盖/删除
+drop policy if exists "downloads admin write" on storage.objects;
+create policy "downloads admin write" on storage.objects
+    for insert with check (bucket_id = 'downloads' and public.is_admin(auth.uid()));
+
+drop policy if exists "downloads admin update" on storage.objects;
+create policy "downloads admin update" on storage.objects
+    for update using (bucket_id = 'downloads' and public.is_admin(auth.uid()));
+
+drop policy if exists "downloads admin delete" on storage.objects;
+create policy "downloads admin delete" on storage.objects
+    for delete using (bucket_id = 'downloads' and public.is_admin(auth.uid()));
