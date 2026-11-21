@@ -121,14 +121,8 @@
     const caption = document.createElement('p');
     caption.className = 'dl-caption';
 
-    const gh = document.createElement('a');
-    gh.className = 'dl-github';
-    gh.target = '_blank';
-    gh.rel = 'noopener noreferrer';
-
     function setCaption(item, isLatest) {
-      caption.textContent = `${item.tag}${isLatest ? ' · latest' : ''}${item.size ? ` · ${label(item.size)}` : ''}  `;
-      caption.append(gh);
+      caption.textContent = `${item.tag}${isLatest ? ' · latest' : ''}${item.size ? ` · ${label(item.size)}` : ''}`;
     }
 
     list.forEach((item, index) => {
@@ -187,15 +181,7 @@
     group.append(main, caret, menu);
     host.append(group, caption);
 
-    // GitHub 只作为历史归档入口，不再是下载地址
-    if (repo) {
-      gh.href = `https://github.com/${repo}/releases`;
-      gh.textContent = 'View on GitHub';
-      setCaption(latest, true);
-    } else {
-      setCaption(latest, true);
-      gh.remove();
-    }
+    setCaption(latest, true);
   }
 
   document.querySelectorAll('[data-download]').forEach(async (host) => {
