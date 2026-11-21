@@ -31,6 +31,11 @@
 
   const label = (bytes) => bytes ? `${(bytes / 1048576).toFixed(1)} MB` : '';
 
+  /// 站点自己托管的位置：downloads/<app>/<文件名>
+  function siteURL(app, file) {
+    return new URL(`downloads/${app}/${encodeURIComponent(file)}`, location.href).href;
+  }
+
   function publicURL(app, file) {
     return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${app}/${encodeURIComponent(file)}`;
   }
@@ -103,13 +108,14 @@
     return files;
   }
 
-  /// 优先用 Supabase 上的同名文件，找不到再回退 GitHub
+  /// 三级取值：站点自托管 → Supabase → GitHub
   async function resolveURL(app, item) {
-    const local = publicURL(app, item.file);
-    try {
-      const head = await fetch(local, { method: 'HEAD' });
-      if (head.ok) return local;
-    } catch { /* 忽略，回退 GitHub */ }
+    for (const url of [siteURL(app, item.file), publicURL(app, item.file)]) {
+      try {
+        const head = await fetch(url, { method: 'HEAD' });
+        if (head.ok) return url;
+      } catch { /* 继续尝试下一个 */ }
+    }
     return item.github;
   }
 
