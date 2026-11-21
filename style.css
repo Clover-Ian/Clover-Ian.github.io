@@ -3404,3 +3404,17 @@ article.legal-policy h2 {
     margin-top: 8px;
     font-size: 12.5px;
 }
+
+/* 封禁说明页：整页宽度 */
+.ban-page-card {
+    width: min(100%, 760px);
+    margin: 0 auto;
+}
+
+.ban-page-card h1 {
+    font-size: clamp(32px, 4vw, 44px);
+}
+
+.ban-page-card p {
+    max-width: 60ch;
+}
