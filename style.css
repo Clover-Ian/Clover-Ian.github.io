@@ -3422,11 +3422,16 @@ article.legal-policy h2 {
 /* ---------- 下载控件 ---------- */
 .dl {
     margin: 0;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;   /* 版本号和按钮左边缘对齐 */
 }
 
 /* 让 "View on GitHub" 这类链接和 Download 按钮视觉居中对齐 */
 .action-row > .text-link {
-    margin-top: 9px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;          /* 和 Download 按钮同高，垂直居中 */
     line-height: 1.2;
 }
 
@@ -3534,6 +3539,7 @@ article.legal-policy h2 {
 
 .dl-caption {
     margin: 7px 0 0;
+    padding-left: 2px;
     font-size: 12.5px;
     color: var(--muted);
 }

@@ -110,7 +110,12 @@
 
   /// 三级取值：站点自托管 → Supabase → GitHub
   async function resolveURL(app, item) {
-    for (const url of [siteURL(app, item.file), publicURL(app, item.file)]) {
+    const candidates = [
+      siteURL(app, `${item.tag}.dmg`),      // downloads/<app>/v0.1.dmg（推荐命名）
+      siteURL(app, item.file),              // 或者原始文件名
+      publicURL(app, item.file),
+    ];
+    for (const url of candidates) {
       try {
         const head = await fetch(url, { method: 'HEAD' });
         if (head.ok) return url;
@@ -127,6 +132,9 @@
       return;
     }
 
+    let selected = latest;
+    let isLatestSelected = true;
+
     const group = document.createElement('div');
     group.className = 'dl-group';
 
@@ -134,8 +142,23 @@
     main.className = 'dl-main';
     main.textContent = 'Download';
     main.setAttribute('download', '');
-    resolveURL(app, latest).then((url) => { main.href = url; }).catch(() => {});
-    main.href = latest.github;
+
+    function syncMainButton() {
+      main.href = selected.github;
+      resolveURL(app, selected).then((url) => { main.href = url; }).catch(() => {});
+    }
+
+    main.addEventListener('click', (event) => {
+      event.preventDefault();
+      resolveURL(app, selected).then((url) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.setAttribute('download', '');
+        document.body.append(a);
+        a.click();
+        a.remove();
+      }).catch(() => { window.location.href = selected.github; });
+    });
 
     const caret = document.createElement('button');
     caret.type = 'button';
@@ -177,14 +200,11 @@
         option.append(badge);
       }
 
-      option.addEventListener('click', async () => {
-        const a = document.createElement('a');
-        a.href = await resolveURL(app, item);
-        a.setAttribute('download', '');
-        document.body.append(a);
-        a.click();
-        a.remove();
-        setCaption(item, index === 0);
+      option.addEventListener('click', () => {
+        selected = item;
+        isLatestSelected = index === 0;
+        setCaption(item, isLatestSelected);
+        syncMainButton();
         close();
       });
 
@@ -212,6 +232,7 @@
     host.append(group, caption);
 
     setCaption(latest, true);
+    syncMainButton();
   }
 
   document.querySelectorAll('[data-download]').forEach(async (host) => {
