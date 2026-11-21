@@ -50,37 +50,44 @@
     return 0;
   }
 
-  async function listVersions(app) {
-    if (cache[app]) return cache[app];
+  /// 版本列表来自 GitHub Releases：上传新 release 后网站自动出现
+  async function listVersions(repo) {
+    if (cache[repo]) return cache[repo];
 
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prefix: `${app}/`, limit: 100 }),
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=30`, {
+      headers: { Accept: 'application/vnd.github+json' },
     });
-    if (!res.ok) throw new Error(`Storage ${res.status}`);
+    if (!res.ok) throw new Error(`GitHub ${res.status}`);
 
-    const rows = await res.json();
-    const files = rows
-      .filter((r) => r.name && r.name.toLowerCase().endsWith('.dmg'))
-      .sort((a, b) => compare(a.name, b.name))
-      .map((r) => ({
-        file: r.name,
-        tag: r.name.replace(/\.dmg$/i, ''),
-        size: r.metadata?.size ?? 0,
-        url: publicURL(app, r.name),
-      }));
+    const files = (await res.json())
+      .map((r) => {
+        const asset = (r.assets ?? []).find((a) => a.name.toLowerCase().endsWith('.dmg'));
+        if (!asset) return null;
+        return {
+          file: asset.name,
+          tag: r.tag_name,
+          size: asset.size,
+          github: asset.browser_download_url,
+        };
+      })
+      .filter(Boolean);
 
-    cache[app] = files;
+    cache[repo] = files;
     saveCache();
     return files;
   }
 
-  function build(host, app, list) {
+  /// 优先用 Supabase 上的同名文件，找不到再回退 GitHub
+  async function resolveURL(app, item) {
+    const local = publicURL(app, item.file);
+    try {
+      const head = await fetch(local, { method: 'HEAD' });
+      if (head.ok) return local;
+    } catch { /* 忽略，回退 GitHub */ }
+    return item.github;
+  }
+
+  function build(host, app, list, repo) {
     host.innerHTML = '';
     const latest = list[0];
     if (!latest) {
@@ -94,8 +101,9 @@
     const main = document.createElement('a');
     main.className = 'dl-main';
     main.textContent = 'Download';
-    main.href = latest.url;
     main.setAttribute('download', '');
+    resolveURL(app, latest).then((url) => { main.href = url; }).catch(() => {});
+    main.href = latest.github;
 
     const caret = document.createElement('button');
     caret.type = 'button';
@@ -143,9 +151,9 @@
         option.append(badge);
       }
 
-      option.addEventListener('click', () => {
+      option.addEventListener('click', async () => {
         const a = document.createElement('a');
-        a.href = item.url;
+        a.href = await resolveURL(app, item);
         a.setAttribute('download', '');
         document.body.append(a);
         a.click();
@@ -178,7 +186,6 @@
     host.append(group, caption);
 
     // GitHub 只作为历史归档入口，不再是下载地址
-    const repo = host.dataset.github;
     if (repo) {
       gh.href = `https://github.com/${repo}/releases`;
       gh.textContent = 'View on GitHub';
@@ -191,9 +198,10 @@
 
   document.querySelectorAll('[data-download]').forEach(async (host) => {
     const app = host.dataset.download;
+    const repo = host.dataset.github;
     host.innerHTML = '<p class="dl-caption">Loading versions…</p>';
     try {
-      build(host, app, await listVersions(app));
+      build(host, app, await listVersions(repo), repo);
     } catch (error) {
       console.warn('[download] 读取版本失败：', error);
       host.innerHTML = '<p class="dl-caption">Downloads are temporarily unavailable.</p>';
