@@ -50,6 +50,30 @@
     return 0;
   }
 
+  /// 先读 Supabase Storage（国内快），没有文件时回退 GitHub Releases
+  async function listFromStorage(app) {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prefix: `${app}/`, limit: 100 }),
+    });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return rows
+      .filter((r) => r.name && r.name.toLowerCase().endsWith('.dmg'))
+      .sort((a, b) => compare(a.name, b.name))
+      .map((r) => ({
+        file: r.name,
+        tag: r.name.replace(/\.dmg$/i, ''),
+        size: r.metadata?.size ?? 0,
+        github: publicURL(app, r.name),
+      }));
+  }
+
   /// 版本列表来自 GitHub Releases：上传新 release 后网站自动出现
   async function listVersions(repo) {
     if (cache[repo]) return cache[repo];
@@ -189,7 +213,9 @@
     const repo = host.dataset.github;
     host.innerHTML = '<p class="dl-caption">Loading versions…</p>';
     try {
-      build(host, app, await listVersions(repo), repo);
+      const local = await listFromStorage(app).catch(() => []);
+      const files = local.length ? local : await listVersions(repo);
+      build(host, app, files, repo);
     } catch (error) {
       console.warn('[download] 读取版本失败：', error);
       const repo = host.dataset.github;
