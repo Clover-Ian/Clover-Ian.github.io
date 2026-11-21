@@ -3380,3 +3380,27 @@ article.legal-policy h2 {
     font-size: 13px;
     font-weight: 500;
 }
+
+/* 封禁说明 */
+.account-ban-reason {
+    margin: 6px 0 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(192, 57, 43, 0.25);
+    border-radius: 12px;
+    background: rgba(192, 57, 43, 0.06);
+    font-size: 13.5px;
+    white-space: pre-wrap;
+}
+
+.account-ban-until {
+    margin: 0 0 18px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+/* 登录页上的"为什么被封"链接 */
+.account-ban-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12.5px;
+}

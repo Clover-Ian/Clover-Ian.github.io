@@ -327,9 +327,14 @@
           return;
         }
 
-        // 账号被禁用：直接展示禁用说明，而不是普通报错
+        // 账号被禁用：给一个"为什么被封"的链接
         if (error && isBannedError(error)) {
-          await showBanNotice(email);
+          showMessage('This account is suspended and cannot sign in.');
+          const link = document.createElement('a');
+          link.href = `IYS Account Banned.html?email=${encodeURIComponent(email)}`;
+          link.className = 'account-ban-link';
+          link.textContent = 'Why am I banned?';
+          feedback?.insertAdjacentElement('afterend', link);
           setBusy(false);
           return;
         }
