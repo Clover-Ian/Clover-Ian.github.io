@@ -1728,6 +1728,20 @@
       return;
     }
 
+    // 用账号当前的名字，而不是提交成绩时的旧名字
+    const liveNames = new Map();
+    try {
+      const ids = [...new Set(data.map((row) => row.user_id).filter(Boolean))];
+      if (ids.length) {
+        const { data: nameRows } = await client.rpc('leaderboard_names', { p_ids: ids });
+        (nameRows ?? []).forEach((row) => {
+          if (row.user_id && row.name) liveNames.set(row.user_id, row.name);
+        });
+      }
+    } catch (nameError) {
+      console.warn('[benchmark] 读取用户名失败：', nameError);
+    }
+
     // 同一用户同一项目只留最好的一条（数据已按成绩排好，先出现的即最好）
     const seen = new Set();
     const top = [];
@@ -1762,7 +1776,7 @@
       rank.className = 'hb-board-rank';
       rank.textContent = String(lastRank);
 
-      const display = row.detail?.name || 'Player';
+      const display = liveNames.get(row.user_id) || row.detail?.name || 'Player';
       const name = document.createElement('span');
       name.className = 'hb-board-name';
       name.append(boardAvatar(row.user_id, display));

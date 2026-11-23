@@ -1450,3 +1450,26 @@ create policy "downloads admin update" on storage.objects
 drop policy if exists "downloads admin delete" on storage.objects;
 create policy "downloads admin delete" on storage.objects
     for delete using (bucket_id = 'downloads' and public.is_admin(auth.uid()));
+
+-- ---------- 27. 排行榜显示"当前"用户名（而不是提交时的快照） ----------
+drop function if exists public.leaderboard_names(uuid[]);
+
+create or replace function public.leaderboard_names(p_ids uuid[])
+returns table (user_id uuid, name text)
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+    select u.id,
+           coalesce(nullif(p.username, u.email::text),
+                    nullif(u.raw_user_meta_data->>'display_name', u.email::text),
+                    u.raw_user_meta_data->>'username',
+                    'Player')
+      from auth.users u
+      left join public.profiles p on p.id = u.id
+     where u.id = any(p_ids)
+     limit 500;
+$$;
+
+grant execute on function public.leaderboard_names(uuid[]) to anon, authenticated;
