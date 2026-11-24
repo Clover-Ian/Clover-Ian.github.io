@@ -12,6 +12,27 @@
   const defaultLabel = button ? button.textContent : '';
   const client = window.iysSupabase;
 
+  /** 登录/注册完成后回到哪里 */
+  function nextDestination() {
+    const param = new URLSearchParams(window.location.search).get('next');
+    const candidates = [param, document.referrer];
+
+    for (const raw of candidates) {
+      if (!raw) continue;
+      try {
+        const url = new URL(raw, window.location.href);
+        if (url.origin !== window.location.origin) continue;
+        if (url.pathname.endsWith('IYS Account Sign In.html')) continue;
+        if (url.pathname.endsWith('IYS Account Sign Up.html')) continue;
+        if (url.pathname.endsWith('IYS Account Reset Password.html')) continue;
+        return url.pathname.replace(/^\//, '') + url.search + url.hash;
+      } catch { /* 忽略非法值 */ }
+    }
+    return 'index.html';
+  }
+
+  const DESTINATION = nextDestination();
+
   // 注册后用 8 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
   const verifyStep = document.querySelector('[data-verify-step]');
   const verifyForm = document.querySelector('[data-verify-form]');
@@ -283,7 +304,7 @@
 
         const options = {
           // 明确指定邮件确认后的落地页，避免依赖 Supabase 的 Site URL。
-          emailRedirectTo: new URL('index.html', window.location.href).href,
+          emailRedirectTo: new URL(DESTINATION, window.location.href).href,
         };
         if (displayName) options.data = { display_name: displayName };
 
@@ -350,7 +371,7 @@
         'success',
       );
       window.setTimeout(() => {
-        window.location.assign('index.html');
+        window.location.assign(DESTINATION);
       }, 700);
     } catch (error) {
       showMessage(messageForError(error));
@@ -398,7 +419,7 @@
 
         showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
         window.setTimeout(() => {
-          window.location.assign('index.html');
+          window.location.assign(DESTINATION);
         }, 700);
       } catch (error) {
         showVerifyMessage(messageForError(error));

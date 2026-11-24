@@ -8,6 +8,18 @@
 
   if (!signInLink || !signUpLink) return;
 
+  // 带上"从哪来"，登录/注册完成后回到这一页
+  (() => {
+    const here = location.pathname.split('/').pop() + location.search;
+    const skip = /IYS Account (Sign In|Sign Up|Reset Password)\.html$/;
+    if (skip.test(location.pathname)) return;
+    if (here) {
+      const suffix = `?next=${encodeURIComponent(here)}`;
+      if (signInLink) signInLink.href = `IYS Account Sign In.html${suffix}`;
+      if (signUpLink) signUpLink.href = `IYS Account Sign Up.html${suffix}`;
+    }
+  })();
+
   const client = window.iysSupabase;
   if (!client) {
     console.error('Supabase client is not available.');
