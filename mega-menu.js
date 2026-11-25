@@ -12,7 +12,7 @@
 
   const GROUPS = [
     {
-      title: 'Play',
+      title: 'Website',
       links: [
         ['IYS Arcade', 'IYS Arcade.html'],
         ['IYS Critters', 'IYS Critters.html'],
@@ -23,7 +23,6 @@
       links: [
         ['IYS Archiver', 'IYS Archiver Pro.html'],
         ['IYS PDF', 'IYS Software.html'],
-        ['IYS Studio', 'IYS Studio.html'],
       ],
     },
   ];
