@@ -15,23 +15,36 @@
   /** 登录/注册完成后回到哪里 */
   function nextDestination() {
     const param = new URLSearchParams(window.location.search).get('next');
-    const candidates = [param, document.referrer];
+    const blocked = [
+      'IYS Account Sign In.html',
+      'IYS Account Sign Up.html',
+      'IYS Account Reset Password.html',
+      'IYS Account Banned.html',
+    ];
+    const hereFile = decodeURIComponent(window.location.pathname.split('/').pop() || '');
 
-    for (const raw of candidates) {
+    for (const raw of [param, document.referrer]) {
       if (!raw) continue;
       try {
         const url = new URL(raw, window.location.href);
         if (url.origin !== window.location.origin) continue;
-        if (url.pathname.endsWith('IYS Account Sign In.html')) continue;
-        if (url.pathname.endsWith('IYS Account Sign Up.html')) continue;
-        if (url.pathname.endsWith('IYS Account Reset Password.html')) continue;
-        return url.pathname.replace(/^\//, '') + url.search + url.hash;
+
+        // pathname 是百分号编码的，必须解码后再比较
+        const path = decodeURIComponent(url.pathname);
+        const file = path.split('/').pop() || 'index.html';
+
+        if (blocked.includes(file)) continue;   // 不回登录页
+        if (file === hereFile) continue;        // 不回当前页
+        if (!file) continue;
+
+        return file + url.search + url.hash;
       } catch { /* 忽略非法值 */ }
     }
     return 'index.html';
   }
 
-  const DESTINATION = nextDestination();
+  // 每次跳转时重新计算，避免 referrer 尚未就绪时拿到空值
+  const destination = () => nextDestination();
 
   // 注册后用 8 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
   const verifyStep = document.querySelector('[data-verify-step]');
@@ -304,7 +317,7 @@
 
         const options = {
           // 明确指定邮件确认后的落地页，避免依赖 Supabase 的 Site URL。
-          emailRedirectTo: new URL(DESTINATION, window.location.href).href,
+          emailRedirectTo: new URL(destination(), window.location.href).href,
         };
         if (displayName) options.data = { display_name: displayName };
 
@@ -371,7 +384,7 @@
         'success',
       );
       window.setTimeout(() => {
-        window.location.assign(DESTINATION);
+        window.location.assign(destination());
       }, 700);
     } catch (error) {
       showMessage(messageForError(error));
@@ -419,7 +432,7 @@
 
         showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
         window.setTimeout(() => {
-          window.location.assign(DESTINATION);
+          window.location.assign(destination());
         }, 700);
       } catch (error) {
         showVerifyMessage(messageForError(error));
