@@ -92,15 +92,22 @@
   trigger.setAttribute('aria-expanded', 'false');
 
   const navLinks = trigger.closest('.nav-links') || trigger.parentElement;
-  const contact = navLinks?.querySelector('a[href^="mailto:"]');
 
-  // 鼠标进入导航条就展开（Contact 除外）
+  // 只有这几个文字链接算触发区（不含 Contact 和账号区）
+  const triggerLinks = new Set(
+    Array.from(navLinks?.querySelectorAll('a') ?? []).filter((link) => {
+      const href = link.getAttribute('href') ?? '';
+      if (href.startsWith('mailto:')) return false;
+      if (link.classList.contains('account-nav-link')) return false;
+      if (link.classList.contains('account-nav-user')) return false;
+      return /IYM\.html|IYS Software\.html|IYS Studio\.html|IYS Website\.html/.test(href);
+    })
+  );
+
   navLinks?.addEventListener('mouseover', (event) => {
-    if (contact && contact.contains(event.target)) {
-      close();
-      return;
-    }
-    open();
+    const link = event.target.closest('a');
+    if (link && triggerLinks.has(link)) open();
+    else close();
   });
 
   navLinks?.addEventListener('mouseleave', close);
