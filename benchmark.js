@@ -1020,13 +1020,9 @@
   paintLockButton();
 
   const aimView = document.querySelector('#view-aim');
-  // 放在 Aim 标题下面、测试框上面
-  const aimHead = aimView?.querySelector('.hb-view-head');
-  if (aimHead && aimHead.parentElement === aimView) {
-    aimHead.insertAdjacentElement('afterend', lockButton);
-  } else if (aimStage?.parentElement) {
-    aimStage.parentElement.insertBefore(lockButton, aimStage);
-  }
+  // 直接挂到 body：祖先若有 transform / backdrop-filter，
+  // position: fixed 会退化成 absolute（跟着内容滚），放到 body 才真正悬浮
+  document.body.append(lockButton);
 
   function syncLockButton() {
     const visible = !!aimView && !aimView.hidden && aimView.offsetParent !== null;
