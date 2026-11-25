@@ -3615,3 +3615,16 @@ body.is-locked {
     overscroll-behavior: none;
     touch-action: none;
 }
+
+/* 历史里的"破纪录"标记 */
+.hb-record-badge {
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(255, 179, 71, 0.16);
+    color: #9a5b00;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}

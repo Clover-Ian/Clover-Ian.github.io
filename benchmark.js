@@ -969,6 +969,8 @@
   const aimAverageEl = $('[data-aim-average]');
   const aimBestEl = $('[data-aim-best]');
   const aimState = $('[data-aim-state]');
+  const aimActions = $('[data-aim-actions]');
+  const aimRestart = $('[data-aim-restart]');
 
   const aim = { hits: 0, times: [], targetAt: 0, playing: false, finished: false };
 
@@ -1070,6 +1072,7 @@
     if (aimHitsEl) aimHitsEl.textContent = '0';
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
+    if (aimActions) aimActions.hidden = true;
     updateAimBest();
   }
 
@@ -1110,8 +1113,9 @@
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
     if (aimHint) {
       aimHint.hidden = false;
-      aimHint.textContent = `Done — ${Math.round(average)} ms per target. Click anywhere to try again.`;
+      aimHint.textContent = `Done — ${Math.round(average)} ms per target.`;
     }
+    if (aimActions) aimActions.hidden = false;
 
     if (cloud.ready) {
       const record = isRecord('aim', Math.round(average));
@@ -1143,8 +1147,17 @@
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
     if (aimHint) aimHint.hidden = true;
+    if (aimActions) aimActions.hidden = true;
     aimSpawn();
   }
+
+  aimRestart?.addEventListener('click', () => {
+    aimReset();
+    if (aimHint) {
+      aimHint.hidden = false;
+      aimHint.textContent = 'Click anywhere in this box to start.';
+    }
+  });
 
   // 在框里点一下就开局；结束后必须点下面的 Restart，避免手还在连点时误触
   aimStage?.addEventListener('pointerdown', (event) => {
@@ -1269,6 +1282,23 @@
       historyStatus.hidden = true;
     }
 
+    // 先按时间正序算出"当时是否破纪录"，再倒序展示
+    const chronological = [...rows].slice(0, 500).sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    const runningBest = new Map();
+    const wasRecord = new Map();   // created_at + test -> bool
+    chronological.forEach((row) => {
+      const value = Number(row.value);
+      if (!Number.isFinite(value)) return;
+      const key = `${row.created_at}|${row.test}`;
+      const current = runningBest.get(row.test);
+      const better = current === undefined
+        || (LOWER_IS_BETTER.has(row.test) ? value < current : value > current);
+      wasRecord.set(key, better);
+      if (better) runningBest.set(row.test, value);
+    });
+
     rows.slice(0, 500).forEach((row) => {
       const li = document.createElement('li');
       li.className = 'hb-board-row hb-history-row';
@@ -1286,6 +1316,14 @@
       score.textContent = historyScore(row);
 
       li.append(when, test, score);
+
+      if (wasRecord.get(`${row.created_at}|${row.test}`)) {
+        const badge = document.createElement('span');
+        badge.className = 'hb-record-badge';
+        badge.textContent = 'Record';
+        badge.title = 'This run set a personal best when it was played.';
+        li.append(badge);
+      }
       historyRows.append(li);
     });
   }
