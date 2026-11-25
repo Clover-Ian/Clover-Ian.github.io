@@ -14,16 +14,16 @@
     {
       title: 'Play',
       links: [
-        ['IYS Arcade', 'IYS Arcade.html', 'Seven quick browser tests'],
-        ['IYS Critters', 'IYS Critters.html', 'Adopt a small creature'],
+        ['IYS Arcade', 'IYS Arcade.html'],
+        ['IYS Critters', 'IYS Critters.html'],
       ],
     },
     {
       title: 'Software',
       links: [
-        ['IYS Archiver', 'IYS Archiver Pro.html', 'Archives, every format'],
-        ['IYS PDF', 'IYS Software.html', 'A light PDF editor'],
-        ['IYS Studio', 'IYS Studio.html', 'Music, movies, stories'],
+        ['IYS Archiver', 'IYS Archiver Pro.html'],
+        ['IYS PDF', 'IYS Software.html'],
+        ['IYS Studio', 'IYS Studio.html'],
       ],
     },
   ];
@@ -44,7 +44,7 @@
     heading.textContent = group.title;
     column.append(heading);
 
-    group.links.forEach(([label, href, note]) => {
+    group.links.forEach(([label, href]) => {
       const link = document.createElement('a');
       link.className = 'mega-link';
       link.href = href;
@@ -53,11 +53,7 @@
       name.className = 'mega-link-name';
       name.textContent = label;
 
-      const hint = document.createElement('span');
-      hint.className = 'mega-link-note';
-      hint.textContent = note;
-
-      link.append(name, hint);
+      link.append(name);
       column.append(link);
     });
 
