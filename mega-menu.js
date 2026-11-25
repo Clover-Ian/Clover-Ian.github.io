@@ -16,7 +16,6 @@
       links: [
         ['IYS Arcade', 'IYS Arcade.html', 'Seven quick browser tests'],
         ['IYS Critters', 'IYS Critters.html', 'Adopt a small creature'],
-        ['Human Benchmark', 'IYS Human Benchmark.html', 'Reaction, aim, typing'],
       ],
     },
     {
@@ -97,9 +96,20 @@
   trigger.setAttribute('aria-haspopup', 'true');
   trigger.setAttribute('aria-expanded', 'false');
 
-  trigger.addEventListener('mouseenter', open);
+  const navLinks = trigger.closest('.nav-links') || trigger.parentElement;
+  const contact = navLinks?.querySelector('a[href^="mailto:"]');
+
+  // 鼠标进入导航条就展开（Contact 除外）
+  navLinks?.addEventListener('mouseover', (event) => {
+    if (contact && contact.contains(event.target)) {
+      close();
+      return;
+    }
+    open();
+  });
+
+  navLinks?.addEventListener('mouseleave', close);
   trigger.addEventListener('focus', open);
-  trigger.addEventListener('mouseleave', close);
   trigger.addEventListener('blur', close);
 
   panel.addEventListener('mouseenter', () => window.clearTimeout(closeTimer));

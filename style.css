@@ -3641,8 +3641,7 @@ body.is-locked {
     left: 0;
     right: 0;
     padding: 0 24px 26px;
-    background: rgb(255 255 255 / 92%);
-    backdrop-filter: blur(20px) saturate(180%);
+    background: #fff;
     border-bottom: 1px solid var(--line);
     box-shadow: 0 24px 60px rgb(29 29 31 / 10%);
 
