@@ -1162,6 +1162,7 @@
   // 在框里点一下就开局；结束后必须点下面的 Restart，避免手还在连点时误触
   aimStage?.addEventListener('pointerdown', (event) => {
     if (aim.playing) return;
+    if (aim.finished) return;          // 打完后必须点 Try again
     if (event.target.closest('.hb-target')) return;
     event.preventDefault();
     aimStart();
