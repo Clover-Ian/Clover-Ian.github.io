@@ -1019,21 +1019,29 @@
   });
   paintLockButton();
 
-  // 放到 Aim 区域里
-  if (aimStage?.parentElement) {
+  const aimView = document.querySelector('#view-aim');
+  // 放在 Aim 标题下面、测试框上面
+  const aimHead = aimView?.querySelector('.hb-view-head');
+  if (aimHead && aimHead.parentElement === aimView) {
+    aimHead.insertAdjacentElement('afterend', lockButton);
+  } else if (aimStage?.parentElement) {
     aimStage.parentElement.insertBefore(lockButton, aimStage);
   }
 
-  // 离开 Aim 页时解锁
-  const aimObserver = new MutationObserver(() => {
-    const view = document.querySelector('#view-aim');
-    const visible = view && !view.hidden;
+  function syncLockButton() {
+    const visible = !!aimView && !aimView.hidden && aimView.offsetParent !== null;
     lockButton.hidden = !visible;
     if (!visible) unlockPage();
-  });
-  document.querySelectorAll('[data-view]').forEach((el) => {
-    aimObserver.observe(el, { attributes: true, attributeFilter: ['hidden'] });
-  });
+  }
+
+  syncLockButton();
+  if (aimView) {
+    new MutationObserver(syncLockButton).observe(aimView, {
+      attributes: true,
+      attributeFilter: ['hidden', 'class', 'style'],
+    });
+  }
+  window.addEventListener('hashchange', syncLockButton);
 
   // 阻止触摸拖动导致的页面滑动 / 双击缩放
   function blockTouch(event) {
