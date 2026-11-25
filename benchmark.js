@@ -972,6 +972,28 @@
 
   const aim = { hits: 0, times: [], targetAt: 0, playing: false, finished: false };
 
+  /* ---- 触屏锁定：玩的时候不让页面滚动/缩放/长按选中 ---- */
+  let lockCount = 0;
+
+  function lockScroll(on) {
+    lockCount = Math.max(0, lockCount + (on ? 1 : -1));
+    const locked = lockCount > 0;
+    document.documentElement.style.overscrollBehavior = locked ? 'none' : '';
+    document.body.style.overflow = locked ? 'hidden' : '';
+    document.body.style.touchAction = locked ? 'none' : '';
+  }
+
+  // 阻止触摸拖动导致的页面滑动 / 双击缩放
+  function blockTouch(event) {
+    if (!aim.playing) return;
+    if (event.cancelable) event.preventDefault();
+  }
+  document.addEventListener('touchmove', blockTouch, { passive: false });
+  document.addEventListener('gesturestart', (event) => { if (aim.playing) event.preventDefault(); });
+  aimStage?.addEventListener('contextmenu', (event) => {
+    if (aim.playing) event.preventDefault();
+  });
+
   function updateAimBest() {
     const best = bestOf('aim');
     if (aimBestEl) aimBestEl.textContent = best ? `${Math.round(best)} ms` : '—';
@@ -984,6 +1006,7 @@
 
   function aimReset() {
     aimClearTargets();
+    if (aim.playing) lockScroll(false);
     aim.playing = false;
     aim.finished = false;
     aim.hits = 0;
@@ -1027,6 +1050,7 @@
   function aimFinish() {
     aim.playing = false;
     aim.finished = true;
+    lockScroll(false);
     const total = aim.times.reduce((sum, value) => sum + value, 0);
     const average = aim.times.length ? total / aim.times.length : 0;
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
@@ -1049,6 +1073,7 @@
   }
 
   function aimTeardown() {
+    if (aim.playing) lockScroll(false);
     aim.playing = false;
     aimClearTargets();
   }
@@ -1060,6 +1085,7 @@
     aim.times = [];
     aim.playing = true;
     aim.finished = false;
+    lockScroll(true);
     if (aimHitsEl) aimHitsEl.textContent = '0';
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';

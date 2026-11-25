@@ -3559,3 +3559,18 @@ article.legal-policy h2 {
 .dl-github {
     font-size: 12.5px;
 }
+
+/* Aim Trainer：玩的时候锁住页面滚动与手势 */
+.hb-aim-stage,
+[data-aim-stage] {
+    touch-action: none;
+    overscroll-behavior: contain;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+body.is-locked {
+    overflow: hidden;
+    touch-action: none;
+}
