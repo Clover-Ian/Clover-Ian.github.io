@@ -107,10 +107,28 @@
     showFeedback(feedback, AUTH_ERROR_MESSAGES[error?.code] || error?.message || fallback);
   }
 
+  /** 被禁用的账号：直接踢掉（不需要提示页） */
+  async function kickIfBanned() {
+    try {
+      const { data, error } = await client.rpc('am_i_banned');
+      if (error) return;
+      if (data === true) {
+        await client.auth.signOut();
+        window.location.reload();
+        return true;
+      }
+    } catch (kickError) {
+      console.warn('[account] 封禁检查失败：', kickError);
+    }
+    return false;
+  }
+
   async function init() {
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
     if (!data.session?.user) return;
+
+    if (await kickIfBanned()) return;
 
     let user = data.session.user;
 
@@ -241,7 +259,10 @@
     }
     refreshInboxBadge();
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) refreshInboxBadge();
+      if (!document.hidden) {
+        refreshInboxBadge();
+        kickIfBanned();
+      }
     });
 
     accountMenu.append(userLabel, menu);

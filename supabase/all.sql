@@ -1473,3 +1473,22 @@ as $$
 $$;
 
 grant execute on function public.leaderboard_names(uuid[]) to anon, authenticated;
+
+-- ---------- 28. 当前登录用户是否被封禁 ----------
+drop function if exists public.am_i_banned();
+
+create or replace function public.am_i_banned()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+    select coalesce(
+        (select u.banned_until is not null and u.banned_until > now()
+           from auth.users u
+          where u.id = auth.uid()),
+        false);
+$$;
+
+grant execute on function public.am_i_banned() to authenticated;
