@@ -3575,13 +3575,18 @@ body.is-locked {
     touch-action: none;
 }
 
-/* Aim Trainer：手动锁定按钮 */
+/* Aim Trainer：左下角浮动锁定按钮 */
 .hb-lock-toggle {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 60;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin: 0 0 10px;
-    padding: 7px 14px;
+    margin: 0;
+    padding: 9px 16px;
+    box-shadow: 0 8px 24px rgb(29 29 31 / 16%);
     border: 1px solid var(--line);
     border-radius: 999px;
     background: #fff;
