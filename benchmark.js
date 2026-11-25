@@ -983,9 +983,61 @@
     document.body.style.touchAction = locked ? 'none' : '';
   }
 
+  /* ---- 手动锁定：滚到合适位置后点一下，页面就不再跟着手指走 ---- */
+  let pageLocked = false;
+  const lockButton = document.createElement('button');
+  lockButton.type = 'button';
+  lockButton.className = 'hb-lock-toggle';
+  lockButton.hidden = true;
+  lockButton.setAttribute('aria-pressed', 'false');
+
+  function paintLockButton() {
+    lockButton.textContent = pageLocked ? 'Unlock page' : 'Lock page';
+    lockButton.classList.toggle('is-active', pageLocked);
+    lockButton.setAttribute('aria-pressed', String(pageLocked));
+  }
+
+  function lockPage() {
+    if (pageLocked) return;
+    pageLocked = true;
+    document.body.classList.add('is-locked');
+    document.documentElement.style.overscrollBehavior = 'none';
+    paintLockButton();
+  }
+
+  function unlockPage() {
+    if (!pageLocked) return;
+    pageLocked = false;
+    document.body.classList.remove('is-locked');
+    document.documentElement.style.overscrollBehavior = '';
+    paintLockButton();
+  }
+
+  lockButton.addEventListener('click', () => {
+    if (pageLocked) unlockPage();
+    else lockPage();
+  });
+  paintLockButton();
+
+  // 放到 Aim 区域里
+  if (aimStage?.parentElement) {
+    aimStage.parentElement.insertBefore(lockButton, aimStage);
+  }
+
+  // 离开 Aim 页时解锁
+  const aimObserver = new MutationObserver(() => {
+    const view = document.querySelector('#view-aim');
+    const visible = view && !view.hidden;
+    lockButton.hidden = !visible;
+    if (!visible) unlockPage();
+  });
+  document.querySelectorAll('[data-view]').forEach((el) => {
+    aimObserver.observe(el, { attributes: true, attributeFilter: ['hidden'] });
+  });
+
   // 阻止触摸拖动导致的页面滑动 / 双击缩放
   function blockTouch(event) {
-    if (!aim.playing) return;
+    if (!pageLocked) return;
     if (event.cancelable) event.preventDefault();
   }
   document.addEventListener('touchmove', blockTouch, { passive: false });
@@ -1006,7 +1058,6 @@
 
   function aimReset() {
     aimClearTargets();
-    if (aim.playing) lockScroll(false);
     aim.playing = false;
     aim.finished = false;
     aim.hits = 0;
@@ -1050,7 +1101,6 @@
   function aimFinish() {
     aim.playing = false;
     aim.finished = true;
-    lockScroll(false);
     const total = aim.times.reduce((sum, value) => sum + value, 0);
     const average = aim.times.length ? total / aim.times.length : 0;
     if (aimAverageEl) aimAverageEl.textContent = `${Math.round(average)} ms`;
@@ -1073,9 +1123,9 @@
   }
 
   function aimTeardown() {
-    if (aim.playing) lockScroll(false);
     aim.playing = false;
     aimClearTargets();
+    unlockPage();
   }
 
   /** 开始一轮：清空计数，弹出第一个目标 */
@@ -1085,7 +1135,6 @@
     aim.times = [];
     aim.playing = true;
     aim.finished = false;
-    lockScroll(true);
     if (aimHitsEl) aimHitsEl.textContent = '0';
     if (aimAverageEl) aimAverageEl.textContent = '—';
     if (aimState) aimState.textContent = '';
