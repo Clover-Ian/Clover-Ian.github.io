@@ -16,6 +16,7 @@
       links: [
         ['IYS Archiver', 'IYS Archiver Pro.html'],
         ['IYS PDF', 'IYS Software.html'],
+        ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
       ],
     },
     {
