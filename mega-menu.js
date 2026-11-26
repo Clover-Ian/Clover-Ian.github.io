@@ -12,7 +12,7 @@
       title: 'IYM',
       columns: [
         { heading: 'IYM', links: [
-          ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
+          ['IYM AutoClicker', 'IYS Software.html#iym-autoclicker'],
           ['About IYM', 'IYM.html'],
         ] },
       ],
@@ -21,9 +21,9 @@
       title: 'Software',
       columns: [
         { heading: 'IYS Software', links: [
-          ['IYS Archiver', 'IYS Archiver Pro.html'],
-          ['IYS PDF', 'IYS Software.html'],
-          ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
+          ['IYS Archiver', 'IYS Software.html#iys-archiver'],
+          ['IYS PDF', 'IYS Software.html#iys-pdf'],
+          ['IYM AutoClicker', 'IYS Software.html#iym-autoclicker'],
         ] },
       ],
     },
