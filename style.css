@@ -3734,3 +3734,17 @@ main, .site-footer {
 .mega-link:hover .mega-link-name {
     color: var(--blue);
 }
+
+/* 导航面板里的外站箭头 */
+.mega-external {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 10.5px;
+    line-height: 1;
+    color: var(--muted);
+    transform: translateY(-1px);
+}
+
+.mega-link:hover .mega-external {
+    color: var(--blue);
+}

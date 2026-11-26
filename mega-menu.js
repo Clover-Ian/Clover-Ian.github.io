@@ -94,6 +94,18 @@
           link.href = href;
           link.style.animationDelay = `${index * 18}ms`;
           link.textContent = label;
+
+          // 外站链接：右上角小箭头 + 新标签打开
+          if (/^https?:/i.test(href)) {
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            const arrow = document.createElement('span');
+            arrow.className = 'mega-external';
+            arrow.setAttribute('aria-hidden', 'true');
+            arrow.textContent = '↗';
+            link.append(arrow);
+          }
+
           col.append(link);
         });
 
