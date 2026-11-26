@@ -3783,3 +3783,108 @@ main, .site-footer {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* ---------- 工具页通用 ---------- */
+.tool-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px 90px;
+}
+
+.tool-card {
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgb(29 29 31 / 6%);
+}
+
+.tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+}
+
+.tool-field {
+    display: grid;
+    gap: 6px;
+    flex: 1 1 200px;
+}
+
+.tool-field label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.tool-field input[type="text"],
+.tool-field input[type="number"],
+.tool-field select,
+.tool-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.tool-field textarea {
+    min-height: 150px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+}
+
+.tool-button {
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tool-button:hover { filter: brightness(1.06); }
+
+.tool-button--ghost {
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--ink);
+}
+
+.tool-note {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+.tool-drop {
+    display: grid;
+    place-items: center;
+    gap: 8px;
+    padding: 46px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    background: #fafafc;
+    text-align: center;
+    cursor: pointer;
+}
+
+.tool-drop.is-over {
+    border-color: var(--blue);
+    background: #f2f8ff;
+}
+
+.tool-preview {
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}

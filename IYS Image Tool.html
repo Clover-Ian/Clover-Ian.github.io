@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Compress or convert images locally in the browser.">
+    <title>IYS Image Tool</title>
+    <link rel="icon" type="image/png" href="IYS Developer.png">
+    <link rel="apple-touch-icon" href="IYS Developer.png">
+    <link rel="stylesheet" href="style.css?v=20261127a">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261126d" defer></script>
+    <script src="mega-menu.js?v=20261127a" defer></script>
+    <script src="presence.js?v=20261118d" defer></script>
+    <script src="announcements.js?v=20261126b" defer></script>
+    <script src="messages.js?v=20261116e" defer></script>
+    <script src="scroll-center.js?v=20261126a" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a class="current" href="IYS Developer.html" aria-current="page">Developer</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="tool-wrap">
+
+            <p class="eyebrow">Developer · Image tool</p>
+            <h1>Compress or convert an image.</h1>
+            <p class="hero-copy">Runs in your browser. The picture is never uploaded.</p>
+
+            <div class="tool-card" style="margin-top:26px">
+                <div class="tool-drop" id="img-drop">
+                    <strong>Drop an image here</strong>
+                    <span class="tool-note">or click to choose — PNG, JPEG, WebP, GIF, BMP</span>
+                    <input id="img-input" type="file" accept="image/*" hidden>
+                </div>
+
+                <div class="tool-row" style="margin-top:18px">
+                    <div class="tool-field">
+                        <label for="img-format">Format</label>
+                        <select id="img-format">
+                            <option value="image/webp">WebP (smallest)</option>
+                            <option value="image/jpeg">JPEG</option>
+                            <option value="image/png">PNG (lossless)</option>
+                        </select>
+                    </div>
+                    <div class="tool-field">
+                        <label for="img-quality">Quality</label>
+                        <input id="img-quality" type="range" min="40" max="100" value="82">
+                    </div>
+                    <div class="tool-field">
+                        <label for="img-width">Max width (px)</label>
+                        <input id="img-width" type="number" min="64" max="6000" value="1600">
+                    </div>
+                </div>
+
+                <div class="tool-row" style="margin-top:18px">
+                    <button class="tool-button" id="img-run">Convert</button>
+                    <button class="tool-button tool-button--ghost" id="img-download" disabled>Download</button>
+                    <span class="tool-note" id="img-status"></span>
+                </div>
+
+                <div id="img-result" style="margin-top:18px"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+
+<script>
+(() => {
+  const drop = document.getElementById('img-drop');
+  const input = document.getElementById('img-input');
+  const format = document.getElementById('img-format');
+  const quality = document.getElementById('img-quality');
+  const maxWidth = document.getElementById('img-width');
+  const run = document.getElementById('img-run');
+  const download = document.getElementById('img-download');
+  const status = document.getElementById('img-status');
+  const result = document.getElementById('img-result');
+
+  let source = null;        // { file, image }
+  let output = null;        // { blob, url, name }
+
+  const kb = (bytes) => `${(bytes / 1024).toFixed(0)} KB`;
+
+  function pick(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      status.textContent = 'That is not an image.';
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      source = { file, image };
+      status.textContent = `${file.name} · ${image.width}×${image.height} · ${kb(file.size)}`;
+      convert();
+    };
+    image.onerror = () => { status.textContent = 'Could not read that image.'; };
+    image.src = url;
+  }
+
+  function convert() {
+    if (!source) return;
+    const targetFormat = format.value;
+    const ratio = Math.min(1, Number(maxWidth.value || 1600) / source.image.width);
+    const w = Math.max(1, Math.round(source.image.width * ratio));
+    const h = Math.max(1, Math.round(source.image.height * ratio));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (targetFormat === 'image/jpeg') {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.drawImage(source.image, 0, 0, w, h);
+
+    canvas.toBlob((blob) => {
+      if (!blob) { status.textContent = 'Conversion failed.'; return; }
+      if (output) URL.revokeObjectURL(output.url);
+      const ext = targetFormat.split('/')[1].replace('jpeg', 'jpg');
+      output = {
+        blob,
+        url: URL.createObjectURL(blob),
+        name: source.file.name.replace(/\.[^.]+$/, '') + '.' + ext,
+      };
+
+      const saved = Math.round((1 - blob.size / source.file.size) * 100);
+      status.textContent = `${w}×${h} · ${kb(source.file.size)} → ${kb(blob.size)} (${saved > 0 ? '−' + saved + '%' : '+' + Math.abs(saved) + '%'})`;
+      download.disabled = false;
+
+      result.innerHTML = '';
+      const img = document.createElement('img');
+      img.className = 'tool-preview';
+      img.src = output.url;
+      result.append(img);
+    }, targetFormat, Number(quality.value) / 100);
+  }
+
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => pick(input.files[0]));
+
+  ['dragenter', 'dragover'].forEach((type) => drop.addEventListener(type, (event) => {
+    event.preventDefault();
+    drop.classList.add('is-over');
+  }));
+  ['dragleave', 'drop'].forEach((type) => drop.addEventListener(type, (event) => {
+    event.preventDefault();
+    drop.classList.remove('is-over');
+  }));
+  drop.addEventListener('drop', (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (file) pick(file);
+  });
+
+  run.addEventListener('click', convert);
+  [format, quality, maxWidth].forEach((el) => el.addEventListener('input', convert));
+
+  download.addEventListener('click', () => {
+    if (!output) return;
+    const link = document.createElement('a');
+    link.href = output.url;
+    link.download = output.name;
+    link.click();
+  });
+})();
+</script>
+
+</body>
+</html>

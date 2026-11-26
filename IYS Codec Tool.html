@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Base64 and URL encoding, done in the browser.">
+    <title>IYS Codec Tool</title>
+    <link rel="icon" type="image/png" href="IYS Developer.png">
+    <link rel="apple-touch-icon" href="IYS Developer.png">
+    <link rel="stylesheet" href="style.css?v=20261127a">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261126d" defer></script>
+    <script src="mega-menu.js?v=20261127a" defer></script>
+    <script src="presence.js?v=20261118d" defer></script>
+    <script src="announcements.js?v=20261126b" defer></script>
+    <script src="messages.js?v=20261116e" defer></script>
+    <script src="scroll-center.js?v=20261126a" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a class="current" href="IYS Developer.html" aria-current="page">Developer</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="tool-wrap">
+
+            <p class="eyebrow">Developer · Codec</p>
+            <h1>Base64 &amp; URL codec.</h1>
+            <p class="hero-copy">Encode and decode text instantly, in the browser.</p>
+
+            <div class="tool-card" style="margin-top:26px">
+                <div class="tool-field">
+                    <label for="codec-text">Text</label>
+                    <textarea id="codec-text" placeholder="Type or paste something…"></textarea>
+                </div>
+
+                <div class="tool-row" style="margin-top:16px">
+                    <button class="tool-button" data-act="b64e">Base64 encode</button>
+                    <button class="tool-button" data-act="b64d">Base64 decode</button>
+                    <button class="tool-button" data-act="urle">URL encode</button>
+                    <button class="tool-button" data-act="urld">URL decode</button>
+                    <button class="tool-button tool-button--ghost" data-act="copy">Copy</button>
+                    <span class="tool-note" id="codec-status"></span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+
+<script>
+(() => {
+  const field = document.getElementById('codec-text');
+  const status = document.getElementById('codec-status');
+
+  function note(message) {
+    status.textContent = message;
+    window.setTimeout(() => { status.textContent = ''; }, 1800);
+  }
+
+  const actions = {
+    b64e: () => btoa(String.fromCharCode(...new TextEncoder().encode(field.value))),
+    b64d: () => new TextDecoder().decode(Uint8Array.from(atob(field.value.trim()), (c) => c.charCodeAt(0))),
+    urle: () => encodeURIComponent(field.value),
+    urld: () => decodeURIComponent(field.value),
+  };
+
+  document.querySelectorAll('[data-act]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const act = button.dataset.act;
+
+      if (act === 'copy') {
+        try {
+          await navigator.clipboard.writeText(field.value);
+          note('Copied.');
+        } catch { note('Copy failed.'); }
+        return;
+      }
+
+      try {
+        field.value = actions[act]();
+        note('Done.');
+      } catch {
+        note('That input is not valid for this operation.');
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -43,7 +43,10 @@
       title: 'IYS Developer',
       columns: [
         { heading: 'IYS Developer', links: [
-          ['IYS SQL Viewer', 'IYS STL Viewer.html'],
+          ['IYS STL Viewer', 'IYS STL Viewer.html'],
+          ['IYS Card Maker', 'IYS Card Maker.html'],
+          ['IYS Image Tool', 'IYS Image Tool.html'],
+          ['IYS Codec Tool', 'IYS Codec Tool.html'],
         ] },
       ],
     },
