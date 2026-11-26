@@ -1,32 +1,63 @@
 /**
- * 悬停展开的导航面板（不用点击）。
- * 用法：给导航项加 data-mega="explore"，脚本会自动生成面板。
- * 点击导航项仍然正常跳转。
+ * 导航悬停面板：每个导航项有自己的内容，切换时快速淡入 + 轻微上浮。
+ * 停在导航栏的空白处不会关闭，也不会改变当前内容。
  */
 (() => {
-  const trigger = document.querySelector('[data-mega]');
-  if (!trigger) return;
-
+  const navLinks = document.querySelector('.nav-links');
   const header = document.querySelector('.site-header');
-  if (!header) return;
+  if (!navLinks || !header) return;
 
-  const GROUPS = [
-    {
+  const SECTIONS = {
+    iym: {
+      title: 'IYM',
+      columns: [
+        { heading: 'Tools', links: [
+          ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
+          ['About IYM', 'IYM.html'],
+        ] },
+      ],
+    },
+    software: {
       title: 'Software',
-      links: [
-        ['IYS Archiver', 'IYS Archiver Pro.html'],
-        ['IYS PDF', 'IYS Software.html'],
-        ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
+      columns: [
+        { heading: 'Apps', links: [
+          ['IYS Archiver', 'IYS Archiver Pro.html'],
+          ['IYS PDF', 'IYS Software.html'],
+          ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
+        ] },
       ],
     },
-    {
+    studio: {
+      title: 'Studio',
+      columns: [
+        { heading: 'Studio', links: [
+          ['IYS Studio', 'IYS Studio.html'],
+          ['Music', 'IYS Studio.html'],
+          ['Movies', 'IYS Studio.html'],
+          ['Stories', 'IYS Studio.html'],
+        ] },
+      ],
+    },
+    website: {
       title: 'Website',
-      links: [
-        ['IYS Arcade', 'IYS Arcade.html'],
-        ['IYS Critters', 'IYS Critters.html'],
+      columns: [
+        { heading: 'Play', links: [
+          ['IYS Arcade', 'IYS Arcade.html'],
+          ['IYS Critters', 'IYS Critters.html'],
+        ] },
       ],
     },
-  ];
+  };
+
+  const triggerFor = (link) => {
+    if (!link) return null;
+    const href = link.getAttribute('href') ?? '';
+    if (href === 'IYM.html') return 'iym';
+    if (href === 'IYS Software.html') return 'software';
+    if (href === 'IYS Studio.html') return 'studio';
+    if (href === 'IYS Website.html') return 'website';
+    return null;
+  };
 
   const panel = document.createElement('div');
   panel.className = 'mega-panel';
@@ -34,47 +65,67 @@
 
   const inner = document.createElement('div');
   inner.className = 'mega-inner';
-
-  GROUPS.forEach((group) => {
-    const column = document.createElement('div');
-    column.className = 'mega-column';
-
-    const heading = document.createElement('p');
-    heading.className = 'mega-heading';
-    heading.textContent = group.title;
-    column.append(heading);
-
-    group.links.forEach(([label, href]) => {
-      const link = document.createElement('a');
-      link.className = 'mega-link';
-      link.href = href;
-
-      const name = document.createElement('span');
-      name.className = 'mega-link-name';
-      name.textContent = label;
-
-      link.append(name);
-      column.append(link);
-    });
-
-    inner.append(column);
-  });
-
   panel.append(inner);
   header.append(panel);
 
-  let closeTimer = 0;
+  let current = '';
   let openTimer = 0;
+  let closeTimer = 0;
+  let swapTimer = 0;
+
+  function render(key, immediate = false) {
+    const section = SECTIONS[key];
+    if (!section) return;
+
+    const paint = () => {
+      inner.innerHTML = '';
+      inner.dataset.section = key;
+
+      section.columns.forEach((column) => {
+        const col = document.createElement('div');
+        col.className = 'mega-column';
+
+        const heading = document.createElement('p');
+        heading.className = 'mega-heading';
+        heading.textContent = column.heading;
+        col.append(heading);
+
+        column.links.forEach(([label, href], index) => {
+          const link = document.createElement('a');
+          link.className = 'mega-link';
+          link.href = href;
+          link.style.animationDelay = `${index * 18}ms`;
+          link.textContent = label;
+          col.append(link);
+        });
+
+        inner.append(col);
+      });
+    };
+
+    if (immediate || !panel.classList.contains('is-open')) {
+      paint();
+      current = key;
+      return;
+    }
+
+    // 快速交叉淡出 → 换内容 → 淡入
+    inner.classList.add('is-swapping');
+    window.clearTimeout(swapTimer);
+    swapTimer = window.setTimeout(() => {
+      paint();
+      inner.classList.remove('is-swapping');
+      current = key;
+    }, 90);
+  }
 
   function open() {
     window.clearTimeout(closeTimer);
     window.clearTimeout(openTimer);
     openTimer = window.setTimeout(() => {
       panel.hidden = false;
-      // 下一帧再加 class，保证有过渡
       requestAnimationFrame(() => panel.classList.add('is-open'));
-      trigger.setAttribute('aria-expanded', 'true');
-    }, 70);
+    }, 40);
   }
 
   function close() {
@@ -82,47 +133,44 @@
     window.clearTimeout(closeTimer);
     closeTimer = window.setTimeout(() => {
       panel.classList.remove('is-open');
-      trigger.setAttribute('aria-expanded', 'false');
       window.setTimeout(() => {
         if (!panel.classList.contains('is-open')) panel.hidden = true;
-      }, 240);
-    }, 120);
+      }, 220);
+    }, 140);
   }
 
-  trigger.setAttribute('aria-haspopup', 'true');
-  trigger.setAttribute('aria-expanded', 'false');
-
-  const navLinks = trigger.closest('.nav-links') || trigger.parentElement;
-
-  // 只有这几个文字链接算触发区（不含 Contact 和账号区）
-  const triggerLinks = new Set(
-    Array.from(navLinks?.querySelectorAll('a') ?? []).filter((link) => {
-      const href = link.getAttribute('href') ?? '';
-      if (href.startsWith('mailto:')) return false;
-      if (link.classList.contains('account-nav-link')) return false;
-      if (link.classList.contains('account-nav-user')) return false;
-      return /IYM\.html|IYS Software\.html|IYS Studio\.html|IYS Website\.html/.test(href);
-    })
-  );
-
-  navLinks?.addEventListener('mouseover', (event) => {
+  navLinks.addEventListener('mouseover', (event) => {
     const link = event.target.closest('a');
-    if (link && triggerLinks.has(link)) open();
-    else close();
+    const key = triggerFor(link);
+
+    if (key) {
+      open();
+      if (key !== current) render(key);
+      return;
+    }
+
+    // 空白处 / Contact / 账号区：保持当前内容，不关闭
+    if (panel.classList.contains('is-open')) window.clearTimeout(closeTimer);
   });
 
-  navLinks?.addEventListener('mouseleave', close);
-  trigger.addEventListener('focus', open);
-  trigger.addEventListener('blur', close);
-
+  // 只有离开「导航栏 + 面板」才关闭
+  const leave = () => close();
+  navLinks.addEventListener('mouseleave', (event) => {
+    const to = event.relatedTarget;
+    if (to && panel.contains(to)) return;
+    leave();
+  });
   panel.addEventListener('mouseenter', () => window.clearTimeout(closeTimer));
-  panel.addEventListener('mouseleave', close);
+  panel.addEventListener('mouseleave', (event) => {
+    const to = event.relatedTarget;
+    if (to && navLinks.contains(to)) return;
+    leave();
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') close();
   });
 
-  // 滚离顶部就收起
   window.addEventListener('scroll', () => {
     if (!panel.hidden && window.scrollY > 40) close();
   }, { passive: true });
