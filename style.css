@@ -3919,13 +3919,60 @@ main, .site-footer {
 .card-modal-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding-top: 14px;
+    gap: 10px;
+    padding-top: 16px;
 }
 
-.card-modal-bar .button-link {
+/* Apple 风格的胶囊按钮 */
+.card-modal-bar button {
+    appearance: none;
+    -webkit-appearance: none;
     border: 0;
+    border-radius: 980px;
+    padding: 9px 20px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 590;
+    letter-spacing: -0.01em;
     cursor: pointer;
+    transition: background 150ms ease, transform 120ms ease, color 150ms ease;
+}
+
+.card-modal-bar button:active {
+    transform: scale(0.965);
+}
+
+/* 主按钮：蓝 */
+.card-modal-bar button:first-child {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.card-modal-bar button:first-child:hover {
+    background: #0a58c4;
+}
+
+/* 次按钮：浅灰胶囊 */
+.card-modal-bar button:not(:first-child) {
+    background: rgb(118 118 128 / 12%);
+    color: var(--ink);
+}
+
+.card-modal-bar button:not(:first-child):hover {
+    background: rgb(118 118 128 / 20%);
+}
+
+/* Close 推到右边 */
+.card-modal-bar button:last-child {
+    margin-left: auto;
+    background: transparent;
+    color: var(--muted);
+}
+
+.card-modal-bar button:last-child:hover {
+    background: rgb(118 118 128 / 12%);
+    color: var(--ink);
 }
 
 .hb-card-button {
