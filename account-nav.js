@@ -138,7 +138,7 @@
 
     if (await kickIfBanned()) return;
 
-    let user = data.session.user;
+    let user = session.user;
 
     const accountMenu = document.createElement('div');
     accountMenu.className = 'account-menu-container';
