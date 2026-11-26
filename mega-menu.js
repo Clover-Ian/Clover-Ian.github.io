@@ -25,6 +25,10 @@
           ['IYS PDF', 'IYS Software.html#iys-pdf'],
           ['IYM AutoClicker', 'IYS Software.html#iym-autoclicker'],
         ] },
+        { heading: 'Pro', links: [
+          ['IYS Archiver Pro', 'IYS Archiver Pro.html'],
+          ['IYM AutoClicker Pro', 'IYM AutoClicker Pro.html'],
+        ] },
       ],
     },
     studio: {
