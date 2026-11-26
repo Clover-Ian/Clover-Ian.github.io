@@ -3634,6 +3634,19 @@ body.is-locked {
     position: relative;
 }
 
+/* 面板打开时，页面内容做磨砂处理 */
+body.is-mega-open main,
+body.is-mega-open .site-footer {
+    filter: blur(7px) saturate(0.85);
+    opacity: 0.55;
+    transition: filter 200ms ease, opacity 200ms ease;
+    pointer-events: none;
+}
+
+main, .site-footer {
+    transition: filter 200ms ease, opacity 200ms ease;
+}
+
 .mega-panel {
     position: absolute;
     z-index: 40;
@@ -3641,10 +3654,11 @@ body.is-locked {
     left: 0;
     right: 0;
     padding: 0 24px 0;
-    background: linear-gradient(to bottom, #fff 0%, #fff 62%, rgb(255 255 255 / 0%) 100%);
-    padding-bottom: 64px;
-    border-bottom: 0;
-    box-shadow: none;
+    background: #fff;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 28px 60px rgb(29 29 31 / 14%);
 
     opacity: 0;
     transform: translateY(-6px) scale(0.995);

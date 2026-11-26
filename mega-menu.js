@@ -124,6 +124,7 @@
     window.clearTimeout(openTimer);
     openTimer = window.setTimeout(() => {
       panel.hidden = false;
+      document.body.classList.add('is-mega-open');
       requestAnimationFrame(() => panel.classList.add('is-open'));
     }, 40);
   }
@@ -133,6 +134,7 @@
     window.clearTimeout(closeTimer);
     closeTimer = window.setTimeout(() => {
       panel.classList.remove('is-open');
+      document.body.classList.remove('is-mega-open');
       window.setTimeout(() => {
         if (!panel.classList.contains('is-open')) panel.hidden = true;
       }, 220);
