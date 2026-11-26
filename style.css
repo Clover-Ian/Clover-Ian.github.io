@@ -4083,6 +4083,10 @@ body.theme-dark .tool-button--ghost:hover {
     background: rgb(255 255 255 / 8%);
 }
 
+body.theme-dark .tool-drop strong {
+    color: #fff;
+}
+
 body.theme-dark .tool-drop {
     background: #17171a;
     border-color: rgb(255 255 255 / 16%);
@@ -4116,4 +4120,48 @@ body.theme-dark .announcement-bar {
 
 body.theme-dark .announcement-text {
     color: rgb(255 255 255 / 70%);
+}
+
+/* 深色页：导航里的 Inbox / 头像必须看得见 */
+body.theme-dark .nav-inbox {
+    background: rgb(255 255 255 / 10%);
+    border-color: rgb(255 255 255 / 22%);
+    color: #fff;
+}
+
+body.theme-dark .nav-inbox:hover {
+    background: rgb(255 255 255 / 18%);
+    border-color: #fff;
+}
+
+body.theme-dark .nav-inbox svg {
+    stroke: currentColor;
+}
+
+body.theme-dark .account-nav-user,
+body.theme-dark .account-nav-link.account-nav-user {
+    background: rgb(255 255 255 / 10%);
+    border-color: rgb(255 255 255 / 22%);
+    color: #fff;
+}
+
+body.theme-dark .account-nav-avatar,
+body.theme-dark .account-nav-user img {
+    background: rgb(255 255 255 / 16%);
+}
+
+/* 深色页对比度稍微提一点 */
+body.theme-dark .hero-copy,
+body.theme-dark .tool-note,
+body.theme-dark .eyebrow {
+    color: rgb(255 255 255 / 68%);
+}
+
+body.theme-dark .tool-field label {
+    color: rgb(255 255 255 / 62%);
+}
+
+body.theme-dark .tool-drop span,
+body.theme-dark .tool-drop .tool-note {
+    color: rgb(255 255 255 / 62%);
 }
