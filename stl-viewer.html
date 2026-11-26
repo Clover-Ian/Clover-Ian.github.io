@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>IYS SQL Viewer — local mesh inspector</title>
-<link rel="icon" type="image/png" sizes="32x32" href="stl-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="stl-192.png">
-<link rel="icon" href="stl.ico">
-<link rel="apple-touch-icon" sizes="180x180" href="stl-180.png">
+<link rel="icon" type="image/png" href="IYS SQL Viewer.png">
+<link rel="apple-touch-icon" href="IYS SQL Viewer.png">
+<link rel="stylesheet" href="style.css?v=20261126r">
 <style>
   :root {
     --bg: #f7f8fb;
@@ -45,56 +44,16 @@
     outline-offset: 3px;
   }
 
-  /* 主站风格导航条 */
+  /* 主站导航栏 + 查看器布局 */
   .site-header {
-    height: 56px;
-    border-bottom: 1px solid var(--line-soft);
-    background: rgba(255, 255, 255, .82);
-    backdrop-filter: saturate(180%) blur(18px);
-    -webkit-backdrop-filter: saturate(180%) blur(18px);
-  }
-
-  .navigation {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 28px;
-  }
-
-  .navigation .brand {
-    color: var(--ink);
-    font-family: Georgia, "Iowan Old Style", serif;
-    font-size: 19px;
-    font-weight: 700;
-    letter-spacing: -.06em;
-    text-decoration: none;
-  }
-
-  .navigation .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-  }
-
-  .navigation .account-nav-link,
-  .navigation .nav-links a {
-    color: var(--muted);
-    font-size: 12.5px;
-    text-decoration: none;
-  }
-
-  .navigation .nav-links a:hover {
-    color: var(--ink);
+    position: relative;
   }
 
   .app {
     position: relative;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-    height: calc(100% - 56px);
+    height: calc(100% - 61px);
     min-height: 480px;
   }
 
@@ -713,13 +672,13 @@
 </head>
 <body>
 <header class="site-header">
-  <nav class="navigation" aria-label="Main navigation">
-    <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
-    <div class="nav-links">
-      <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
-      <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
-    </div>
-  </nav>
+    <nav class="navigation" aria-label="Main navigation">
+        <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+        <div class="nav-links">
+            <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+            <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+        </div>
+    </nav>
 </header>
 
 <div class="app">
