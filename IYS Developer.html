@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Developer tools built by IYS — small, focused utilities that run in the browser.">
+    <title>IYS Developer</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+    <link rel="stylesheet" href="style.css?v=20261126n">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261125a" defer></script>
+    <script src="mega-menu.js?v=20261126n" defer></script>
+    <script src="presence.js?v=20261118d" defer></script>
+    <script src="announcements.js?v=20261117b" defer></script>
+    <script src="scroll-center.js?v=20261126a" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a class="current" href="IYS Developer.html" aria-current="page">Developer</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <img class="page-title-icon" src="IYS Software.png" alt="IYS Developer">
+            <p class="eyebrow">SMALL TOOLS, SHARP EDGES</p>
+            <h1>Developer tools.</h1>
+            <p class="hero-copy">Utilities we build for our own work, shared because they turned out useful.</p>
+        </section>
+
+        <section class="product-section content-width" id="iys-sql-viewer">
+            <div class="product-heading">
+                <img class="product-icon" src="IYS Software.png" alt="IYS SQL Viewer icon">
+                <div>
+                    <p class="eyebrow">Browser tool</p>
+                    <h2>IYS SQL Viewer</h2>
+                    <p>Drop an STL file into the browser and inspect the mesh — triangle count, bounding box, volume, surface area. Nothing is uploaded; the file never leaves your computer.</p>
+                    <p><span class="pill">Runs locally · No sign-in</span></p>
+                    <div class="action-row">
+                        <a class="button-link" href="stl-viewer.html">Open IYS SQL Viewer</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <article class="detail-card">
+                    <h3>Everything local.</h3>
+                    <p>The file is parsed in your browser. No upload, no account, no trace left on our servers.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Reads the numbers.</h3>
+                    <p>Triangles, bounding box, volume and surface area, plus an interactive orbit view of the mesh.</p>
+                </article>
+                <article class="detail-card">
+                    <h3>Built for checking.</h3>
+                    <p>Made to answer "is this model printable, and is it the size I think it is" in a few seconds.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

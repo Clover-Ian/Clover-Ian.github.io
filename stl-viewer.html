@@ -1,0 +1,1821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>STL Viewer — local mesh inspector</title>
+<style>
+  :root {
+    --bg: #f7f8fb;
+    --panel: #ffffff;
+    --panel-2: #f3f6fb;
+    --line: #e4e8f0;
+    --line-soft: rgba(31, 41, 55, .09);
+    --ink: #1d1d1f;
+    --muted: #6e6e73;
+    --muted-2: #969daa;
+    --accent: #06c;
+    --accent-bright: #1677df;
+    --accent-faint: rgba(0, 102, 204, .1);
+    --mono: "SFMono-Regular", "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  /* 返回主站 */
+  .back-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .back-home:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .app {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 480px;
+  }
+
+  /* ── Top bar ─────────────────────────────────────────────── */
+  .topbar {
+    position: relative;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(175px, 1fr) auto minmax(175px, 1fr);
+    align-items: center;
+    gap: 22px;
+    min-height: 82px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--line-soft);
+    background: rgba(255, 255, 255, .82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    justify-self: start;
+    min-width: 0;
+    user-select: none;
+  }
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border: 1px solid #dce5f1;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #f1f7ff, #fff);
+    box-shadow: inset 0 1px 0 #fff, 0 3px 12px rgba(49, 88, 140, .08);
+  }
+  .brand-mark svg { width: 23px; height: 23px; display: block; }
+  .brand-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .brand-title {
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: .15em;
+    white-space: nowrap;
+  }
+  .brand-title i {
+    display: inline-block;
+    margin: 0 7px;
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 400;
+  }
+  .brand-sub {
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1;
+    letter-spacing: .18em;
+    white-space: nowrap;
+  }
+
+  .modebar {
+    justify-self: center;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .88);
+    box-shadow: 0 8px 26px rgba(43, 61, 87, .09);
+    transition: opacity .18s ease;
+  }
+  .modebar.is-disabled { opacity: .38; }
+  .mode {
+    position: relative;
+    padding: 9px 13px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #6e7480;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: .065em;
+    white-space: nowrap;
+    transition: color .16s ease, background .16s ease, box-shadow .16s ease;
+  }
+  .mode:hover:not(:disabled) { color: var(--ink); background: #f1f5fb; }
+  .mode[aria-pressed="true"] {
+    color: #fff;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px rgba(0, 102, 204, .16), 0 4px 12px rgba(0, 102, 204, .2);
+  }
+  .mode:disabled { cursor: default; }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    justify-self: end;
+  }
+  .local-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .12em;
+    white-space: nowrap;
+  }
+  .local-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, .1);
+  }
+  .open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 38px;
+    padding: 0 15px;
+    border: 1px solid #d7dfeb;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    white-space: nowrap;
+    transition: border-color .16s ease, background .16s ease, transform .16s ease;
+  }
+  .open-btn:hover { border-color: var(--accent); background: #f3f8ff; }
+  .open-btn:active { transform: translateY(1px); }
+  .open-btn svg { width: 13px; height: 13px; color: var(--accent); }
+
+  /* ── Viewport ────────────────────────────────────────────── */
+  .stage {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse 52% 62% at 48% 42%, rgba(255, 255, 255, .96), transparent 78%),
+      radial-gradient(ellipse 42% 52% at 88% 18%, rgba(206, 229, 255, .66), transparent 76%),
+      radial-gradient(ellipse 34% 42% at 8% 90%, rgba(255, 226, 246, .5), transparent 78%),
+      #f4f7fc;
+  }
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .2;
+    background-image: radial-gradient(circle at 1px 1px, rgba(89, 119, 160, .13) .8px, transparent 0);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 10%, transparent 82%);
+    -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 10%, transparent 82%);
+  }
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: radial-gradient(ellipse 82% 92% at 50% 48%, transparent 58%, rgba(218, 226, 239, .22) 100%);
+  }
+  #gl {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: default;
+    outline: none;
+  }
+  #gl:focus-visible { outline: none; }
+  .stage.has-model #gl { cursor: grab; }
+  .stage.has-model #gl.is-dragging { cursor: grabbing; }
+
+  /* Empty state */
+  .empty {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    transition: opacity .24s ease, visibility .24s ease;
+  }
+  .stage.has-model .empty { opacity: 0; visibility: hidden; pointer-events: none; }
+  .empty-card {
+    position: relative;
+    width: min(500px, 100%);
+    padding: 38px 42px 34px;
+    border: 1px dashed #cbd7e8;
+    border-radius: 19px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .94), rgba(250, 252, 255, .9));
+    box-shadow: 0 24px 70px rgba(63, 84, 119, .12), inset 0 1px 0 #fff;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  }
+  .empty-card::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    width: 64px;
+    height: 1px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .empty-icon {
+    display: grid;
+    place-items: center;
+    width: 86px;
+    height: 86px;
+    margin: 0 auto 23px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 102, 204, .12), transparent 68%);
+  }
+  .empty-icon svg { width: 70px; height: 70px; overflow: visible; }
+  .empty-index {
+    margin-bottom: 11px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: .2em;
+  }
+  .empty h1 {
+    margin: 0;
+    font-size: clamp(23px, 3vw, 30px);
+    font-weight: 620;
+    line-height: 1.04;
+    letter-spacing: -.018em;
+  }
+  .empty p {
+    margin: 11px auto 24px;
+    max-width: 330px;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.65;
+  }
+  .empty p b { color: #3d4d62; font-weight: 600; }
+  .browse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    height: 42px;
+    padding: 0 20px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    transition: background .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .browse-btn:hover { background: var(--accent-bright); box-shadow: 0 8px 24px rgba(0, 102, 204, .2); }
+  .browse-btn:active { transform: translateY(1px); }
+  .browse-btn svg { width: 12px; height: 12px; }
+  .empty-foot {
+    margin-top: 19px;
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: .1em;
+  }
+
+  /* Drag state */
+  .dropveil {
+    position: absolute;
+    inset: 14px;
+    z-index: 12;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--accent);
+    border-radius: 17px;
+    background: rgba(244, 249, 255, .9);
+    box-shadow: inset 0 0 100px rgba(0, 102, 204, .06), 0 0 0 1px rgba(0, 102, 204, .1);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .15s ease, visibility .15s ease;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .stage.is-dragging .dropveil { opacity: 1; visibility: visible; }
+  .stage.is-dragging .empty-card { border-color: var(--accent); transform: scale(.99); }
+  .dropveil-inner { text-align: center; }
+  .dropveil-icon {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 17px;
+    border: 1px solid rgba(0, 102, 204, .28);
+    border-radius: 50%;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 300;
+  }
+  .dropveil strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 620;
+    letter-spacing: -.01em;
+  }
+  .dropveil span {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .16em;
+  }
+
+  /* Overlay controls */
+  .reset-btn {
+    position: absolute;
+    left: 24px;
+    bottom: 22px;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 31px;
+    padding: 0 11px;
+    border: 1px solid #dbe2ec;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, .82);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: .11em;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity .18s ease, color .16s ease, border-color .16s ease, transform .18s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .stage.has-model .reset-btn { opacity: 1; visibility: visible; transform: none; }
+  .reset-btn:hover { color: var(--ink); border-color: #a9bfdc; }
+  .reset-btn svg { width: 11px; height: 11px; color: var(--accent); }
+
+  .axis-gizmo {
+    position: absolute;
+    right: 22px;
+    bottom: 18px;
+    z-index: 6;
+    width: 92px;
+    height: 92px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .22s ease;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 8px rgba(56, 76, 110, .18));
+  }
+  .stage.has-model .axis-gizmo { opacity: .92; visibility: visible; }
+  .axis-line { stroke-width: 1.1; }
+  .axis-label {
+    font-family: var(--mono);
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .axis-origin { fill: #fff; stroke: #aeb8c7; stroke-width: 1; }
+
+  /* Loading */
+  .loading {
+    position: absolute;
+    inset: 0;
+    z-index: 13;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(247, 249, 253, .72);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .16s ease, visibility .16s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .loading.is-on { opacity: 1; visibility: visible; }
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d5deeb;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .75s linear infinite;
+  }
+  .loading-copy {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .16em;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    z-index: 30;
+    max-width: min(520px, calc(100% - 48px));
+    padding: 11px 15px;
+    border: 1px solid #d6e2f2;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .97);
+    box-shadow: 0 14px 40px rgba(43, 61, 87, .16);
+    color: #a11818;
+    font-size: 11px;
+    line-height: 1.45;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 8px);
+    transition: opacity .18s ease, visibility .18s ease, transform .18s ease;
+  }
+  .toast.is-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+  /* ── Info rail ───────────────────────────────────────────── */
+  .info {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 78px;
+    padding: 0 30px;
+    border-top: 1px solid var(--line);
+    background: rgba(255, 255, 255, .92);
+  }
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: 0;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 25px;
+    border-left: 1px solid #e6e9ef;
+  }
+  .stat:first-child { padding-left: 0; border-left: 0; }
+  .stat-label {
+    color: #858b96;
+    font-family: var(--mono);
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: .15em;
+    white-space: nowrap;
+  }
+  .stat-value {
+    max-width: 330px;
+    overflow: hidden;
+    color: #303844;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 450;
+    line-height: 1.2;
+    letter-spacing: -.015em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-value.is-empty { color: #9aa2af; }
+  .stat-value.is-strong { color: var(--ink); font-size: 13px; }
+  .stat-file { flex: 0 1 auto; }
+  .stat-file .stat-value { max-width: min(32vw, 340px); }
+  .stat-size .stat-value { min-width: 218px; }
+  .hints {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #7d8592;
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.4;
+    letter-spacing: .09em;
+    white-space: nowrap;
+  }
+  .hint { display: inline-flex; align-items: center; gap: 7px; }
+  .hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 5px;
+    border: 1px solid #dfe5ee;
+    border-bottom-color: #cfd8e5;
+    border-radius: 4px;
+    background: #fff;
+    color: #626d7c;
+    font-family: var(--mono);
+    font-size: 7.5px;
+    line-height: 1;
+  }
+  .hint-sep { width: 1px; height: 12px; background: #dce2eb; }
+
+  @media (max-width: 1120px) {
+    .local-pill { display: none; }
+    .topbar { grid-template-columns: minmax(158px, 1fr) auto minmax(135px, 1fr); gap: 14px; padding-inline: 20px; }
+    .mode { padding: 9px 10px; font-size: 9px; }
+    .stat { padding-inline: 18px; }
+    .stat-size .stat-value { min-width: 195px; }
+    .hints .hint:last-child,
+    .hints .hint-sep:nth-last-child(2) { display: none; }
+  }
+
+  @media (max-width: 880px) {
+    .topbar {
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 18px 12px;
+    }
+    .brand-sub { display: none; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 8px; }
+    .actions { justify-self: end; }
+    .modebar {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      justify-content: stretch;
+    }
+    .mode { flex: 1 1 0; padding: 9px 5px; font-size: 8.5px; }
+    .empty-card { padding: 32px 24px 28px; }
+    .info { min-height: 70px; padding: 0 18px; gap: 12px; }
+    .hints { display: none; }
+    .stats { width: 100%; justify-content: space-between; }
+    .stat { padding-inline: 13px; flex: 1 1 0; }
+    .stat-file { flex: 1.4 1 0; }
+    .stat-value { font-size: 10.5px; }
+    .stat-file .stat-value { max-width: 30vw; }
+    .stat-size .stat-value { min-width: 0; white-space: normal; }
+    .axis-gizmo { width: 72px; height: 72px; right: 12px; bottom: 10px; }
+    .reset-btn { left: 14px; bottom: 13px; }
+  }
+
+  @media (max-width: 390px) {
+    .mode { padding: 8px 3px; font-size: 7.5px; letter-spacing: .015em; }
+  }
+
+  @media (max-width: 560px) {
+    .brand-title { font-size: 13px; letter-spacing: .1em; }
+    .brand-title i { margin-inline: 5px; }
+    .open-btn { width: 38px; padding: 0; justify-content: center; font-size: 0; gap: 0; }
+    .open-btn svg { width: 15px; height: 15px; }
+    .empty { padding: 16px; }
+    .empty h1 { font-size: 22px; }
+    .empty p { font-size: 10.5px; }
+    .empty-foot { font-size: 7px; }
+    .info { display: block; padding: 12px 16px; min-height: 0; }
+    .stats { display: grid; grid-template-columns: 1.35fr .8fr 1.2fr; gap: 12px; }
+    .stat { padding: 0; border: 0; gap: 5px; }
+    .stat-label { font-size: 6.5px; }
+    .stat-value, .stat-value.is-strong { font-size: 9.5px; }
+    .stat-file .stat-value { max-width: none; }
+    .stat-size .stat-value { min-width: 0; font-size: 8.5px; }
+    .toast { bottom: 58px; }
+  }
+
+  @media (max-height: 660px) {
+    .topbar { min-height: 66px; padding-block: 10px; }
+    .info { min-height: 64px; }
+    .empty-card { padding-top: 24px; padding-bottom: 22px; }
+    .empty-icon { width: 64px; height: 64px; margin-bottom: 14px; }
+    .empty-icon svg { width: 54px; height: 54px; }
+    .empty p { margin-bottom: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <a class="back-home" href="IYS Developer.html">← IYS</a>
+    <div class="brand" aria-label="STL Viewer">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2.6 21 7.7v8.6L12 21.4 3 16.3V7.7L12 2.6Z" stroke="#06c" stroke-width="1.25" stroke-linejoin="round"/>
+          <path d="m3.3 7.9 8.7 5 8.7-5M12 12.9v8.1" stroke="#06c" stroke-width="1.05" stroke-linejoin="round" opacity=".55"/>
+          <path d="M7.5 5.2 16.6 10.4" stroke="#06c" stroke-width="1.05" opacity=".35"/>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <div class="brand-title">STL<i>/</i>VIEWER</div>
+        <div class="brand-sub">LOCAL MESH INSPECTOR</div>
+      </div>
+    </div>
+
+    <div class="modebar is-disabled" id="modebar" role="group" aria-label="Render mode">
+      <button class="mode" type="button" data-mode="solid" aria-pressed="true" disabled title="Solid (1)">SOLID</button>
+      <button class="mode" type="button" data-mode="wire" aria-pressed="false" disabled title="Wireframe (2)">WIREFRAME</button>
+      <button class="mode" type="button" data-mode="edges" aria-pressed="false" disabled title="Solid with edges (3)">SOLID + EDGES</button>
+      <button class="mode" type="button" data-mode="xray" aria-pressed="false" disabled title="See-through (4)">SEE-THROUGH</button>
+    </div>
+
+    <div class="actions">
+      <span class="local-pill"><span class="local-dot"></span>100% LOCAL</span>
+      <button class="open-btn" id="openBtn" type="button" title="Open an STL file">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 10.5V2.8m0 0L5.2 5.6M8 2.8l2.8 2.8M2.8 9.5v2.1c0 .9.7 1.6 1.6 1.6h7.2c.9 0 1.6-.7 1.6-1.6V9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        OPEN STL
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="gl" tabindex="0" aria-label="3D STL model viewport. Drag to orbit and scroll to zoom."></canvas>
+
+    <div class="empty" id="empty">
+      <div class="empty-card" id="emptyCard">
+        <div class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 120 120" fill="none">
+            <g stroke-linejoin="round" stroke-linecap="round">
+              <path d="M60 12 105 38v44L60 108 15 82V38L60 12Z" stroke="#06c" stroke-width="1.6"/>
+              <path d="M15.8 38.7 60 63l44.2-24.3M60 63v44.4" stroke="#06c" stroke-width="1.25" opacity=".66"/>
+              <path d="m60 12 45 26M60 12 15 38" stroke="#06c" stroke-width="1.25" opacity=".33"/>
+              <path d="M37.5 25.2 82.5 51" stroke="#06c" stroke-width="1.25" opacity=".18"/>
+            </g>
+            <circle cx="60" cy="63" r="2.5" fill="#06c" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="empty-index">01 / LOAD GEOMETRY</div>
+        <h1>Drop an STL to inspect.</h1>
+        <p>Drop a file anywhere on this page, or browse your device. <b>ASCII and binary</b> STL are read locally — nothing is uploaded.</p>
+        <button class="browse-btn" type="button" id="browseBtn">
+          CHOOSE A FILE
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h9.5M8.7 4.2 12.5 8l-3.8 3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="empty-foot">.STL &nbsp;·&nbsp; NO LIBRARIES &nbsp;·&nbsp; NO NETWORK</div>
+      </div>
+    </div>
+
+    <div class="dropveil" aria-hidden="true">
+      <div class="dropveil-inner">
+        <div class="dropveil-icon">↓</div>
+        <strong>Release to load.</strong>
+        <span>STL · ASCII OR BINARY</span>
+      </div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn" type="button" title="Reset view (R)">
+      <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M11.6 5.4A5 5 0 1 0 12 8" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+        <path d="M9.3 5.4h2.6V2.8" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      RESET VIEW
+    </button>
+
+    <svg class="axis-gizmo" id="axisGizmo" viewBox="0 0 92 92" aria-hidden="true">
+      <circle class="axis-origin" cx="46" cy="46" r="2.4"/>
+      <line class="axis-line" id="axisLineX" x1="46" y1="46" x2="46" y2="46" stroke="#ff6b3d"/>
+      <line class="axis-line" id="axisLineY" x1="46" y1="46" x2="46" y2="46" stroke="#8f9ba5"/>
+      <line class="axis-line" id="axisLineZ" x1="46" y1="46" x2="46" y2="46" stroke="#6ec8ff"/>
+      <text class="axis-label" id="axisTextX" x="46" y="46" fill="#ff6b3d">X</text>
+      <text class="axis-label" id="axisTextY" x="46" y="46" fill="#8f9ba5">Y</text>
+      <text class="axis-label" id="axisTextZ" x="46" y="46" fill="#6ec8ff">Z</text>
+    </svg>
+
+    <div class="loading" id="loading" aria-hidden="true">
+      <div class="spinner"></div>
+      <div class="loading-copy" id="loadingCopy">READING GEOMETRY</div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer class="info" aria-label="Model information">
+    <div class="stats">
+      <div class="stat stat-file">
+        <span class="stat-label">FILE</span>
+        <span class="stat-value is-empty" id="fileName">No model loaded</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">TRIANGLES</span>
+        <span class="stat-value is-empty" id="triCount">—</span>
+      </div>
+      <div class="stat stat-size">
+        <span class="stat-label">MODEL SIZE / MM</span>
+        <span class="stat-value is-empty" id="modelSize">—</span>
+      </div>
+    </div>
+    <div class="hints" aria-hidden="true">
+      <span class="hint"><kbd>DRAG</kbd> orbit</span>
+      <span class="hint-sep"></span>
+      <span class="hint"><kbd>SCROLL</kbd> zoom</span>
+      <span class="hint-sep"></span>
+      <span class="hint"><kbd>1–4</kbd> modes</span>
+    </div>
+  </footer>
+
+  <input id="fileInput" type="file" accept=".stl,model/stl,application/sla,application/vnd.ms-pki.stl" hidden>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // DOM
+  // ---------------------------------------------------------------------------
+  const $ = (sel) => document.querySelector(sel);
+  const canvas = $('#gl');
+  const stage = $('#stage');
+  const empty = $('#empty');
+  const modebar = $('#modebar');
+  const modeButtons = Array.from(document.querySelectorAll('.mode'));
+  const openBtn = $('#openBtn');
+  const browseBtn = $('#browseBtn');
+  const resetBtn = $('#resetBtn');
+  const fileInput = $('#fileInput');
+  const fileNameEl = $('#fileName');
+  const triCountEl = $('#triCount');
+  const modelSizeEl = $('#modelSize');
+  const loading = $('#loading');
+  const loadingCopy = $('#loadingCopy');
+  const toast = $('#toast');
+  const axisGizmo = $('#axisGizmo');
+  const axisEls = {
+    X: { line: $('#axisLineX'), text: $('#axisTextX'), vec: [1, 0, 0] },
+    Y: { line: $('#axisLineY'), text: $('#axisTextY'), vec: [0, 1, 0] },
+    Z: { line: $('#axisLineZ'), text: $('#axisTextZ'), vec: [0, 0, 1] }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Constants / state
+  // ---------------------------------------------------------------------------
+  const FOV = 32 * Math.PI / 180;
+  const DEFAULT_YAW = 0.65;
+  const DEFAULT_PITCH = 0.36;
+  const MIN_ZOOM = 0.18;
+  const MAX_ZOOM = 9;
+  const numberFormat = new Intl.NumberFormat('en-US');
+
+  const state = {
+    model: null,
+    mode: 'solid',
+    yaw: DEFAULT_YAW,
+    pitch: DEFAULT_PITCH,
+    zoom: 1,
+    baseDist: 1,
+    radius: 1,
+    min: [0, 0, 0],
+    max: [0, 0, 0],
+    pointers: new Map(),
+    pinchStart: 0,
+    pinchZoom: 1,
+    dragging: false,
+    lastX: 0,
+    lastY: 0,
+    toastTimer: 0,
+    loadToken: 0
+  };
+
+  // ---------------------------------------------------------------------------
+  // WebGL
+  // ---------------------------------------------------------------------------
+  let gl = null;
+  let program = null;
+  let vao = null;
+  let vbo = null;
+  let edgeIbo = null;
+  let uniforms = {};
+  let drawCount = 0;
+  let edgeIndexCount = 0;
+
+  const VERTEX_SHADER = `#version 300 es
+    precision highp float;
+
+    layout(location = 0) in vec3 aPos;
+
+    uniform mat4 uProjection;
+    uniform mat4 uView;
+    uniform highp int uPass;
+
+    out vec3 vViewPos;
+
+    void main() {
+      vec4 viewPos = uView * vec4(aPos, 1.0);
+      vViewPos = viewPos.xyz;
+      gl_Position = uProjection * viewPos;
+
+      // Nudge the line pass a fraction toward the camera so shared mesh
+      // edges win against the solid surface instead of z-fighting.
+      if (uPass == 2) gl_Position.z -= 0.00022 * gl_Position.w;
+    }
+  `;
+
+  const FRAGMENT_SHADER = `#version 300 es
+    precision highp float;
+
+    in vec3 vViewPos;
+
+    uniform highp int uPass;    // 0 = shaded surface, 2 = line edges
+    uniform vec3 uFillColor;
+    uniform vec3 uEdgeColor;
+    uniform float uEdgeAlpha;
+    uniform float uSurfaceAlpha;
+
+    out vec4 outColor;
+
+    void main() {
+      if (uPass == 2) {
+        outColor = vec4(uEdgeColor, uEdgeAlpha);
+        return;
+      }
+
+      vec3 rawNormal = cross(dFdx(vViewPos), dFdy(vViewPos));
+      if (dot(rawNormal, rawNormal) < 1e-16) rawNormal = vec3(0.0, 0.0, 1.0);
+      vec3 n = normalize(rawNormal);
+      vec3 toEye = normalize(-vViewPos);
+      if (dot(n, toEye) < 0.0) n = -n;
+
+      vec3 keyDir = normalize(vec3(-0.42, 0.63, 0.76));
+      vec3 fillDir = normalize(vec3(0.68, -0.32, 0.54));
+
+      float key = max(dot(n, keyDir), 0.0);
+      float fill = max(dot(n, fillDir), 0.0);
+      float fresnel = pow(1.0 - clamp(dot(n, toEye), 0.0, 1.0), 3.0);
+      float specular = pow(max(dot(reflect(-keyDir, n), toEye), 0.0), 42.0);
+
+      vec3 color = uFillColor * (0.155 + 0.77 * key + 0.19 * fill);
+      color += vec3(0.28, 0.52, 0.82) * fresnel * 0.115;
+      color += vec3(1.0, 0.91, 0.82) * specular * 0.13;
+
+      outColor = vec4(color, uSurfaceAlpha);
+    }
+  `;
+
+  function compileShader(type, source) {
+    const shader = gl.createShader(type);
+    if (!shader) throw new Error('Could not allocate a shader.');
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const log = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error('Shader error: ' + log);
+    }
+    return shader;
+  }
+
+  function createProgram() {
+    const vs = compileShader(gl.VERTEX_SHADER, VERTEX_SHADER);
+    const fs = compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      const log = gl.getProgramInfoLog(prog);
+      gl.deleteProgram(prog);
+      throw new Error('Program link error: ' + log);
+    }
+    return prog;
+  }
+
+  function initGL() {
+    gl = canvas.getContext('webgl2', {
+      alpha: true,
+      antialias: true,
+      depth: true,
+      premultipliedAlpha: false,
+      powerPreference: 'high-performance'
+    });
+
+    if (!gl) {
+      showToast('This browser does not support WebGL 2, which is required by the viewer.');
+      empty.querySelector('h1').textContent = 'WebGL 2 is unavailable.';
+      empty.querySelector('p').textContent = 'Try the latest Chrome, Edge, Safari or Firefox to inspect STL files here.';
+      browseBtn.disabled = true;
+      openBtn.disabled = true;
+      fileInput.disabled = true;
+      return;
+    }
+
+    try {
+      program = createProgram();
+    } catch (error) {
+      showToast(error.message || 'Could not initialise the renderer.');
+      browseBtn.disabled = true;
+      openBtn.disabled = true;
+      fileInput.disabled = true;
+      return;
+    }
+
+    uniforms = {
+      projection: gl.getUniformLocation(program, 'uProjection'),
+      view: gl.getUniformLocation(program, 'uView'),
+      pass: gl.getUniformLocation(program, 'uPass'),
+      fillColor: gl.getUniformLocation(program, 'uFillColor'),
+      edgeColor: gl.getUniformLocation(program, 'uEdgeColor'),
+      edgeAlpha: gl.getUniformLocation(program, 'uEdgeAlpha'),
+      surfaceAlpha: gl.getUniformLocation(program, 'uSurfaceAlpha')
+    };
+
+    vao = gl.createVertexArray();
+    vbo = gl.createBuffer();
+    edgeIbo = gl.createBuffer();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeIbo);
+    gl.bindVertexArray(null);
+
+    gl.disable(gl.CULL_FACE);
+    gl.clearColor(0, 0, 0, 0);
+    gl.depthFunc(gl.LEQUAL);
+
+    canvas.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault();
+      showToast('The 3D context was lost. Reload the page to continue.');
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Matrix / camera helpers
+  // ---------------------------------------------------------------------------
+  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  function cross(a, b) {
+    return [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0]
+    ];
+  }
+  function normalize(v) {
+    const length = Math.hypot(v[0], v[1], v[2]);
+    if (length < 1e-12) return [0, 0, 1];
+    return [v[0] / length, v[1] / length, v[2] / length];
+  }
+
+  function perspective(fovY, aspect, near, far) {
+    const f = 1 / Math.tan(fovY / 2);
+    const nf = 1 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * nf, -1,
+      0, 0, 2 * far * near * nf, 0
+    ]);
+  }
+
+  function lookAt(eye, worldUp) {
+    const z = normalize(eye);                 // camera looks toward the origin
+    const x = normalize(cross(worldUp, z));   // right
+    const y = cross(z, x);                    // up
+    return new Float32Array([
+      x[0], y[0], z[0], 0,
+      x[1], y[1], z[1], 0,
+      x[2], y[2], z[2], 0,
+      -dot(x, eye), -dot(y, eye), -dot(z, eye), 1
+    ]);
+  }
+
+  function cameraBasis() {
+    const distance = state.baseDist * state.zoom;
+    const cp = Math.cos(state.pitch);
+    const eye = [
+      distance * cp * Math.cos(state.yaw),
+      distance * cp * Math.sin(state.yaw),
+      distance * Math.sin(state.pitch)
+    ];
+    const forward = normalize([-eye[0], -eye[1], -eye[2]]);
+    const right = normalize(cross(forward, [0, 0, 1]));
+    const up = normalize(cross(right, forward));
+    return { eye, forward, right, up };
+  }
+
+  function fitBaseDistance() {
+    const width = Math.max(stage.clientWidth, 1);
+    const height = Math.max(stage.clientHeight, 1);
+    const aspect = width / height;
+    const tanY = Math.tan(FOV / 2);
+    const tanX = tanY * aspect;
+
+    if (!state.model || !state.model.positions) return 1;
+
+    // Fit the projected mesh itself, rather than its enclosing sphere or box,
+    // so silhouettes and curved parts use the available space. A vertex is in
+    // frame when |x| <= tan(fovX/2) * depth, which lets us solve for distance.
+    const { forward, right, up } = cameraBasis();
+    const positions = state.model.positions;
+    const margin = 1.1;
+    const maxSamples = 900000;
+    const vertexTotal = positions.length / 3;
+    const step = Math.max(1, Math.ceil(vertexTotal / maxSamples));
+    let distance = state.radius * 0.05;
+
+    for (let i = 0; i < positions.length; i += 3 * step) {
+      const x = positions[i];
+      const y = positions[i + 1];
+      const z = positions[i + 2];
+      const depthOffset = x * forward[0] + y * forward[1] + z * forward[2];
+      const screenX = Math.abs(x * right[0] + y * right[1] + z * right[2]);
+      const screenY = Math.abs(x * up[0] + y * up[1] + z * up[2]);
+      const neededX = (screenX * margin) / tanX - depthOffset;
+      const neededY = (screenY * margin) / tanY - depthOffset;
+      if (neededX > distance) distance = neededX;
+      if (neededY > distance) distance = neededY;
+    }
+    return distance;
+  }
+
+  function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+  // ---------------------------------------------------------------------------
+  // STL parsing
+  // ---------------------------------------------------------------------------
+  function looksLikeAsciiSTL(buffer) {
+    const probeLength = Math.min(buffer.byteLength, 16384);
+    let text;
+    try {
+      text = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(buffer, 0, probeLength));
+    } catch (_) {
+      return false;
+    }
+    const head = text.replace(/^\uFEFF/, '').trimStart();
+    if (!/^solid\b/i.test(head)) return false;
+    return /\bfacet\s+normal\b/i.test(text) && /\bvertex\b/i.test(text);
+  }
+
+  function binaryStlCount(buffer) {
+    if (buffer.byteLength < 84) return 0;
+    return new DataView(buffer).getUint32(80, true);
+  }
+
+  function parseBinarySTL(buffer, count) {
+    if (!Number.isFinite(count) || count <= 0) throw new Error('The binary STL contains no triangles.');
+    if (count > 60000000) throw new Error('This STL is too large for the browser to display.');
+    const expected = 84 + count * 50;
+    if (expected > buffer.byteLength) throw new Error('The binary STL is truncated.');
+
+    const positions = new Float32Array(count * 9);
+    const view = new DataView(buffer);
+    let out = 0;
+    for (let i = 0; i < count; i++) {
+      let offset = 84 + i * 50 + 12; // skip normal
+      for (let vertex = 0; vertex < 3; vertex++) {
+        positions[out++] = view.getFloat32(offset, true);
+        positions[out++] = view.getFloat32(offset + 4, true);
+        positions[out++] = view.getFloat32(offset + 8, true);
+        offset += 12;
+      }
+    }
+    return { positions, triangles: count };
+  }
+
+  function parseAsciiSTL(buffer) {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+    if (!/\bvertex\b/i.test(text)) throw new Error('No STL vertices were found in this file.');
+
+    let values = new Float32Array(3 * 3 * 1024);
+    let used = 0;
+    let triangles = 0;
+
+    function push(value) {
+      if (used + 3 > values.length) {
+        const larger = new Float32Array(values.length * 2);
+        larger.set(values);
+        values = larger;
+      }
+      values[used++] = value;
+    }
+
+    const vertexPattern = /^[ \t]*vertex[ \t]+([^\s]+)[ \t]+([^\s]+)[ \t]+([^\s]+)/gmi;
+    let match;
+    let pending = 0;
+    let a = 0, b = 0, c = 0;
+    while ((match = vertexPattern.exec(text)) !== null) {
+      const x = Number(match[1]);
+      const y = Number(match[2]);
+      const z = Number(match[3]);
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+
+      if (pending === 0) { a = x; b = y; c = z; pending = 1; continue; }
+      if (pending === 1) {
+        push(a); push(b); push(c);
+        a = x; b = y; c = z;
+        pending = 2;
+        continue;
+      }
+      push(a); push(b); push(c);
+      push(x); push(y); push(z);
+      triangles++;
+      pending = 0;
+    }
+
+    if (triangles === 0) throw new Error('The ASCII STL does not contain complete triangles.');
+    return { positions: values.slice(0, triangles * 9), triangles };
+  }
+
+  function parseSTL(buffer) {
+    if (!buffer || buffer.byteLength === 0) throw new Error('This file is empty.');
+
+    const count = binaryStlCount(buffer);
+    const expectedBinaryLength = count > 0 ? 84 + count * 50 : 0;
+    const exactBinary = count > 0 && expectedBinaryLength === buffer.byteLength;
+
+    if (exactBinary) return parseBinarySTL(buffer, count);
+    if (looksLikeAsciiSTL(buffer)) return parseAsciiSTL(buffer);
+
+    if (count > 0 && expectedBinaryLength <= buffer.byteLength) {
+      return parseBinarySTL(buffer, count);
+    }
+
+    // Last chance: ASCII files often use an unusual header.
+    if (/\bvertex\b/i.test(new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 65536))))) {
+      return parseAsciiSTL(buffer);
+    }
+
+    throw new Error('This does not look like a valid ASCII or binary STL.');
+  }
+
+  function analyseGeometry(parsed) {
+    const positions = parsed.positions;
+    if (!positions || positions.length < 9) throw new Error('The STL contains no usable triangles.');
+
+    const count = Math.min(parsed.triangles, Math.floor(positions.length / 9));
+    if (count <= 0) throw new Error('The STL contains no complete triangles.');
+
+    let minX = Infinity, minY = Infinity, minZ = Infinity;
+    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    let validTriangles = 0;
+
+    // Compact on the fly in case an ASCII file contained non-finite values.
+    const cleaned = new Float32Array(count * 9);
+    let write = 0;
+    for (let t = 0; t < count; t++) {
+      const offset = t * 9;
+      let valid = true;
+      for (let i = 0; i < 9; i++) {
+        if (!Number.isFinite(positions[offset + i])) { valid = false; break; }
+      }
+      if (!valid) continue;
+      for (let i = 0; i < 9; i += 3) {
+        const x = positions[offset + i];
+        const y = positions[offset + i + 1];
+        const z = positions[offset + i + 2];
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (z < minZ) minZ = z;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+        if (z > maxZ) maxZ = z;
+      }
+      cleaned.set(positions.subarray(offset, offset + 9), write);
+      write += 9;
+      validTriangles++;
+    }
+
+    if (validTriangles === 0) throw new Error('The STL contains no finite triangles.');
+
+    const finalPositions = write === cleaned.length ? cleaned : cleaned.slice(0, write);
+    const center = [
+      (minX + maxX) / 2,
+      (minY + maxY) / 2,
+      (minZ + maxZ) / 2
+    ];
+
+    // Recenter once, on the CPU, so the camera always orbits the true centre.
+    for (let i = 0; i < finalPositions.length; i += 3) {
+      finalPositions[i] -= center[0];
+      finalPositions[i + 1] -= center[1];
+      finalPositions[i + 2] -= center[2];
+    }
+
+    const size = [maxX - minX, maxY - minY, maxZ - minZ];
+    const diagonal = Math.hypot(size[0], size[1], size[2]);
+    const radius = Math.max(diagonal / 2, 0.00001);
+
+    return {
+      positions: finalPositions,
+      triangles: validTriangles,
+      size,
+      radius
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loading / metadata
+  // ---------------------------------------------------------------------------
+  function formatMM(value) {
+    if (!Number.isFinite(value)) return '—';
+    if (value < 1) return value.toFixed(3);
+    if (value < 100) return value.toFixed(2);
+    return value.toFixed(1);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function updateInfo(model) {
+    fileNameEl.textContent = model.name;
+    fileNameEl.title = model.name + ' · ' + formatFileSize(model.byteLength);
+    fileNameEl.classList.remove('is-empty');
+    triCountEl.textContent = numberFormat.format(model.triangles);
+    triCountEl.classList.remove('is-empty');
+    triCountEl.classList.add('is-strong');
+    const size = model.size;
+    modelSizeEl.textContent = formatMM(size[0]) + ' × ' + formatMM(size[1]) + ' × ' + formatMM(size[2]) + ' mm';
+    modelSizeEl.title = 'X × Y × Z bounding box, in millimetres';
+    modelSizeEl.classList.remove('is-empty');
+  }
+
+  function clearInfo() {
+    fileNameEl.textContent = 'No model loaded';
+    fileNameEl.title = '';
+    fileNameEl.classList.add('is-empty');
+    triCountEl.textContent = '—';
+    triCountEl.classList.remove('is-strong');
+    triCountEl.classList.add('is-empty');
+    modelSizeEl.textContent = '—';
+    modelSizeEl.classList.add('is-empty');
+  }
+
+  async function loadFile(file) {
+    if (!file) return;
+    if (!/\.stl$/i.test(file.name)) {
+      showToast('Please choose a file with an .stl extension.');
+      return;
+    }
+    if (file.size === 0) {
+      showToast('That STL file is empty.');
+      return;
+    }
+
+    const token = ++state.loadToken;
+    loadingCopy.textContent = 'READING ' + file.name.toUpperCase();
+    loading.classList.add('is-on');
+    loading.setAttribute('aria-hidden', 'false');
+
+    // Give the browser a frame to paint the loading state before the parse.
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const parsed = parseSTL(buffer);
+      const geometry = analyseGeometry(parsed);
+
+      if (token !== state.loadToken) return;
+
+      const indexedEdges = new Uint32Array(geometry.triangles * 6);
+      for (let t = 0; t < geometry.triangles; t++) {
+        const baseVertex = t * 3;
+        const baseIndex = t * 6;
+        indexedEdges[baseIndex] = baseVertex;
+        indexedEdges[baseIndex + 1] = baseVertex + 1;
+        indexedEdges[baseIndex + 2] = baseVertex + 1;
+        indexedEdges[baseIndex + 3] = baseVertex + 2;
+        indexedEdges[baseIndex + 4] = baseVertex + 2;
+        indexedEdges[baseIndex + 5] = baseVertex;
+      }
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, geometry.positions, gl.STATIC_DRAW);
+      gl.bindVertexArray(vao);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeIbo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexedEdges, gl.STATIC_DRAW);
+      gl.bindVertexArray(null);
+      if (gl.getError() !== gl.NO_ERROR) {
+        throw new Error('This model is too large for the graphics card to hold.');
+      }
+      drawCount = geometry.triangles * 3;
+      edgeIndexCount = geometry.triangles * 6;
+
+      state.model = {
+        name: file.name,
+        byteLength: file.size,
+        triangles: geometry.triangles,
+        size: geometry.size,
+        radius: geometry.radius,
+        positions: geometry.positions
+      };
+      state.radius = geometry.radius;
+      state.zoom = 1;
+      state.yaw = DEFAULT_YAW;
+      state.pitch = DEFAULT_PITCH;
+      state.baseDist = fitBaseDistance();
+      state.dragging = false;
+      state.pointers.clear();
+
+      stage.classList.add('has-model');
+      stage.classList.remove('is-dragging');
+      modebar.classList.remove('is-disabled');
+      modeButtons.forEach((button) => { button.disabled = false; });
+
+      clearTimeout(state.toastTimer);
+      toast.classList.remove('is-on');
+      updateInfo(state.model);
+      setMode('solid');
+      requestRender();
+    } catch (error) {
+      if (token !== state.loadToken) return;
+      showToast(error && error.message ? error.message : 'Could not read that STL file.');
+    } finally {
+      if (token === state.loadToken) {
+        loading.classList.remove('is-on');
+        loading.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+  let renderQueued = false;
+
+  function requestRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(() => {
+      renderQueued = false;
+      render();
+    });
+  }
+
+  function resizeCanvas() {
+    const width = Math.max(stage.clientWidth, 1);
+    const height = Math.max(stage.clientHeight, 1);
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const pixelBudget = 8e6;
+    if (width * height * dpr * dpr > pixelBudget) {
+      dpr = Math.max(1, Math.sqrt(pixelBudget / (width * height)));
+    }
+    const pixelWidth = Math.max(1, Math.round(width * dpr));
+    const pixelHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
+  }
+
+  function setCommonUniforms() {
+    gl.uniformMatrix4fv(uniforms.projection, false, currentProjection);
+    gl.uniformMatrix4fv(uniforms.view, false, currentView);
+    gl.uniform1i(uniforms.pass, 0);
+  }
+
+  let currentProjection = null;
+  let currentView = null;
+
+  function drawSurface(fill, alpha) {
+    gl.uniform1i(uniforms.pass, 0);
+    gl.uniform3fv(uniforms.fillColor, fill);
+    gl.uniform1f(uniforms.surfaceAlpha, alpha);
+    gl.drawArrays(gl.TRIANGLES, 0, drawCount);
+  }
+
+  function drawEdges(color, alpha) {
+    gl.uniform1i(uniforms.pass, 2);
+    gl.uniform3fv(uniforms.edgeColor, color);
+    gl.uniform1f(uniforms.edgeAlpha, alpha);
+    gl.drawElements(gl.LINES, edgeIndexCount, gl.UNSIGNED_INT, 0);
+  }
+
+  function render() {
+    if (!gl || !program) return;
+    resizeCanvas();
+
+    const width = canvas.width;
+    const height = canvas.height;
+    if (width === 0 || height === 0) return;
+
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Update the axis widget even when the grid is empty.
+    updateAxisWidget();
+
+    if (!state.model) return;
+
+    const distance = state.baseDist * state.zoom;
+    const near = Math.max(state.radius * 0.0008, distance - state.radius * 2.4);
+    const far = Math.max(distance + state.radius * 3.2, near + state.radius * 0.01);
+    const aspect = width / height;
+
+    currentProjection = perspective(FOV, aspect, near, far);
+    currentView = lookAt(cameraBasis().eye, [0, 0, 1]);
+
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+    gl.uniformMatrix4fv(uniforms.projection, false, currentProjection);
+    gl.uniformMatrix4fv(uniforms.view, false, currentView);
+
+    const silver = new Float32Array([0.66, 0.71, 0.76]);
+    const ghost = new Float32Array([0.43, 0.60, 0.72]);
+    const accentEdge = new Float32Array([0.0, 0.4, 0.8]);
+    const warmEdge = new Float32Array([0.24, 0.53, 0.84]);
+    const ghostEdge = new Float32Array([0.36, 0.58, 0.82]);
+
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+
+    if (state.mode === 'solid') {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(true);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      drawSurface(silver, 1.0);
+    } else if (state.mode === 'wire') {
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      drawEdges(accentEdge, 0.98);
+    } else if (state.mode === 'edges') {
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthMask(true);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      drawSurface(silver, 1.0);
+
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      drawEdges(warmEdge, 0.94);
+    } else if (state.mode === 'xray') {
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      drawSurface(ghost, 0.145);
+      drawEdges(ghostEdge, 0.62);
+    }
+
+    gl.bindVertexArray(null);
+    gl.depthMask(true);
+  }
+
+  function updateAxisWidget() {
+    const { forward, right, up } = cameraBasis();
+    for (const key of ['X', 'Y', 'Z']) {
+      const item = axisEls[key];
+      const sx = dot(item.vec, right);
+      const sy = -dot(item.vec, up);
+      const depth = dot(item.vec, forward);
+      const reach = 30;
+      const x2 = 46 + sx * reach;
+      const y2 = 46 + sy * reach;
+      const tx = 46 + sx * (reach + 10);
+      const ty = 46 + sy * (reach + 10) + 2.6;
+      item.line.setAttribute('x2', x2.toFixed(1));
+      item.line.setAttribute('y2', y2.toFixed(1));
+      item.line.setAttribute('opacity', (0.52 + 0.48 * (1 - (depth + 1) / 2)).toFixed(2));
+      item.text.setAttribute('x', tx.toFixed(1));
+      item.text.setAttribute('y', ty.toFixed(1));
+      item.text.setAttribute('opacity', (0.55 + 0.45 * (1 - (depth + 1) / 2)).toFixed(2));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modes and interactions
+  // ---------------------------------------------------------------------------
+  function setMode(mode) {
+    if (!state.model) return;
+    const next = ['solid', 'wire', 'edges', 'xray'].includes(mode) ? mode : 'solid';
+    state.mode = next;
+    modeButtons.forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.mode === next));
+    });
+    requestRender();
+  }
+
+  function resetView() {
+    if (!state.model) return;
+    state.yaw = DEFAULT_YAW;
+    state.pitch = DEFAULT_PITCH;
+    state.zoom = 1;
+    state.baseDist = fitBaseDistance();
+    requestRender();
+  }
+
+  function showToast(message, tone = 'error', duration = 4200) {
+    if (!message) return;
+    clearTimeout(state.toastTimer);
+    toast.textContent = message;
+    toast.style.borderColor = tone === 'info' ? '#d6e2f2' : '#f0caca';
+    toast.style.color = tone === 'info' ? '#3d4d62' : '#a11818';
+    toast.classList.add('is-on');
+    state.toastTimer = window.setTimeout(() => toast.classList.remove('is-on'), duration);
+  }
+
+  function pointerDistance() {
+    const points = Array.from(state.pointers.values());
+    if (points.length < 2) return 0;
+    return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!state.model || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    canvas.focus({ preventScroll: true });
+    canvas.setPointerCapture(event.pointerId);
+    state.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (state.pointers.size === 1) {
+      state.dragging = true;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      canvas.classList.add('is-dragging');
+    } else if (state.pointers.size === 2) {
+      state.pinchStart = pointerDistance();
+      state.pinchZoom = state.zoom;
+    }
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
+    if (!state.model || !state.pointers.has(event.pointerId)) return;
+    state.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (state.pointers.size === 2) {
+      const distance = pointerDistance();
+      if (state.pinchStart > 0 && distance > 0) {
+        state.zoom = clamp(state.pinchZoom * (state.pinchStart / distance), MIN_ZOOM, MAX_ZOOM);
+        requestRender();
+      }
+      return;
+    }
+
+    if (!state.dragging) return;
+    const dx = event.clientX - state.lastX;
+    const dy = event.clientY - state.lastY;
+    state.lastX = event.clientX;
+    state.lastY = event.clientY;
+
+    state.yaw -= dx * 0.0068;
+    state.pitch = clamp(state.pitch + dy * 0.0058, -Math.PI / 2 + 0.045, Math.PI / 2 - 0.045);
+    requestRender();
+  });
+
+  function endPointer(event) {
+    if (!state.pointers.has(event.pointerId)) return;
+    state.pointers.delete(event.pointerId);
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+
+    if (state.pointers.size === 0) {
+      state.dragging = false;
+      canvas.classList.remove('is-dragging');
+    } else if (state.pointers.size === 1) {
+      const remaining = Array.from(state.pointers.values())[0];
+      state.lastX = remaining.x;
+      state.lastY = remaining.y;
+      state.dragging = true;
+      state.pinchStart = 0;
+    }
+  }
+
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
+  canvas.addEventListener('wheel', (event) => {
+    if (!state.model) return;
+    event.preventDefault();
+    const unit = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? 320 : 1;
+    const factor = Math.exp(event.deltaY * unit * 0.00115);
+    state.zoom = clamp(state.zoom * factor, MIN_ZOOM, MAX_ZOOM);
+    requestRender();
+  }, { passive: false });
+
+  canvas.addEventListener('dblclick', () => { if (state.model) resetView(); });
+
+  canvas.addEventListener('keydown', (event) => {
+    if (!state.model) return;
+    const key = event.key;
+    if (key === 'ArrowLeft') {
+      event.preventDefault();
+      state.yaw += 0.075;
+      requestRender();
+    } else if (key === 'ArrowRight') {
+      event.preventDefault();
+      state.yaw -= 0.075;
+      requestRender();
+    } else if (key === 'ArrowUp') {
+      event.preventDefault();
+      state.pitch = clamp(state.pitch + 0.06, -Math.PI / 2 + 0.045, Math.PI / 2 - 0.045);
+      requestRender();
+    } else if (key === 'ArrowDown') {
+      event.preventDefault();
+      state.pitch = clamp(state.pitch - 0.06, -Math.PI / 2 + 0.045, Math.PI / 2 - 0.045);
+      requestRender();
+    } else if (key === '+' || key === '=') {
+      event.preventDefault();
+      state.zoom = clamp(state.zoom * 0.88, MIN_ZOOM, MAX_ZOOM);
+      requestRender();
+    } else if (key === '-' || key === '_') {
+      event.preventDefault();
+      state.zoom = clamp(state.zoom / 0.88, MIN_ZOOM, MAX_ZOOM);
+      requestRender();
+    }
+  });
+
+  window.addEventListener('keydown', (event) => {
+    const target = event.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+    if (!state.model) return;
+    if (event.key === '1') setMode('solid');
+    else if (event.key === '2') setMode('wire');
+    else if (event.key === '3') setMode('edges');
+    else if (event.key === '4') setMode('xray');
+    else if (event.key.toLowerCase() === 'r') resetView();
+  });
+
+  // ---------------------------------------------------------------------------
+  // File input / drag & drop
+  // ---------------------------------------------------------------------------
+  function openPicker() {
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  openBtn.addEventListener('click', openPicker);
+  browseBtn.addEventListener('click', openPicker);
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (file) loadFile(file);
+    fileInput.value = '';
+  });
+
+  let dragDepth = 0;
+
+  function hasFiles(event) {
+    return event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
+  }
+
+  window.addEventListener('dragenter', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    dragDepth++;
+    stage.classList.add('is-dragging');
+  });
+
+  window.addEventListener('dragover', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    if (!stage.classList.contains('is-dragging')) stage.classList.add('is-dragging');
+  });
+
+  window.addEventListener('dragleave', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) stage.classList.remove('is-dragging');
+  });
+
+  window.addEventListener('drop', (event) => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    dragDepth = 0;
+    stage.classList.remove('is-dragging');
+    const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  window.addEventListener('dragend', () => {
+    dragDepth = 0;
+    stage.classList.remove('is-dragging');
+  });
+
+  window.addEventListener('blur', () => {
+    dragDepth = 0;
+    stage.classList.remove('is-dragging');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------------
+  initGL();
+  modeButtons.forEach((button) => {
+    button.addEventListener('click', () => setMode(button.dataset.mode));
+  });
+  resetBtn.addEventListener('click', resetView);
+
+  const resizeObserver = new ResizeObserver(() => {
+    if (!gl) return;
+    resizeCanvas();
+    if (state.model) state.baseDist = fitBaseDistance();
+    requestRender();
+  });
+  resizeObserver.observe(stage);
+
+  window.addEventListener('resize', () => {
+    if (!gl) return;
+    resizeCanvas();
+    if (state.model) state.baseDist = fitBaseDistance();
+    requestRender();
+  });
+
+  if (gl) {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    resizeCanvas();
+    updateAxisWidget();
+  }
+})();
+</script>
+</body>
+</html>
