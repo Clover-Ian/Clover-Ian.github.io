@@ -35,7 +35,6 @@
       title: 'Studio',
       columns: [
         { heading: 'IYS Studio', links: [
-          ['IYS Studio', 'IYS Studio.html'],
           ['Bilibili', 'https://space.bilibili.com/3546826449881110'],
         ] },
       ],
@@ -44,7 +43,6 @@
       title: 'IYS Developer',
       columns: [
         { heading: 'IYS Developer', links: [
-          ['IYS Developer', 'IYS Developer.html'],
           ['IYS SQL Viewer', 'stl-viewer.html'],
         ] },
       ],
