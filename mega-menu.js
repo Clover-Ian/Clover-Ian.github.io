@@ -11,7 +11,7 @@
     iym: {
       title: 'IYM',
       columns: [
-        { heading: 'Tools', links: [
+        { heading: 'IYM', links: [
           ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
           ['About IYM', 'IYM.html'],
         ] },
@@ -20,7 +20,7 @@
     software: {
       title: 'Software',
       columns: [
-        { heading: 'Apps', links: [
+        { heading: 'IYS Software', links: [
           ['IYS Archiver', 'IYS Archiver Pro.html'],
           ['IYS PDF', 'IYS Software.html'],
           ['IYM AutoClicker', 'IYM AutoClicker Pro.html'],
@@ -30,18 +30,16 @@
     studio: {
       title: 'Studio',
       columns: [
-        { heading: 'Studio', links: [
+        { heading: 'IYS Studio', links: [
           ['IYS Studio', 'IYS Studio.html'],
-          ['Music', 'IYS Studio.html'],
-          ['Movies', 'IYS Studio.html'],
-          ['Stories', 'IYS Studio.html'],
+          ['Bilibili', 'https://space.bilibili.com/3546826449881110'],
         ] },
       ],
     },
     website: {
       title: 'Website',
       columns: [
-        { heading: 'Play', links: [
+        { heading: 'IYS Website', links: [
           ['IYS Arcade', 'IYS Arcade.html'],
           ['IYS Critters', 'IYS Critters.html'],
         ] },
