@@ -43,7 +43,7 @@
       title: 'IYS Developer',
       columns: [
         { heading: 'IYS Developer', links: [
-          ['IYS SQL Viewer', 'stl-viewer.html'],
+          ['IYS SQL Viewer', 'IYS stl viewer.html'],
         ] },
       ],
     },
