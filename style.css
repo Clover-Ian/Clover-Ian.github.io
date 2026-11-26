@@ -3769,6 +3769,6 @@ main, .site-footer {
 /* 产品区块里独立的按钮行：居中 */
 .product-section > .action-row {
     justify-content: center;
-    margin-top: 24px;
-    margin-bottom: 34px;
+    margin-top: 30px;
+    margin-bottom: 0;
 }
