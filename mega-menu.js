@@ -163,8 +163,12 @@
     }, 140);
   }
 
-  const websiteLink = Array.from(navLinks.querySelectorAll('a'))
-    .find((link) => link.getAttribute('href') === 'IYS Website.html');
+  // 最后一个触发项（现在是 Developer）的右边缘 —— 只有它右边的空白才收起
+  const triggerNodes = Array.from(navLinks.querySelectorAll('a'))
+    .filter((link) => triggerFor(link));
+
+  const lastTriggerRight = () =>
+    triggerNodes.reduce((max, link) => Math.max(max, link.getBoundingClientRect().right), 0);
 
   navLinks.addEventListener('mouseover', (event) => {
     const link = event.target.closest('a');
@@ -181,9 +185,9 @@
       return;
     }
 
-    // 空白处：Website 右边到 Contact 之间收起，其余空白保持
-    const edge = websiteLink?.getBoundingClientRect().right ?? 0;
-    if (websiteLink && event.clientX > edge) {
+    // 空白处：最后一个触发项右边（到 Contact）才收起，其余空白保持
+    const edge = lastTriggerRight();
+    if (edge && event.clientX > edge) {
       close();
       return;
     }
