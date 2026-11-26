@@ -12,7 +12,7 @@
       title: 'IYM',
       columns: [
         { heading: 'IYM', links: [
-          ['IYM AutoClicker', 'IYS Software.html#iym-autoclicker'],
+          ['IYM AutoClicker', 'IYM.html#iym-autoclicker'],
           ['About IYM', 'IYM.html'],
         ] },
       ],
