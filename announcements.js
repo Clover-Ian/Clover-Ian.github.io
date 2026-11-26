@@ -1,10 +1,11 @@
 /**
  * 全站公告：显示所有已发布的公告，最新的在最上面。
- * 不再只显示一条，也不提供关闭按钮——不用的公告在 IYS User 里删掉即可。
+ * 不依赖 supabase.js —— 直接 fetch，页面刚开始解析就能显示（不用等大库加载完）。
  */
 (() => {
-  const client = window.iysSupabase;
-  if (!client) return;
+  const SUPABASE_URL = window.IYS_SUPABASE_URL || 'https://qbkfdhmjogdwtjovqzaw.supabase.co';
+  const SUPABASE_KEY = window.IYS_SUPABASE_KEY || 'sb_publishable_n04Iayrnlhn4aznjtLa0Rg_gSJqdBTS';
+  const CACHE_KEY = 'iys.announcements.v1';
 
   function stamp(iso) {
     return new Date(iso).toLocaleDateString('en-GB', {
@@ -47,70 +48,66 @@
     return bar;
   }
 
-  const CACHE_KEY = 'iys.announcements.v1';
+  function paint(items) {
+    if (!Array.isArray(items) || !items.length) return false;
+    const main = document.querySelector('main');
+    if (!main) return false;
 
-  /* 先用上次的缓存立刻显示，网络好了再刷新 */
-  function paintCache() {
+    const list = document.createElement('section');
+    list.className = 'announcement-list';
+    list.setAttribute('aria-label', 'Announcements');
+    items.forEach((item) => list.append(renderItem(item)));
+
+    main.querySelector('.announcement-list')?.remove();
+    main.prepend(list);
+    return true;
+  }
+
+  function cached() {
     try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (!Array.isArray(data) || !data.length) return;
-
-      const list = document.createElement('section');
-      list.className = 'announcement-list';
-      list.setAttribute('aria-label', 'Announcements');
-      data.forEach((item) => list.append(renderItem(item)));
-
-      const main = document.querySelector('main');
-      if (main) {
-        main.querySelector('.announcement-list')?.remove();
-        main.prepend(list);
-      }
-    } catch { /* 忽略 */ }
+      return JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+    } catch {
+      return [];
+    }
   }
 
   async function fetchAnnouncements() {
-    const { data, error } = await client
-      .from('announcements')
-      .select('id, title, body, level, created_at')
-      .eq('published', true)
-      .order('created_at', { ascending: false })
-      .limit(20);
+    const url = `${SUPABASE_URL}/rest/v1/announcements`
+      + '?select=id,title,body,level,created_at&published=eq.true&order=created_at.desc&limit=20';
 
-    if (error || !data?.length) return false;
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!Array.isArray(data) || !data.length) return false;
 
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(data));
     } catch { /* 忽略 */ }
 
-    const list = document.createElement('section');
-    list.className = 'announcement-list';
-    list.setAttribute('aria-label', 'Announcements');
-
-    data.forEach((item) => list.append(renderItem(item)));
-
-    const main = document.querySelector('main');
-    if (main) {
-      main.querySelector('.announcement-list')?.remove();
-      main.prepend(list);
-    }
-    return true;
+    return paint(data);
   }
 
-  async function init() {
-    paintCache();
-
-    // 网络不稳：最多试 3 次，拿到就停
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        if (await fetchAnnouncements()) return;
-      } catch (error) {
-        console.warn('[announcements] 读取失败：', error);
+  // 1) 有缓存就立刻画（不等网络）
+  if (!paint(cached())) {
+    // 2) 没缓存：马上请求，失败再重试
+    (async () => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          if (await fetchAnnouncements()) return;
+        } catch (error) {
+          console.warn('[announcements] 读取失败：', error);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
       }
-      await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
-    }
+    })();
+  } else {
+    // 已经显示了旧内容，后台静默刷新
+    fetchAnnouncements().catch(() => {});
   }
-
-  init();
 })();
