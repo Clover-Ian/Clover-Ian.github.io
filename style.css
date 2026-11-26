@@ -3759,3 +3759,9 @@ main, .site-footer {
 .mega-link:hover .mega-external {
     color: var(--blue);
 }
+
+/* .product-heading 里的按钮行靠左，不和其它内容抢中线 */
+.product-heading .action-row {
+    justify-content: flex-start;
+    margin-top: 18px;
+}

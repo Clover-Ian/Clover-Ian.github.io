@@ -40,6 +40,15 @@
         ] },
       ],
     },
+    developer: {
+      title: 'IYS Developer',
+      columns: [
+        { heading: 'IYS Developer', links: [
+          ['IYS Developer', 'IYS Developer.html'],
+          ['IYS SQL Viewer', 'stl-viewer.html'],
+        ] },
+      ],
+    },
     website: {
       title: 'Website',
       columns: [
@@ -58,6 +67,7 @@
     if (href === 'IYS Software.html') return 'software';
     if (href === 'IYS Studio.html') return 'studio';
     if (href === 'IYS Website.html') return 'website';
+    if (href === 'IYS Developer.html') return 'developer';
     return null;
   };
 
