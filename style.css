@@ -3636,10 +3636,7 @@ body.is-locked {
     top: 0;
     z-index: 60;
     border-bottom: 1px solid rgb(0 0 0 / 6%);
-    background:
-        radial-gradient(ellipse 55% 180% at 0% 0%, #FFE7FF 0%, rgb(255 255 255 / 0%) 72%),
-        radial-gradient(ellipse 55% 180% at 100% 0%, #DCF1FF 0%, rgb(255 255 255 / 0%) 72%),
-        rgb(255 255 255 / 90%);
+    background: rgb(255 255 255 / 92%);
     backdrop-filter: saturate(180%) blur(18px);
 }
 
