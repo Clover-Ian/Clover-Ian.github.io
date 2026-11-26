@@ -3765,3 +3765,9 @@ main, .site-footer {
     justify-content: flex-start;
     margin-top: 18px;
 }
+
+/* 产品区块里独立的按钮行：居中 */
+.product-section > .action-row {
+    justify-content: center;
+    margin-top: 24px;
+}
