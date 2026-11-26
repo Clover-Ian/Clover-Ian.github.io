@@ -1316,7 +1316,21 @@
       score.className = 'hb-board-score';
       score.textContent = historyScore(row);
 
-      li.append(when, test, score);
+      const cardButton = document.createElement('button');
+      cardButton.type = 'button';
+      cardButton.className = 'hb-card-button';
+      cardButton.textContent = 'Card';
+      cardButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.IYSCard?.open({
+          test: TEST_LABELS[row.test] || row.test,
+          score: historyScore(row),
+          date: historyWhen(row.created_at),
+          name: (cloud.user?.user_metadata?.display_name || '').trim(),
+        });
+      });
+
+      li.append(when, test, score, cardButton);
 
       if (wasRecord.get(`${row.created_at}|${row.test}`)) {
         const badge = document.createElement('span');

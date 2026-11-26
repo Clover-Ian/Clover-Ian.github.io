@@ -3888,3 +3888,58 @@ main, .site-footer {
     border-radius: 12px;
     border: 1px solid var(--line);
 }
+
+/* 成绩卡弹窗 */
+.card-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgb(20 20 24 / 55%);
+    backdrop-filter: blur(6px);
+}
+
+.card-modal-panel {
+    width: min(920px, 100%);
+    padding: 16px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 30px 80px rgb(0 0 0 / 30%);
+}
+
+.card-modal-canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+
+.card-modal-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 14px;
+}
+
+.card-modal-bar .button-link {
+    border: 0;
+    cursor: pointer;
+}
+
+.hb-card-button {
+    padding: 2px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.hb-card-button:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+}
