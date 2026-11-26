@@ -123,10 +123,18 @@
     return false;
   }
 
+  async function currentSession() {
+    const first = await client.auth.getSession();
+    if (first?.data?.session?.user) return first.data.session;
+    // 有时 supabase 还在恢复会话，等一下再读一次
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const second = await client.auth.getSession();
+    return second?.data?.session ?? null;
+  }
+
   async function init() {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    if (!data.session?.user) return;
+    const session = await currentSession();
+    if (!session?.user) return;
 
     if (await kickIfBanned()) return;
 

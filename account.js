@@ -45,6 +45,7 @@
 
   // 每次跳转时重新计算，避免 referrer 尚未就绪时拿到空值
   const destination = () => nextDestination();
+  const herePath = window.location.pathname;
 
   // 注册后用 8 位验证码确认邮箱（同一份代码也跑在登录页，那里没有这些节点）
   const verifyStep = document.querySelector('[data-verify-step]');
@@ -341,7 +342,7 @@
           setBusy(false);
           return;
         }
-        await saveProfile(data.user);
+        saveProfile(data.user);
       } else {
         const { data: signIn, error } = await client.auth.signInWithPassword({ email, password });
 
@@ -374,7 +375,7 @@
         }
 
         if (error) throw error;
-        await saveProfile(signIn?.user);
+        saveProfile(signIn?.user);
       }
 
       showMessage(
@@ -383,9 +384,12 @@
           : 'Signed in. Taking you to the homepage…',
         'success',
       );
+      const target = destination();
+      window.setTimeout(() => window.location.assign(target), 250);
+      // 兜底：万一主流程被网络卡住，最多 5 秒后也跳走
       window.setTimeout(() => {
-        window.location.assign(destination());
-      }, 700);
+        if (window.location.pathname === herePath) window.location.assign(target);
+      }, 5000);
     } catch (error) {
       showMessage(messageForError(error));
       setBusy(false);
@@ -428,7 +432,7 @@
           type: 'signup',
         });
         if (error) throw error;
-        await saveProfile(verified?.user);
+        saveProfile(verified?.user);
 
         showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
         window.setTimeout(() => {
