@@ -3667,14 +3667,19 @@ main, .site-footer {
     box-shadow: 0 28px 60px rgb(29 29 31 / 14%);
 
     opacity: 0;
-    transform: translateY(-6px) scale(0.995);
+    transform: translateY(-10px);
+    clip-path: inset(0 0 100% 0);          /* 从上往下"伸出来" */
     transform-origin: top center;
-    transition: opacity 150ms ease, transform 190ms cubic-bezier(0.16, 0.84, 0.28, 1);
+    transition:
+        clip-path 500ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 380ms ease;
 }
 
 .mega-panel.is-open {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
 }
 
 .mega-panel[hidden] {
