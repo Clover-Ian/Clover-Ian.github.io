@@ -155,6 +155,9 @@
     }, 140);
   }
 
+  const websiteLink = Array.from(navLinks.querySelectorAll('a'))
+    .find((link) => link.getAttribute('href') === 'IYS Website.html');
+
   navLinks.addEventListener('mouseover', (event) => {
     const link = event.target.closest('a');
     const key = triggerFor(link);
@@ -165,7 +168,18 @@
       return;
     }
 
-    // 空白处 / Contact / 账号区：保持当前内容，不关闭
+    if (link) {                     // Contact / 账号区
+      close();
+      return;
+    }
+
+    // 空白处：Website 右边到 Contact 之间收起，其余空白保持
+    const edge = websiteLink?.getBoundingClientRect().right ?? 0;
+    if (websiteLink && event.clientX > edge) {
+      close();
+      return;
+    }
+
     if (panel.classList.contains('is-open')) window.clearTimeout(closeTimer);
   });
 
