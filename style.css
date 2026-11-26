@@ -3772,3 +3772,14 @@ main, .site-footer {
     margin-top: 30px;
     margin-bottom: 0;
 }
+
+/* 首页能力卡片：两列布局 */
+.feature-grid--home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .feature-grid--home {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
