@@ -349,11 +349,23 @@
         }
         saveProfile(data.user);
       } else {
-        // 这个网络（尤其 Safari）偶尔会直接掐断请求，失败时自动再试两次
+        // 这个网络（尤其 Safari）偶尔会直接掐断请求，失败时自动再试两次。
+        // 每次请求最多等 10 秒，避免一直卡在 pending。
+        const withTimeout = (promise, ms) => Promise.race([
+          promise,
+          new Promise((resolve) => setTimeout(
+            () => resolve({ data: null, error: new Error('Request timed out') }),
+            ms,
+          )),
+        ]);
+
         let signIn = null;
         let error = null;
         for (let attempt = 0; attempt < 3; attempt += 1) {
-          const result = await client.auth.signInWithPassword({ email, password });
+          const result = await withTimeout(
+            client.auth.signInWithPassword({ email, password }),
+            10000,
+          );
           signIn = result.data;
           error = result.error;
 
