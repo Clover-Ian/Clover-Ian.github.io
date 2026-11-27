@@ -5002,3 +5002,49 @@ body.theme-dark .ai-line--me {
     border-color: var(--blue);
     box-shadow: 0 0 0 3px rgb(0 102 204 / 12%);
 }
+
+/* AI 面板头部：窄窗口时不换行、更紧凑 */
+.ai-panel {
+    container-type: inline-size;
+}
+
+.ai-head {
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 12px;
+}
+
+.ai-head-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ai-title {
+    white-space: nowrap;
+}
+
+.ai-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-head-right {
+    flex: 0 0 auto;
+}
+
+@container (max-width: 430px) {
+    .ai-sub {
+        display: none;
+    }
+
+    .ai-model {
+        min-width: 96px;
+        max-width: 120px;
+        font-size: 11px;
+    }
+
+    .ai-head {
+        padding: 12px 14px 10px;
+    }
+}
