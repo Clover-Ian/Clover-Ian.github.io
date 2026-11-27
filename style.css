@@ -4409,13 +4409,15 @@ body.theme-dark .ai-line--me {
 .ai-fab-mark {
     width: 30px;
     height: 30px;
-    border-radius: 8px;
+    border-radius: 50%;          /* 圆形显示，文件仍是方形 */
+    object-fit: cover;
     display: block;
 }
 
 .ai-mark {
     width: 26px;
     height: 26px;
-    border-radius: 7px;
+    border-radius: 50%;
+    object-fit: cover;
     flex: 0 0 auto;
 }
