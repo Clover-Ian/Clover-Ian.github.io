@@ -5137,3 +5137,12 @@ body.profile-page .profile-panels {
         height: auto;
     }
 }
+
+/* 默认 Base URL 用灰色显示 */
+.profile-panel input.is-default-value {
+    color: var(--muted);
+}
+
+.profile-panel input.is-default-value:focus {
+    color: var(--ink);
+}

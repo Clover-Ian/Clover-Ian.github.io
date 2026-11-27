@@ -572,6 +572,15 @@
   }
 
   const DEFAULT_BASE = 'https://relaydock.omnis.com.cn/v1';
+
+  /** 默认地址用灰色显示，自己改过的才是黑色 */
+  function markDefaultBase() {
+    if (!aiBaseInput) return;
+    const isDefault = aiBaseInput.value.trim() === DEFAULT_BASE;
+    aiBaseInput.classList.toggle('is-default-value', isDefault);
+  }
+
+  aiBaseInput?.addEventListener('input', markDefaultBase);
   let editingRow = null;
 
   function startEdit(row) {
@@ -581,6 +590,7 @@
     aiKeyInput.placeholder = 'Leave empty to keep the current key';
     aiNameInput.value = row.label || '';
     aiBaseInput.value = row.base_url || DEFAULT_BASE;
+    markDefaultBase();
     renderModelOptions(row.model || IYS_MODELS[0]);
     status('ai', '');
     showForm(true);
@@ -596,6 +606,7 @@
       if (aiBaseInput && !aiBaseInput.value.trim()) {
         aiBaseInput.value = DEFAULT_BASE;
       }
+      markDefaultBase();
       renderModelOptions(IYS_MODELS[0]);
       showForm(true);
     });
