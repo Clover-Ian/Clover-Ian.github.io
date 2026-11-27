@@ -24,9 +24,12 @@
     status.style.color = error ? '#ff8a80' : '';
   }
 
-  expiry.addEventListener('change', () => {
+  function syncExpiry() {
     customWrap.hidden = expiry.value !== 'custom';
-  });
+  }
+
+  expiry.addEventListener('change', syncExpiry);
+  syncExpiry();
 
   function pickImage(chosen) {
     if (!chosen || !chosen.type.startsWith('image/')) {

@@ -5366,3 +5366,8 @@ body.ai-page .site-footer {
 .site-confirm .account-delete-submit:hover {
     background: #a8201a;
 }
+
+/* 通用：任何被隐藏的表单区块都不显示（display:grid/flex 会盖掉 [hidden]） */
+[hidden] {
+    display: none !important;
+}
