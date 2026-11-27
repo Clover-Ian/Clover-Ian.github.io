@@ -156,6 +156,19 @@
     }
   }
 
+  /** 最简兜底：至少把 Sign in / Sign up 换成一个能进账号中心的按钮 */
+  function fallbackMenu() {
+    if (!document.querySelector('.account-nav-link[href^="IYS Account Sign In"]')) return;
+    const link = document.createElement('a');
+    link.className = 'account-nav-link account-nav-user';
+    link.href = 'IYS Account Profile.html';
+    link.textContent = 'Account';
+    const signIn = document.querySelector('.account-nav-link[href^="IYS Account Sign In"]');
+    const signUp = document.querySelector('.account-nav-link.account-signup-link');
+    if (signIn) signIn.replaceWith(link);
+    if (signUp) signUp.remove();
+  }
+
   async function init() {
     const session = await currentSession();
     if (!session?.user) return;
@@ -849,5 +862,6 @@
 
   init().catch((error) => {
     console.error('Unable to update IYS account navigation.', error);
+    fallbackMenu();
   });
 })();
