@@ -42,7 +42,10 @@
         <p class="ai-title">IYS AI</p>
         <p class="ai-sub">Ask about the site, the apps or the tools.</p>
       </div>
-      <button type="button" class="ai-close" aria-label="Close">×</button>
+      <div class="ai-head-right">
+        <select class="ai-model" aria-label="Model"></select>
+        <button type="button" class="ai-close" aria-label="Close">×</button>
+      </div>
     </div>
     <div class="ai-log" role="log" aria-live="polite"></div>
     <form class="ai-form">
@@ -56,6 +59,59 @@
   const form = panel.querySelector('.ai-form');
   const input = panel.querySelector('.ai-input');
   const close = panel.querySelector('.ai-close');
+
+  const modelSelect = panel.querySelector('.ai-model');
+  const STORE_KEY = 'iys.ai.model';
+  let modelsLoaded = false;
+
+  const NICE = {
+    'deepseek-v4.1-flash': 'DeepSeek 4.1 Flash',
+    'glm-5.3-flash': 'GLM 5.3 Flash',
+    'qwen-3.8-flash': 'Qwen 3.8 Flash',
+    'relay-rlx/glm-5.3-flash': 'GLM 5.3 Flash (relay)',
+    'glm-5.3': 'GLM 5.3',
+    'GLM-5.4': 'GLM 5.4',
+    'deepseek-v4-pro': 'DeepSeek 4 Pro',
+    'kimi-k3.1-pro': 'Kimi K3.1 Pro',
+    'kimi-k3.1-pro-high': 'Kimi K3.1 Pro High',
+    'mimo-v2.6-pro': 'MiMo 2.6 Pro',
+    'grok-composer-2.5-fast': 'Grok Composer 2.5 Fast',
+    'grok-4.7': 'Grok 4.7',
+    'qwen4_max': 'Qwen4 Max',
+  };
+
+  async function loadModels() {
+    if (modelsLoaded) return;
+    modelsLoaded = true;
+
+    let list = Object.keys(NICE);
+    let fallback = 'deepseek-v4.1-flash';
+
+    try {
+      const response = await fetch(ENDPOINT);
+      const data = await response.json();
+      if (Array.isArray(data?.models) && data.models.length) list = data.models;
+      if (data?.default) fallback = data.default;
+    } catch {
+      /* 离线时用内置列表 */
+    }
+
+    const saved = localStorage.getItem(STORE_KEY);
+    modelSelect.innerHTML = '';
+
+    list.forEach((id) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = NICE[id] || id;
+      modelSelect.append(option);
+    });
+
+    modelSelect.value = list.includes(saved) ? saved : fallback;
+
+    modelSelect.addEventListener('change', () => {
+      localStorage.setItem(STORE_KEY, modelSelect.value);
+    });
+  }
 
   const history = [];
 
@@ -72,6 +128,7 @@
     panel.hidden = !open;
     fab.classList.toggle('is-hidden', open);
     if (open) {
+      loadModels();
       if (!log.children.length) {
         line('Hi — I can explain anything on this site. Try “what is IYS Critters?”');
       }
@@ -103,7 +160,12 @@
       const response = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, system: SYSTEM, maxTokens: 320 }),
+        body: JSON.stringify({
+          messages: history,
+          system: SYSTEM,
+          maxTokens: 320,
+          model: modelSelect.value || undefined,
+        }),
       });
 
       const data = await response.json();

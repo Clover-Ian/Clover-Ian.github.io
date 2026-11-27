@@ -3,7 +3,24 @@
 
 const RELAY_BASE = Deno.env.get("RELAY_BASE") ?? "https://relaydock.omnis.com.cn/v1";
 const RELAY_KEY = Deno.env.get("RELAY_KEY") ?? "";
-const MODEL = Deno.env.get("RELAY_MODEL") ?? "deepseek-v4.1-flash";
+const DEFAULT_MODEL = Deno.env.get("RELAY_MODEL") ?? "deepseek-v4.1-flash";
+
+// 允许访客选择的模型（白名单，防止有人传任意模型名）
+const MODELS = [
+  "deepseek-v4.1-flash",
+  "glm-5.3-flash",
+  "qwen-3.8-flash",
+  "relay-rlx/glm-5.3-flash",
+  "glm-5.3",
+  "GLM-5.4",
+  "deepseek-v4-pro",
+  "kimi-k3.1-pro",
+  "kimi-k3.1-pro-high",
+  "mimo-v2.6-pro",
+  "grok-composer-2.5-fast",
+  "grok-4.7",
+  "qwen4_max",
+];
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +33,13 @@ Deno.serve(async (request) => {
     return new Response("ok", { headers: CORS });
   }
 
+  // 列出可选模型
+  if (request.method === "GET") {
+    return new Response(JSON.stringify({ models: MODELS, default: DEFAULT_MODEL }), {
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
   if (!RELAY_KEY) {
     return new Response(JSON.stringify({ error: "RELAY_KEY is not set" }), {
       status: 500,
@@ -24,7 +48,8 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const { messages, maxTokens, system } = await request.json();
+    const { messages, maxTokens, system, model } = await request.json();
+    const chosen = MODELS.includes(model) ? model : DEFAULT_MODEL;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages is required" }), {
@@ -40,7 +65,7 @@ Deno.serve(async (request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: chosen,
         messages: system
           ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
           : messages,
