@@ -5048,3 +5048,50 @@ body.theme-dark .ai-line--me {
         padding: 12px 14px 10px;
     }
 }
+
+/* 保存的 key：掩码 + 操作按钮 */
+.ai-key-mask {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.ai-key-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.ai-key-edit {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(118 118 128 / 10%);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.ai-key-edit:hover {
+    background: rgb(118 118 128 / 18%);
+}
+
+/* 设置页：页脚贴到窗口底部 */
+body.profile-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body.profile-page main {
+    flex: 1 0 auto;
+}
+
+body.profile-page .site-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+}

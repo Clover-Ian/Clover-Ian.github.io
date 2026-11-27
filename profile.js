@@ -450,9 +450,16 @@
   const aiRows = document.querySelector('[data-ai-rows]');
   const aiForm = document.querySelector('[data-ai-form]');
 
+  const aiFormTitle = document.querySelector('[data-ai-form-title]');
+
   function showForm(show) {
     if (!aiForm) return;
     aiForm.hidden = !show;
+    if (!show) {
+      editingRow = null;
+      if (aiFormTitle) aiFormTitle.textContent = 'Add API key';
+      aiKeyInput.placeholder = 'sk-...';
+    }
     if (show) {
       aiForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       aiKeyInput?.focus();
@@ -491,6 +498,13 @@
       const name = document.createElement('td');
       name.textContent = row.label || '—';
 
+      const keyCell = document.createElement('td');
+      keyCell.className = 'ai-key-mask';
+      const raw = row.api_key || '';
+      keyCell.textContent = raw.length > 8
+        ? `${raw.slice(0, 4)}••••${raw.slice(-4)}`
+        : '••••';
+
       const model = document.createElement('td');
       model.textContent = row.model || '—';
 
@@ -499,6 +513,21 @@
       base.textContent = row.base_url || '—';
 
       const action = document.createElement('td');
+      action.className = 'ai-key-actions';
+
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'ai-key-edit';
+      edit.title = 'Edit';
+      edit.setAttribute('aria-label', `Edit ${row.label || 'key'}`);
+      edit.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16v4Z"></path>
+          <path d="M13.5 6.5 17.5 10.5"></path>
+        </svg>`;
+      edit.addEventListener('click', () => startEdit(row));
+
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'ai-key-remove';
@@ -517,9 +546,9 @@
         await loadAiSettings();
         status('ai', 'Key deleted.');
       });
-      action.append(remove);
+      action.append(edit, remove);
 
-      tr.append(name, model, base, action);
+      tr.append(name, keyCell, model, base, action);
       aiRows.append(tr);
     });
 
@@ -543,11 +572,27 @@
   }
 
   const DEFAULT_BASE = 'https://relaydock.omnis.com.cn/v1';
+  let editingRow = null;
+
+  function startEdit(row) {
+    editingRow = row;
+    aiFormTitle.textContent = 'Edit API key';
+    aiKeyInput.value = '';
+    aiKeyInput.placeholder = 'Leave empty to keep the current key';
+    aiNameInput.value = row.label || '';
+    aiBaseInput.value = row.base_url || DEFAULT_BASE;
+    renderModelOptions(row.model || IYS_MODELS[0]);
+    status('ai', '');
+    showForm(true);
+  }
 
   document.querySelectorAll('[data-ai-add]').forEach((button) => {
     button.addEventListener('click', () => {
       aiForm?.reset();
+      editingRow = null;
       aiHasSavedKey = false;
+      if (aiFormTitle) aiFormTitle.textContent = 'Add API key';
+      aiKeyInput.placeholder = 'sk-...';
       if (aiBaseInput && !aiBaseInput.value.trim()) {
         aiBaseInput.value = DEFAULT_BASE;
       }
@@ -567,15 +612,17 @@
     [aiKeyInput, aiBaseInput, aiModelInput, aiModelCustom, aiNameInput]
       .forEach((el) => el?.classList.remove('is-invalid'));
 
-    if (!key || !base || !model || !name) {
-      if (!key) aiKeyInput.classList.add('is-invalid');
+    const keyRequired = !editingRow;
+
+    if ((keyRequired && !key) || !base || !model || !name) {
+      if (keyRequired && !key) aiKeyInput.classList.add('is-invalid');
       if (!base) aiBaseInput.classList.add('is-invalid');
       if (!model) (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
       if (!name) aiNameInput?.classList.add('is-invalid');
       return 'All fields are required.';
     }
 
-    if (!/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
+    if (key && !/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
       aiKeyInput.classList.add('is-invalid');
       return 'The key should look like sk- followed by at least 16 characters.';
     }
@@ -614,13 +661,18 @@
     status('ai', 'Saving…');
     const supabase = client();
 
-    const { error } = await supabase.from('user_ai_settings').insert({
-      user_id: user.id,
+    const payload = {
       label: aiNameInput.value.trim(),
-      api_key: aiKeyInput.value.trim(),
       base_url: aiBaseInput.value.trim(),
       model: currentModelValue(),
-    });
+    };
+    if (aiKeyInput.value.trim()) payload.api_key = aiKeyInput.value.trim();
+
+    const query = editingRow
+      ? supabase.from('user_ai_settings').update(payload).eq('id', editingRow.id)
+      : supabase.from('user_ai_settings').insert({ ...payload, user_id: user.id });
+
+    const { error } = await query;
 
     if (error) {
       status('ai', error.message, false);
