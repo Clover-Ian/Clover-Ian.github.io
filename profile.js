@@ -378,6 +378,7 @@
   const aiModelInput = document.querySelector('[data-ai-model]');
   const aiKeyState = document.querySelector('[data-ai-key-state]');
   const aiNameInput = document.querySelector('[data-ai-name]');
+  const aiModelCustom = document.querySelector('[data-ai-model-custom]');
 
   const IYS_MODELS = [
     'deepseek-v4.1-flash', 'glm-5.3-flash', 'qwen-3.8-flash',
@@ -387,6 +388,16 @@
   ];
 
   let userModels = [];
+
+  function customVisible() {
+    return aiModelInput.value === '__custom__';
+  }
+
+  function currentModelValue() {
+    return customVisible()
+      ? (aiModelCustom?.value.trim() ?? '')
+      : aiModelInput.value;
+  }
 
   function renderModelOptions(selected) {
     aiModelInput.innerHTML = '';
@@ -413,8 +424,35 @@
       aiModelInput.append(own);
     }
 
+    const known = IYS_MODELS.includes(selected) || userModels.includes(selected);
+
+    if (selected && !known) {
+      const saved = document.createElement('optgroup');
+      saved.label = 'Saved';
+      const option = document.createElement('option');
+      option.value = selected;
+      option.textContent = selected;
+      saved.append(option);
+      aiModelInput.append(saved);
+    }
+
+    const custom = document.createElement('option');
+    custom.value = '__custom__';
+    custom.textContent = 'Custom model…';
+    aiModelInput.append(custom);
+
     if (selected) aiModelInput.value = selected;
+    if (aiModelCustom) aiModelCustom.hidden = !customVisible();
   }
+
+  aiModelInput?.addEventListener('change', () => {
+    if (!aiModelCustom) return;
+    aiModelCustom.hidden = !customVisible();
+    if (customVisible()) {
+      aiModelCustom.value = '';
+      aiModelCustom.focus();
+    }
+  });
   let aiHasSavedKey = false;
 
   async function loadAiSettings() {
@@ -445,7 +483,7 @@
   function validateAiFields() {
     const key = aiKeyInput.value.trim();
     const base = aiBaseInput.value.trim();
-    const model = aiModelInput.value.trim();
+    const model = currentModelValue();
     const name = aiNameInput?.value.trim() ?? '';
 
     [aiKeyInput, aiBaseInput, aiModelInput, aiNameInput].forEach((el) => el?.classList.remove('is-invalid'));
@@ -467,7 +505,7 @@
 
     if (!base || !model) {
       if (!base) aiBaseInput.classList.add('is-invalid');
-      if (!model) aiModelInput.classList.add('is-invalid');
+      if (!model) (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
       return 'Base URL and model are both required.';
     }
 
@@ -487,7 +525,7 @@
     }
 
     if (!/^[A-Za-z0-9._/-]+$/.test(model)) {
-      aiModelInput.classList.add('is-invalid');
+      (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
       return 'Model names can only contain letters, numbers, dots, dashes, underscores and slashes.';
     }
 
@@ -531,7 +569,7 @@
       user_id: user.id,
       label: aiNameInput?.value.trim() || null,
       base_url: aiBaseInput.value.trim(),
-      model: aiModelInput.value.trim(),
+      model: currentModelValue(),
       updated_at: new Date().toISOString(),
     };
     // 没填新 key 就保留原来那一条

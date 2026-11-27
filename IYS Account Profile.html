@@ -12,7 +12,7 @@
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127n" defer></script>
+    <script src="profile.js?v=20261128a" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -133,6 +133,8 @@
 
                         <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model <span class="required">required</span></label>
                         <select id="ai-model-input" data-ai-model></select>
+                        <input id="ai-model-custom" type="text" data-ai-model-custom hidden
+                               placeholder="model-name" style="margin-top:8px">
 
                         <div class="avatar-actions" style="margin-top:16px">
                             <button type="button" class="profile-button" data-ai-save>Save key</button>
