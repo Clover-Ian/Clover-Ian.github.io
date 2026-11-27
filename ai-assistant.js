@@ -6,7 +6,7 @@
   if (document.querySelector('.ai-fab')) return;
 
   const ENDPOINT = window.IYS_AI_ENDPOINT
-    || 'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/critter';
+    || 'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/IYS';
 
   const SYSTEM = [
     'You are the IYS site assistant, embedded on clover-ian.github.io.',
