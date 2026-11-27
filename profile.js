@@ -281,6 +281,13 @@
   document.querySelector('[data-photo-remove]')?.addEventListener('click', async () => {
     if (!user) return;
     const supabase = client();
+
+    const check = await supabase.auth.getSession();
+    if (!check?.data?.session) {
+      status('photo', 'Your session expired — please sign in again.', false);
+      return;
+    }
+
     status('photo', 'Removing…');
 
     await supabase.from('profiles').upsert({ id: user.id, avatar_url: null });
