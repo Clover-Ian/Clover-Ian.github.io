@@ -201,7 +201,7 @@
     fab.classList.toggle('is-hidden', open);
     if (open) {
       if (!log.children.length) {
-        line('Hi — I can explain anything on this site. Try “what is IYS Critters?”');
+        line('I am IYS AI. Can I help you?');
       }
       input.focus();
     }
