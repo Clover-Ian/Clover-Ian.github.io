@@ -4167,14 +4167,6 @@ body.theme-dark .tool-drop .tool-note {
 }
 
 /* AI 测试页 */
-.ai-log {
-    display: grid;
-    gap: 10px;
-    margin-top: 18px;
-    max-height: 340px;
-    overflow-y: auto;
-}
-
 body.theme-dark .ai-line {
     background: rgb(255 255 255 / 8%);
     color: #fff;
@@ -4275,7 +4267,6 @@ body.theme-dark .ai-line--me {
     top: 84px;                 /* 默认贴着导航栏下方 */
     right: 22px;
     overflow: hidden;
-    right: 22px;
     z-index: 91;
     display: grid;
     grid-template-rows: auto 1fr auto;
@@ -4326,6 +4317,8 @@ body.theme-dark .ai-line--me {
     gap: 8px;
     padding: 14px 16px 18px;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    min-height: 0;               /* grid 子项必须允许收缩，否则滚不动 */
     background: #fff;
     border: 0;
 }
