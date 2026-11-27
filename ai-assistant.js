@@ -225,6 +225,22 @@
       }
     }
 
+    // getSession() 偶尔在页面刚加载时返回 null；再直接读一次本地存储兜底
+    if (!session?.user) {
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i) || '';
+          if (!key.includes('-auth-token')) continue;
+          const raw = JSON.parse(localStorage.getItem(key) || 'null');
+          const stored = raw?.currentSession ?? raw?.session ?? raw;
+          if (stored?.access_token) {
+            session = stored;
+            break;
+          }
+        }
+      } catch { /* 忽略 */ }
+    }
+
     const signedIn = Boolean(session?.user);
     gate.hidden = signedIn;
     form.hidden = !signedIn;
@@ -240,6 +256,14 @@
 
     return signedIn;
   }
+
+  // 登录状态变化时立即更新（同一页内登录/退出）
+  (async () => {
+    const client = window.iysSupabase ?? await waitForClient();
+    client?.auth?.onAuthStateChange(() => {
+      if (!panel.hidden) refreshAuth();
+    });
+  })();
 
   /* ---------- 对话 ---------- */
   function line(text, mine) {
