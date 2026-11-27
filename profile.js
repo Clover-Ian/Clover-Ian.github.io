@@ -13,6 +13,7 @@
   const usernameInput = document.querySelector('[data-username-input]');
   const emailInput = document.querySelector('[data-email-input]');
   const passwordInput = document.querySelector('[data-password-input]');
+  const passwordConfirm = document.querySelector('[data-password-confirm]');
   const photoInput = document.querySelector('[data-photo-input]');
 
   function status(key, message, ok = true) {
@@ -138,9 +139,16 @@
       return;
     }
 
+    if (value !== passwordConfirm.value) {
+      status('password', 'The two passwords do not match.', false);
+      passwordConfirm.focus();
+      return;
+    }
+
     status('password', 'Updating…');
     const { error } = await client().auth.updateUser({ password: value });
     passwordInput.value = '';
+    passwordConfirm.value = '';
     status('password', error ? error.message : 'Password updated.', !error);
   });
 

@@ -4770,3 +4770,12 @@ body.theme-dark .ai-line--me {
     opacity: 0.45;
     cursor: default;
 }
+
+/* 头像区与下面小节之间的间距（分隔线略下移） */
+.profile-hero {
+    padding-bottom: 26px;
+}
+
+.profile-block:first-of-type {
+    padding-top: 30px;
+}
