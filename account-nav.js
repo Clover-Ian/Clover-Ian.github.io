@@ -228,6 +228,11 @@
         return;
       }
       if (!session?.user) return;
+
+      // 登录/注册/重置页自己会跳转，别在这里刷新（会把跳转冲掉）
+      const path = decodeURIComponent(location.pathname);
+      if (/IYS Account (Sign In|Sign Up|Reset Password)\.html$/.test(path)) return;
+
       if (!document.querySelector('.account-nav-link[href^="IYS Account Sign In"]')) return;
       if (sessionStorage.getItem('iys.nav.synced')) return;
       sessionStorage.setItem('iys.nav.synced', '1');
