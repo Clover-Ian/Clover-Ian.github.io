@@ -190,45 +190,27 @@
     };
     renderMenuUser();
 
+    // 这些按钮不再放进菜单（账号中心页接管），但保留元素让旧对话框代码不报错
     const changePhotoButton = document.createElement('button');
-    changePhotoButton.type = 'button';
-    changePhotoButton.textContent = 'Change photo';
-
     const changeUsernameButton = document.createElement('button');
-    changeUsernameButton.type = 'button';
-    changeUsernameButton.textContent = 'Change username';
-
     const changeEmailButton = document.createElement('button');
-    changeEmailButton.type = 'button';
-    changeEmailButton.textContent = 'Change email';
-
     const changePasswordButton = document.createElement('button');
-    changePasswordButton.type = 'button';
-    changePasswordButton.textContent = 'Change password';
-
     const deleteAccountButton = document.createElement('button');
-    deleteAccountButton.type = 'button';
-    deleteAccountButton.className = 'account-delete-option';
-    deleteAccountButton.textContent = 'Delete account';
+
+    const profileLink = document.createElement('a');
+    profileLink.href = 'IYS Account Profile.html';
+    profileLink.className = 'account-menu-profile';
+    profileLink.textContent = 'Profile';
+    profileLink.addEventListener('click', () => setMenuOpen(false));
 
     const signOutButton = document.createElement('button');
     signOutButton.type = 'button';
     signOutButton.textContent = 'Sign out';
 
-    const inboxLink = document.createElement('a');
-    inboxLink.href = 'IYS Inbox.html';
-    inboxLink.className = 'account-menu-inbox';
-    inboxLink.textContent = 'Inbox';
-    inboxLink.addEventListener('click', () => setMenuOpen(false));
-
     menu.append(
       inboxLink,
       menuUser,
-      changePhotoButton,
-      changeUsernameButton,
-      changeEmailButton,
-      changePasswordButton,
-      deleteAccountButton,
+      profileLink,
       signOutButton,
       menuStatus,
     );

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your IYS account — profile, photo, username, email and password.">
+    <title>IYS Account</title>
+    <link rel="icon" type="image/png" href="IYS Developer.png">
+    <link rel="apple-touch-icon" href="IYS Developer.png">
+    <link rel="stylesheet" href="style.css?v=20261127q">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261127i" defer></script>
+    <script src="announcements.js?v=20261126b" defer></script>
+    <script src="messages.js?v=20261116e" defer></script>
+    <script src="profile.js?v=20261127a" defer></script>
+</head>
+<body class="corner-background">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a href="#" data-ai-open>IYS AI</a>
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a href="IYS Developer.html">Developer</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="profile-wrap">
+        <section class="profile-shell">
+            <aside class="profile-tabs" aria-label="Account sections">
+                <button type="button" class="profile-tab is-active" data-tab="profile">Profile</button>
+                <button type="button" class="profile-tab" data-tab="photo">Change photo</button>
+                <button type="button" class="profile-tab" data-tab="username">Change username</button>
+                <button type="button" class="profile-tab" data-tab="email">Change email</button>
+                <button type="button" class="profile-tab" data-tab="password">Change password</button>
+                <button type="button" class="profile-tab profile-tab--danger" data-tab="danger">Danger zone</button>
+            </aside>
+
+            <div class="profile-panels">
+                <section class="profile-panel is-active" data-panel="profile">
+                    <div class="profile-hero">
+                        <div class="profile-avatar" data-profile-avatar></div>
+                        <div>
+                            <h1 class="profile-name" data-profile-name>—</h1>
+                            <p class="profile-email" data-profile-email>—</p>
+                        </div>
+                    </div>
+                    <p class="profile-note">This is what other IYS users see on the leaderboard and in your inbox.</p>
+                </section>
+
+                <section class="profile-panel" data-panel="photo">
+                    <h2>Change photo</h2>
+                    <p class="profile-note">Square images look best. It is shown next to your name across IYS.</p>
+                    <input type="file" accept="image/*" data-photo-input>
+                    <p class="profile-status" data-status="photo"></p>
+                </section>
+
+                <section class="profile-panel" data-panel="username">
+                    <h2>Change username</h2>
+                    <p class="profile-note">3–20 characters. Letters, numbers, spaces, dashes and underscores.</p>
+                    <label class="profile-label" for="username-input">Username</label>
+                    <input id="username-input" type="text" maxlength="20" data-username-input autocomplete="off">
+                    <button type="button" class="profile-button" data-username-save>Save username</button>
+                    <p class="profile-status" data-status="username"></p>
+                </section>
+
+                <section class="profile-panel" data-panel="email">
+                    <h2>Change email</h2>
+                    <p class="profile-note">We will send a confirmation link to the new address.</p>
+                    <label class="profile-label" for="email-input">New email</label>
+                    <input id="email-input" type="email" data-email-input autocomplete="off">
+                    <button type="button" class="profile-button" data-email-save>Send confirmation</button>
+                    <p class="profile-status" data-status="email"></p>
+                </section>
+
+                <section class="profile-panel" data-panel="password">
+                    <h2>Change password</h2>
+                    <p class="profile-note">At least 8 characters.</p>
+                    <label class="profile-label" for="password-input">New password</label>
+                    <input id="password-input" type="password" data-password-input autocomplete="new-password">
+                    <button type="button" class="profile-button" data-password-save>Update password</button>
+                    <p class="profile-status" data-status="password"></p>
+                </section>
+
+                <section class="profile-panel" data-panel="danger">
+                    <h2 class="profile-danger-title">Danger zone</h2>
+                    <p class="profile-note">These actions cannot be undone.</p>
+
+                    <div class="profile-danger-row">
+                        <div>
+                            <strong>Sign out everywhere</strong>
+                            <p class="profile-note">Ends every session on every device.</p>
+                        </div>
+                        <button type="button" class="profile-button profile-button--danger" data-signout-all>Sign out all</button>
+                    </div>
+
+                    <div class="profile-danger-row">
+                        <div>
+                            <strong>Delete account</strong>
+                            <p class="profile-note">Removes your account, scores and messages for good.</p>
+                        </div>
+                        <button type="button" class="profile-button profile-button--danger" data-delete-account>Delete account</button>
+                    </div>
+
+                    <p class="profile-status" data-status="danger"></p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

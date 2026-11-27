@@ -1518,3 +1518,6 @@ create policy "ai own insert" on public.ai_messages
 drop policy if exists "ai own delete" on public.ai_messages;
 create policy "ai own delete" on public.ai_messages
     for delete using (auth.uid() = user_id);
+
+-- 修：表建好了但没给登录用户授权（否则报 42501 permission denied）
+grant select, insert, delete on public.ai_messages to authenticated;
