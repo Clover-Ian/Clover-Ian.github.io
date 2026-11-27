@@ -4466,3 +4466,17 @@ body.theme-dark .ai-line--me {
 .ai-form[hidden] {
     display: none !important;
 }
+
+/* 未登录时：只显示提示，隐藏对话区和输入框 */
+.ai-log[hidden],
+.ai-form[hidden] {
+    display: none !important;
+}
+
+.ai-gate[hidden] {
+    display: none !important;
+}
+
+.ai-gate {
+    grid-row: 2 / -1;
+}

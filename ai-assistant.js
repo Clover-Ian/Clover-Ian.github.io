@@ -228,6 +228,7 @@
     const signedIn = Boolean(session?.user);
     gate.hidden = signedIn;
     form.hidden = !signedIn;
+    log.hidden = !signedIn;
 
     if (!signedIn) {
       const here = location.pathname.split('/').pop() + location.search;
