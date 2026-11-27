@@ -4267,6 +4267,7 @@ body.theme-dark .ai-line--me {
     top: 84px;                 /* 默认贴着导航栏下方 */
     right: 22px;
     overflow: hidden;
+    overscroll-behavior: contain;
     z-index: 91;
     display: grid;
     grid-template-rows: auto 1fr auto;

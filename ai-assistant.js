@@ -88,6 +88,14 @@
   const handle = panel.querySelector('.ai-resize');
   const modelSelect = panel.querySelector('.ai-model');
 
+  // 滚轮在面板上一律滚动对话区，不要漏到下面去滚网页
+  panel.addEventListener('wheel', (event) => {
+    const log = panel.querySelector('.ai-log');
+    if (!log || log.scrollHeight <= log.clientHeight) return;
+    log.scrollTop += event.deltaY;
+    event.preventDefault();
+  }, { passive: false });
+
   const STORE = {
     model: 'iys.ai.model',
     box: 'iys.ai.box',
