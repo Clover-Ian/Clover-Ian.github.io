@@ -461,7 +461,10 @@
       pending.remove();
 
       if (!reply) {
-        line('Sorry — no reply came back. The assistant may not be configured yet.');
+        const detail = data?.error?.message || data?.error || data?.message || '';
+        line(detail
+          ? `The model returned an error: ${String(detail).slice(0, 200)}`
+          : 'Sorry — no reply came back. Check the model name and API key in Settings → AI.');
         return;
       }
 
