@@ -206,6 +206,7 @@
       avatarZoom.disabled = false;
       avatarSave.disabled = false;
       status('photo', 'Drag to position, then save.');
+      URL.revokeObjectURL(image.src);
     };
     image.onerror = () => status('photo', 'Could not read that image.', false);
     image.src = URL.createObjectURL(file);
@@ -306,6 +307,11 @@
     paintAvatar();
     avatarSave.disabled = true;
     avatarZoom.disabled = true;
+
+    // 清空选择，否则再选同一个文件不会触发 change
+    if (photoInput) photoInput.value = '';
+    const nameEl = document.querySelector('[data-photo-name]');
+    if (nameEl) nameEl.textContent = 'No image chosen';
     await supabase.auth.refreshSession();
     await loadUser();
     status('photo', 'Photo removed.');
