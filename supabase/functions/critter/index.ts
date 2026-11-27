@@ -147,9 +147,20 @@ Deno.serve(async (request) => {
     });
 
     const text = await upstream.text();
+
+    // 供调试：在响应头里标明这次用的是谁的钱、哪个模型、哪家 base
+    let host = "unknown";
+    try { host = new URL(base).hostname; } catch { /* 忽略 */ }
+
     return new Response(text, {
       status: upstream.status,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: {
+        ...CORS,
+        "Content-Type": "application/json",
+        "x-iys-key": useOwn ? "own" : "shared",
+        "x-iys-model": chosen,
+        "x-iys-host": host,
+      },
     });
   } catch (error) {
     return json({ error: String(error) }, 500);
