@@ -484,6 +484,12 @@
         }),
       });
 
+      // 便于自查：这一句能看出用的是谁的 key
+      console.info('[ai] key=%s model=%s host=%s',
+        response.headers.get('x-iys-key') || '?',
+        response.headers.get('x-iys-model') || '?',
+        response.headers.get('x-iys-host') || '?');
+
       const raw = await response.text();
       let data = {};
       try { data = JSON.parse(raw); } catch { data = { raw }; }

@@ -115,6 +115,12 @@
       const response = await fetch(ENDPOINT, {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
       });
+      // 便于自查：这一句能看出用的是谁的 key
+      console.info('[ai] key=%s model=%s host=%s',
+        response.headers.get('x-iys-key') || '?',
+        response.headers.get('x-iys-model') || '?',
+        response.headers.get('x-iys-host') || '?');
+
       const raw = await response.text();
       let data = {};
       try { data = JSON.parse(raw); } catch { data = { raw }; }
@@ -154,6 +160,12 @@
           keyId: (select.value || '').includes('|') ? select.value.split('|')[0] : undefined,
         }),
       });
+
+      // 便于自查：这一句能看出用的是谁的 key
+      console.info('[ai] key=%s model=%s host=%s',
+        response.headers.get('x-iys-key') || '?',
+        response.headers.get('x-iys-model') || '?',
+        response.headers.get('x-iys-host') || '?');
 
       const raw = await response.text();
       let data = {};
