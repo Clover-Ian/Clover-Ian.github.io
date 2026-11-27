@@ -250,19 +250,74 @@
   });
 
   /* ---------- 模型 ---------- */
-  (function seedModels() {
-    const saved = localStorage.getItem(STORE.model);
-    Object.entries(NICE).forEach(([id, label]) => {
+  const modelSource = new Map();   // value -> 'iys' | 'own'
+  let modelsLoaded = false;
+
+  function buildModels(iysList, ownList, ownLabel, selected) {
+    modelSelect.innerHTML = '';
+    modelSource.clear();
+
+    const iys = document.createElement('optgroup');
+    iys.label = 'IYS';
+    iysList.forEach((id) => {
       const option = document.createElement('option');
       option.value = id;
-      option.textContent = label;
-      modelSelect.append(option);
+      option.textContent = NICE[id] || id;
+      modelSource.set(id, 'iys');
+      iys.append(option);
     });
-    modelSelect.value = Object.keys(NICE).includes(saved) ? saved : 'deepseek-v4.1-flash';
+    modelSelect.append(iys);
+
+    if (ownList.length) {
+      const own = document.createElement('optgroup');
+      own.label = ownLabel || 'My key';
+      ownList.forEach((id) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = id;
+        modelSource.set(id, 'own');
+        own.append(option);
+      });
+      modelSelect.append(own);
+    }
+
+    if (selected && modelSource.has(selected)) modelSelect.value = selected;
+    else modelSelect.value = iysList[0] || '';
+  }
+
+  function client() {
+    return window.iysSupabase;
+  }
+
+  async function loadModels() {
+    if (modelsLoaded) return;
+    modelsLoaded = true;
+
+    const saved = localStorage.getItem(STORE.model);
+    let list = Object.keys(NICE);
+    let mine = [];
+    let label = null;
+
+    try {
+      const session = client() ? await client().auth.getSession() : null;
+      const token = session?.data?.session?.access_token;
+      const response = await fetch(ENDPOINT, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await response.json();
+      if (Array.isArray(payload?.models) && payload.models.length) list = payload.models;
+      if (Array.isArray(payload?.mine)) mine = payload.mine;
+      if (payload?.label) label = payload.label;
+    } catch { /* 离线用内置列表 */ }
+
+    buildModels(list, mine, label, saved);
     modelSelect.addEventListener('change', () => {
       localStorage.setItem(STORE.model, modelSelect.value);
     });
-  })();
+  }
+
+  // 先用内置列表占位，打开面板时再换成真实的
+  buildModels(Object.keys(NICE), [], null, localStorage.getItem(STORE.model));
 
   /* ---------- 登录状态 ---------- */
   const gate = panel.querySelector('.ai-gate');
@@ -452,6 +507,7 @@
           system: SYSTEM,
           maxTokens: 320,
           model: modelSelect.value || undefined,
+          source: modelSource.get(modelSelect.value) || 'iys',
         }),
       });
 

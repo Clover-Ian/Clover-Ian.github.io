@@ -84,9 +84,8 @@ Deno.serve(async (request) => {
   const auth = request.headers.get("Authorization") ?? "";
 
   // 读用户自己的 key（RLS 保证只能读到自己那一行）
-  let key = RELAY_KEY;
-  let base = RELAY_BASE;
-  let userModel: string | null = null;
+  let userKey: string | null = null;
+  let userBase: string | null = null;
 
   if (auth.startsWith("Bearer ")) {
     try {
@@ -104,22 +103,26 @@ Deno.serve(async (request) => {
         .maybeSingle();
 
       if (data?.api_key) {
-        key = data.api_key;
-        if (data.base_url) base = data.base_url;
-        if (data.model) userModel = data.model;
+        userKey = data.api_key;
+        userBase = data.base_url ?? null;
       }
     } catch { /* 忽略：退回共享 key */ }
   }
 
-  if (!key) return json({ error: "No API key configured" }, 500);
-
   try {
-    const { messages, maxTokens, system, model } = await request.json();
+    const { messages, maxTokens, system, model, source } = await request.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return json({ error: "messages is required" }, 400);
     }
 
-    const requested = model ?? userModel ?? DEFAULT_MODEL;
+    // source = "own" 时用访客自己的 key，否则用项目共享 key
+    const wantsOwn = source === "own";
+    const key = wantsOwn && userKey ? userKey : RELAY_KEY;
+    const base = (wantsOwn && userKey && userBase) ? userBase : RELAY_BASE;
+
+    if (!key) return json({ error: "No API key configured" }, 500);
+
+    const requested = model ?? DEFAULT_MODEL;
     const usingSharedKey = key === RELAY_KEY;
     const chosen = usingSharedKey && !MODELS.includes(requested) ? DEFAULT_MODEL : requested;
 
