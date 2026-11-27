@@ -236,18 +236,6 @@
   });
 
   // 全屏
-  maxButton.addEventListener('click', () => {
-    panel.classList.toggle('is-full');
-    maxButton.title = panel.classList.contains('is-full') ? 'Exit fullscreen' : 'Fullscreen';
-    if (!panel.classList.contains('is-full')) {
-      try {
-        const box = JSON.parse(localStorage.getItem(STORE.box) || 'null');
-        if (box) applyBox(box);
-      } catch { /* 忽略 */ }
-    }
-    input.focus();
-  });
-
   /* ---------- 模型 ---------- */
   const modelSource = new Map();   // value -> 'iys' | 'own'
   let modelsLoaded = false;
