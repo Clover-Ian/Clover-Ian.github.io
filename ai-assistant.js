@@ -337,6 +337,23 @@
     });
   })();
 
+  /* ---------- 问候语 ---------- */
+  function displayName() {
+    const user = session?.user;
+    const meta = user?.user_metadata ?? {};
+    const name = String(meta.display_name ?? meta.username ?? '').trim();
+    if (name) return name;
+    const email = String(user?.email ?? '');
+    return email ? email.split('@')[0] : '';
+  }
+
+  function greeting() {
+    const name = displayName();
+    return name
+      ? `Hi, ${name}.\nWhat can I help you with today?`
+      : 'Hi.\nWhat can I help you with today?';
+  }
+
   /* ---------- 对话 ---------- */
   function line(text, mine) {
     const p = document.createElement('p');
@@ -361,7 +378,7 @@
     refreshAuth().then((signedIn) => {
       if (signedIn) {
         restoreHistory();
-        if (!log.children.length) line('I am IYS AI. Can I help you?');
+        if (!log.children.length) line(greeting());
         input.focus();
         loadRemoteHistory();
       }
@@ -373,7 +390,7 @@
     saveHistory();
     clearRemote();
     log.innerHTML = '';
-    line('I am IYS AI. Can I help you?');
+    line(greeting());
     input.focus();
   });
 
@@ -475,7 +492,7 @@
     try { sessionStorage.removeItem(STORE.reopen); } catch { /* 忽略 */ }
 
     restoreHistory();
-    if (!log.children.length) line('I am IYS AI. Can I help you?');
+    if (!log.children.length) line(greeting());
     panel.hidden = false;
     fab.classList.add('is-hidden');
     if (wanted === 'full') {
