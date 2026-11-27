@@ -96,6 +96,8 @@
 
     usernameInput.value = meta.display_name || meta.username || '';
     emailInput.value = user.email || '';
+
+    loadAiSettings();
   }
 
   document.querySelector('[data-username-save]')?.addEventListener('click', async () => {
@@ -358,6 +360,94 @@
     status('danger', 'Signing out…');
     await client().auth.signOut({ scope: 'global' }).catch(() => client().auth.signOut());
     window.location.assign('index.html');
+  });
+
+  /* ---------- AI key ---------- */
+  const aiKeyInput = document.querySelector('[data-ai-key]');
+  const aiBaseInput = document.querySelector('[data-ai-base]');
+  const aiModelInput = document.querySelector('[data-ai-model]');
+  const aiKeyState = document.querySelector('[data-ai-key-state]');
+
+  async function loadAiSettings() {
+    if (!user) return;
+    const supabase = client();
+    const { data } = await supabase
+      .from('user_ai_settings')
+      .select('api_key, base_url, model')
+      .maybeSingle();
+
+    if (data?.api_key) {
+      aiKeyState.textContent = `Saved key: ${data.api_key.slice(0, 4)}••••${data.api_key.slice(-4)}`;
+      aiKeyInput.placeholder = 'Enter a new key to replace it';
+    } else {
+      aiKeyState.textContent = 'No key saved — using the shared key.';
+    }
+
+    aiBaseInput.value = data?.base_url ?? '';
+    aiModelInput.value = data?.model ?? '';
+  }
+
+  document.querySelector('[data-ai-save]')?.addEventListener('click', async () => {
+    const key = aiKeyInput.value.trim();
+    if (key && !key.startsWith('sk-')) {
+      status('ai', 'That does not look like an API key (sk-…).', false);
+      return;
+    }
+
+    const supabase = client();
+    status('ai', 'Saving…');
+
+    const { error } = await supabase.from('user_ai_settings').upsert({
+      user_id: user.id,
+      api_key: key || null,
+      base_url: aiBaseInput.value.trim() || null,
+      model: aiModelInput.value.trim() || null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      status('ai', error.message, false);
+      return;
+    }
+
+    aiKeyInput.value = '';
+    await loadAiSettings();
+    status('ai', key ? 'Key saved.' : 'Key cleared.');
+  });
+
+  document.querySelector('[data-ai-remove]')?.addEventListener('click', async () => {
+    const supabase = client();
+    status('ai', 'Removing…');
+    const { error } = await supabase.from('user_ai_settings').delete();
+    if (error) {
+      status('ai', error.message, false);
+      return;
+    }
+    aiKeyInput.value = '';
+    await loadAiSettings();
+    status('ai', 'Key removed — back to the shared key.');
+  });
+
+  document.querySelector('[data-ai-test]')?.addEventListener('click', async () => {
+    status('ai', 'Testing…');
+    try {
+      const response = await fetch(
+        'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/IYS',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ messages: [{ role: 'user', content: 'Reply with OK only.' }], maxTokens: 10 }),
+        },
+      );
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      status('ai', reply ? `OK — model replied: ${String(reply).slice(0, 40)}` : 'No reply came back.', !!reply);
+    } catch (error) {
+      status('ai', error.message || 'Test failed.', false);
+    }
   });
 
   /* ---------- 删除账号：密码 + 勾选确认 ---------- */

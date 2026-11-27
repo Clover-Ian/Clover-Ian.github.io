@@ -1554,3 +1554,54 @@ create policy "avatars own delete" on storage.objects
         bucket_id = 'avatars'
         and (storage.foldername(name))[1] = auth.uid()::text
     );
+
+-- ---------- 31. 确认邮箱：已确认时也返回 true（避免"再点一次就失败"） ----------
+create or replace function public.admin_confirm_user(p_passcode text, p_email text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+    if p_passcode <> 'iys-pro-8074ed5a77cfe853' then
+        return false;
+    end if;
+
+    update auth.users
+       set email_confirmed_at = coalesce(email_confirmed_at, now())
+     where lower(email) = lower(trim(p_email));
+
+    return found;
+end;
+$$;
+
+grant execute on function public.admin_confirm_user(text, text) to anon, authenticated;
+
+-- ---------- 32. 每个账号自己的 AI key（只存服务器，不回传浏览器） ----------
+create table if not exists public.user_ai_settings (
+    user_id    uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+    api_key    text,
+    base_url   text,
+    model      text,
+    updated_at timestamptz not null default now()
+);
+
+alter table public.user_ai_settings enable row level security;
+
+drop policy if exists "ai settings own read" on public.user_ai_settings;
+create policy "ai settings own read" on public.user_ai_settings
+    for select using (auth.uid() = user_id);
+
+drop policy if exists "ai settings own write" on public.user_ai_settings;
+create policy "ai settings own write" on public.user_ai_settings
+    for insert with check (auth.uid() = user_id);
+
+drop policy if exists "ai settings own update" on public.user_ai_settings;
+create policy "ai settings own update" on public.user_ai_settings
+    for update using (auth.uid() = user_id);
+
+drop policy if exists "ai settings own delete" on public.user_ai_settings;
+create policy "ai settings own delete" on public.user_ai_settings
+    for delete using (auth.uid() = user_id);
+
+grant select, insert, update, delete on public.user_ai_settings to authenticated;

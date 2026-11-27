@@ -12,7 +12,7 @@
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127j" defer></script>
+    <script src="profile.js?v=20261127k" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -36,6 +36,7 @@
         <section class="profile-shell">
             <aside class="profile-tabs" aria-label="Account sections">
                 <button type="button" class="profile-tab is-active" data-tab="account">Account</button>
+                <button type="button" class="profile-tab" data-tab="ai">AI</button>
                 <button type="button" class="profile-tab profile-tab--danger" data-tab="danger">Danger zone</button>
             </aside>
 
@@ -103,6 +104,38 @@
 
                         <button type="button" class="profile-button" data-password-save>Save password</button>
                         <p class="profile-status" data-status="password"></p>
+                    </div>
+                </section>
+
+
+                <section class="profile-panel" data-panel="ai">
+                    <h2>AI</h2>
+                    <p class="profile-note">
+                        Use your own API key for IYS AI. It is stored on the server and never shown again
+                        after saving. Leave it empty to use the shared key.
+                    </p>
+
+                    <div class="profile-block">
+                        <h3>API key</h3>
+                        <label class="profile-label" for="ai-key-input">Key</label>
+                        <input id="ai-key-input" type="password" data-ai-key autocomplete="off"
+                               placeholder="sk-...">
+                        <p class="profile-note" data-ai-key-state style="margin-top:8px">No key saved.</p>
+
+                        <label class="profile-label" for="ai-base-input" style="margin-top:14px">Base URL</label>
+                        <input id="ai-base-input" type="text" data-ai-base
+                               placeholder="https://relaydock.omnis.com.cn/v1">
+
+                        <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model</label>
+                        <input id="ai-model-input" type="text" data-ai-model
+                               placeholder="deepseek-v4.1-flash">
+
+                        <div class="avatar-actions" style="margin-top:16px">
+                            <button type="button" class="profile-button" data-ai-save>Save key</button>
+                            <button type="button" class="profile-button profile-button--ghost" data-ai-test>Test</button>
+                            <button type="button" class="profile-button profile-button--ghost" data-ai-remove>Remove</button>
+                        </div>
+                        <p class="profile-status" data-status="ai"></p>
                     </div>
                 </section>
 
