@@ -69,6 +69,7 @@
     gate.hidden = signedIn;
     form.hidden = !signedIn;
     log.hidden = !signedIn;
+    if (select) select.hidden = !signedIn;
     return signedIn;
   }
 

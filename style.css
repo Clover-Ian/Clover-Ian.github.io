@@ -4455,8 +4455,12 @@ body.theme-dark .ai-line--me {
 }
 
 .ai-gate-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
     margin-top: 6px;
-    padding: 9px 20px;
+    padding: 0 22px;
     border-radius: 999px;
     background: var(--blue);
     color: #fff;
@@ -5285,8 +5289,9 @@ body.ai-page .site-footer {
 
 .ai-page-gate {
     display: grid;
+    align-content: center;      /* 垂直居中，不拉伸子元素 */
     justify-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 40px 20px;
     text-align: center;
 }
