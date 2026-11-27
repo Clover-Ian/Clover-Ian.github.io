@@ -5434,42 +5434,19 @@ body.theme-dark .ai-panel .ai-gate {
     color: var(--ink);
 }
 
-/* 工具页下拉/输入框：去掉系统样式与刺眼的蓝色焦点圈 */
-.tool-field select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 34px;
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 12px 8px;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    cursor: pointer;
-}
-
-body.theme-dark .tool-field select {
-    background-color: #1b1b1f;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%239a9aa4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    border-color: rgb(255 255 255 / 14%);
-    color: #fff;
-}
-
-/* 焦点：细边框 + 柔和光，不要系统那圈蓝 */
+/* 工具页：只把刺眼的蓝色焦点圈换成柔和边框，外观保持原样 */
 .tool-field select:focus,
 .tool-field input:focus {
     outline: none;
 }
 
 .tool-field select:focus {
-    border-color: rgb(0 102 204 / 55%);
-    box-shadow: 0 0 0 3px rgb(0 102 204 / 18%);
+    border-color: rgb(0 102 204 / 45%);
+    box-shadow: 0 0 0 3px rgb(0 102 204 / 14%);
 }
 
-body.theme-dark .tool-field select:focus {
-    border-color: rgb(255 255 255 / 38%);
-    box-shadow: 0 0 0 3px rgb(255 255 255 / 8%);
-}
-
+body.theme-dark .tool-field select:focus,
 body.theme-dark .tool-field input:focus {
-    border-color: rgb(255 255 255 / 38%);
-    box-shadow: 0 0 0 3px rgb(255 255 255 / 8%);
+    border-color: rgb(255 255 255 / 32%);
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 6%);
 }
