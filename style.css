@@ -4321,11 +4321,12 @@ body.theme-dark .ai-line--me {
 
 .ai-log {
     display: grid;
-    align-content: start;
+    align-content: end;          /* 消息贴着底部，像聊天软件 */
     gap: 8px;
-    padding: 14px 16px;
+    padding: 14px 16px 18px;
     overflow-y: auto;
-    background: #fbfbfd;
+    background: #fff;
+    border: 0;
 }
 
 .ai-line {
@@ -4850,4 +4851,10 @@ body.theme-dark .ai-line--me {
 
 .profile-panel input.is-invalid:focus {
     outline: 2px solid rgba(192, 39, 29, 0.35);
+}
+
+.ai-panel.is-full .ai-log,
+.ai-panel.is-full .ai-form {
+    padding-left: max(24px, calc((100vw - 760px) / 2));
+    padding-right: max(24px, calc((100vw - 760px) / 2));
 }
