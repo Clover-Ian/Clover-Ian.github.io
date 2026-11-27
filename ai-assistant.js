@@ -106,6 +106,7 @@
 
   function saveHistory() {
     try {
+      if (window.IYS_AI_DEBUG) console.debug('[ai] history', history.length);
       localStorage.setItem(STORE.history, JSON.stringify(history.slice(-40)));
     } catch { /* 忽略 */ }
   }
@@ -375,13 +376,14 @@
     fab.classList.toggle('is-hidden', open);
     if (!open) return;
 
+    // 先把本地记录画出来，不等登录检查（否则会闪一下空白）
+    restoreHistory();
+
     refreshAuth().then((signedIn) => {
-      if (signedIn) {
-        restoreHistory();
-        if (!log.children.length) line(greeting());
-        input.focus();
-        loadRemoteHistory();
-      }
+      if (!signedIn) return;
+      if (!log.children.length) line(greeting());
+      input.focus();
+      loadRemoteHistory();
     });
   }
 
