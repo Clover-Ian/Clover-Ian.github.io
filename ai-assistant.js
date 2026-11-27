@@ -82,7 +82,7 @@
   const handle = panel.querySelector('.ai-resize');
   const modelSelect = panel.querySelector('.ai-model');
 
-  const STORE = { model: 'iys.ai.model', box: 'iys.ai.box' };
+  const STORE = { model: 'iys.ai.model', box: 'iys.ai.box', reopen: 'iys.ai.reopen' };
   const history = [];
 
   /* ---------- 位置 / 大小 ---------- */
@@ -232,6 +232,9 @@
     if (!signedIn) {
       const here = location.pathname.split('/').pop() + location.search;
       gateLink.href = `IYS Account Sign In.html?next=${encodeURIComponent(here)}`;
+      gateLink.onclick = () => {
+        try { sessionStorage.setItem(STORE.reopen, panel.classList.contains('is-full') ? 'full' : 'window'); } catch { /* 忽略 */ }
+      };
     }
 
     return signedIn;
@@ -339,4 +342,27 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !panel.hidden) toggle(false);
   });
+
+  // 登录跳转回来后，把面板重新打开
+  (async () => {
+    let wanted = null;
+    try {
+      wanted = sessionStorage.getItem(STORE.reopen);
+    } catch { /* 忽略 */ }
+    if (!wanted) return;
+
+    const signedIn = await refreshAuth();
+    if (!signedIn) return;              // 还没登录，保留状态，登录后再说
+
+    try { sessionStorage.removeItem(STORE.reopen); } catch { /* 忽略 */ }
+
+    if (!log.children.length) line('I am IYS AI. Can I help you?');
+    panel.hidden = false;
+    fab.classList.add('is-hidden');
+    if (wanted === 'full') {
+      panel.classList.add('is-full');
+      maxButton.title = 'Exit fullscreen';
+    }
+    input.focus();
+  })();
 })();
