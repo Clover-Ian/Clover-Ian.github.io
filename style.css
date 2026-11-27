@@ -4405,3 +4405,17 @@ body.theme-dark .ai-line--me {
     outline: 2px solid rgb(0 102 204 / 30%);
     outline-offset: 1px;
 }
+
+.ai-fab-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: block;
+}
+
+.ai-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    flex: 0 0 auto;
+}

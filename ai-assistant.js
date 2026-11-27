@@ -42,18 +42,14 @@
   fab.type = 'button';
   fab.className = 'ai-fab';
   fab.setAttribute('aria-label', 'Ask IYS AI');
-  fab.innerHTML = `
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-         stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M12 3.2l1.9 4.5 4.5 1.9-4.5 1.9L12 16l-1.9-4.5L5.6 9.6l4.5-1.9L12 3.2Z"/>
-      <path d="M18.4 15.4l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z"/>
-    </svg>`;
+  fab.innerHTML = '<img src="IYS AI.png" alt="" class="ai-fab-mark">';
 
   const panel = document.createElement('div');
   panel.className = 'ai-panel';
   panel.hidden = true;
   panel.innerHTML = `
     <div class="ai-head" data-drag>
+      <img src="IYS AI.png" alt="" class="ai-mark">
       <div class="ai-head-text">
         <p class="ai-title">IYS AI</p>
         <p class="ai-sub">Ask about the site, the apps or the tools.</p>
@@ -215,10 +211,18 @@
   close.addEventListener('click', () => toggle(false));
 
   // 导航里的 "IYS AI" 入口
+  function openFull() {
+    toggle(true);
+    panel.classList.remove('is-full');   // 先清掉再添加，保证从窗口态进入全屏
+    panel.classList.add('is-full');
+    maxButton.title = 'Exit fullscreen';
+    input.focus();
+  }
+
   document.querySelectorAll('[data-ai-open]').forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault();
-      toggle(true);
+      openFull();
     });
   });
 
