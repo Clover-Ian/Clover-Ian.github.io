@@ -156,7 +156,7 @@ Deno.serve(async (request) => {
       messages: system
         ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
         : messages,
-      max_tokens: Math.min(Number(maxTokens) || 300, 1200),
+      max_tokens: Math.min(Number(maxTokens) || 300, 10000),
       temperature: 0.85,
     });
 
@@ -179,6 +179,29 @@ Deno.serve(async (request) => {
         lastError = String(error);
         upstream = null;
         if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
+    // 有些模型不接受 10000，自动降到 4000 再试
+    if (upstream && !upstream.ok && upstream.status === 400) {
+      const bodyText = await upstream.clone().text();
+      if (/max_tokens|max output|too large|invalid.*token/i.test(bodyText)) {
+        const fallbackPayload = JSON.stringify({
+          model: chosen,
+          messages: system
+            ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
+            : messages,
+          max_tokens: 4000,
+          temperature: 0.85,
+        });
+        try {
+          upstream = await fetch(`${base}/chat/completions`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+            body: fallbackPayload,
+            signal: AbortSignal.timeout(20000),
+          });
+        } catch { /* 保持原来的错误 */ }
       }
     }
 
