@@ -4219,6 +4219,10 @@ body.theme-dark .tool-drop .tool-note {
     display: none;
 }
 
+.ai-panel[hidden] {
+    display: none !important;
+}
+
 .ai-panel {
     position: fixed;
     right: 22px;
