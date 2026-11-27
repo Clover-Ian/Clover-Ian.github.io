@@ -156,16 +156,37 @@
     }
   }
 
-  /** 最简兜底：至少把 Sign in / Sign up 换成一个能进账号中心的按钮 */
-  function fallbackMenu() {
-    if (!document.querySelector('.account-nav-link[href^="IYS Account Sign In"]')) return;
-    const link = document.createElement('a');
-    link.className = 'account-nav-link account-nav-user';
-    link.href = 'IYS Account Profile.html';
-    link.textContent = 'Account';
+  /** 兜底：即使菜单构建失败，也要显示"头像 + 名字"的胶囊 */
+  async function fallbackMenu() {
     const signIn = document.querySelector('.account-nav-link[href^="IYS Account Sign In"]');
+    if (!signIn) return;
+
+    let user = null;
+    try {
+      const session = await client.auth.getSession();
+      user = session?.data?.session?.user ?? null;
+    } catch { /* 忽略 */ }
+
+    if (!user) return;
+
+    const pill = document.createElement('a');
+    pill.className = 'account-nav-link account-nav-user';
+    pill.href = 'IYS Account Profile.html';
+    pill.title = `Signed in as ${user.email || ''}`;
+
+    const name = document.createElement('span');
+    name.className = 'account-nav-name';
+    name.textContent = (user.user_metadata?.display_name
+      || user.user_metadata?.username
+      || (user.email || '').split('@')[0] || 'Account');
+
+    try {
+      pill.append(buildAvatar(user, 24));
+    } catch { /* 忽略 */ }
+    pill.append(name);
+
     const signUp = document.querySelector('.account-nav-link.account-signup-link');
-    if (signIn) signIn.replaceWith(link);
+    signIn.replaceWith(pill);
     if (signUp) signUp.remove();
   }
 
