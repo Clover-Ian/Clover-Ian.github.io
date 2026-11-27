@@ -484,16 +484,18 @@
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try { data = JSON.parse(raw); } catch { data = { raw }; }
       const reply = data?.choices?.[0]?.message?.content;
 
       pending.remove();
 
       if (!reply) {
-        const detail = data?.error?.message || data?.error || data?.message || '';
+        const detail = data?.error?.message || data?.error || data?.message || data?.raw || '';
         line(detail
-          ? `The model returned an error: ${String(detail).slice(0, 200)}`
-          : 'Sorry — no reply came back. Check the model name and API key in Settings → AI.');
+          ? `HTTP ${response.status}: ${String(detail).slice(0, 240)}`
+          : `HTTP ${response.status}: the model returned an empty reply.`);
         return;
       }
 

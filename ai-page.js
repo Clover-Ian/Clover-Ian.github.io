@@ -115,7 +115,9 @@
       const response = await fetch(ENDPOINT, {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
       });
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try { data = JSON.parse(raw); } catch { data = { raw }; }
       if (Array.isArray(data?.models) && data.models.length) iysList = data.models;
       if (Array.isArray(data?.keys)) groups = data.keys;
     } catch { /* 用内置列表 */ }
@@ -153,13 +155,18 @@
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try { data = JSON.parse(raw); } catch { data = { raw }; }
       const reply = data?.choices?.[0]?.message?.content;
       pending.remove();
 
       if (!reply) {
-        const detail = data?.error?.message || data?.error || '';
-        line(detail ? `The model returned an error: ${String(detail).slice(0, 200)}` : 'No reply came back.');
+        const detail = data?.error?.message || data?.error || data?.raw || '';
+        const status = response.status;
+        line(detail
+          ? `HTTP ${status}: ${String(detail).slice(0, 240)}`
+          : `HTTP ${status}: the model returned an empty reply.`);
         return;
       }
 
