@@ -4217,8 +4217,62 @@ body.theme-dark .ai-line--me {
     display: none !important;
 }
 
+.ai-panel.is-full {
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0;
+    border: 0;
+}
+
+.ai-resize {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 45%, rgba(0, 0, 0, 0.18) 45%, rgba(0, 0, 0, 0.18) 55%, transparent 55%);
+    border-bottom-right-radius: 18px;
+}
+
+.ai-panel.is-full .ai-resize {
+    display: none;
+}
+
+.ai-head {
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.ai-head:active {
+    cursor: grabbing;
+}
+
+.ai-max {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.ai-max:hover,
+.ai-close:hover {
+    color: var(--ink);
+}
+
+.ai-head-text {
+    min-width: 0;
+}
+
 .ai-panel {
     position: fixed;
+    overflow: hidden;
     right: 22px;
     bottom: 82px;
     z-index: 91;

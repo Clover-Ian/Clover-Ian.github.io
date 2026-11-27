@@ -1,5 +1,5 @@
 /**
- * 全站 AI 助手：右下角按钮 → 聊天面板。
+ * 全站 AI 助手：可拖动、可调大小、可全屏。
  * 走 Supabase 代理函数，key 不在前端。
  */
 (() => {
@@ -19,6 +19,22 @@
     'Never claim to have access to private data or accounts.',
   ].join(' ');
 
+  const NICE = {
+    'deepseek-v4.1-flash': 'DeepSeek 4.1 Flash',
+    'glm-5.3-flash': 'GLM 5.3 Flash',
+    'qwen-3.8-flash': 'Qwen 3.8 Flash',
+    'relay-rlx/glm-5.3-flash': 'GLM 5.3 Flash (relay)',
+    'glm-5.3': 'GLM 5.3',
+    'GLM-5.4': 'GLM 5.4',
+    'deepseek-v4-pro': 'DeepSeek 4 Pro',
+    'kimi-k3.1-pro': 'Kimi K3.1 Pro',
+    'kimi-k3.1-pro-high': 'Kimi K3.1 Pro High',
+    'mimo-v2.6-pro': 'MiMo 2.6 Pro',
+    'grok-composer-2.5-fast': 'Grok 2.5 Fast',
+    'grok-4.7': 'Grok 4.7',
+    'qwen4_max': 'Qwen4 Max',
+  };
+
   const MAX_PER_SESSION = 30;
   let used = 0;
 
@@ -37,13 +53,14 @@
   panel.className = 'ai-panel';
   panel.hidden = true;
   panel.innerHTML = `
-    <div class="ai-head">
-      <div>
+    <div class="ai-head" data-drag>
+      <div class="ai-head-text">
         <p class="ai-title">IYS AI</p>
         <p class="ai-sub">Ask about the site, the apps or the tools.</p>
       </div>
       <div class="ai-head-right">
         <select class="ai-model" aria-label="Model"></select>
+        <button type="button" class="ai-max" aria-label="Fullscreen" title="Fullscreen">⤢</button>
         <button type="button" class="ai-close" aria-label="Close">×</button>
       </div>
     </div>
@@ -51,7 +68,8 @@
     <form class="ai-form">
       <input type="text" class="ai-input" placeholder="Ask something…" autocomplete="off">
       <button type="submit" class="ai-send" aria-label="Send">↑</button>
-    </form>`;
+    </form>
+    <span class="ai-resize" aria-hidden="true"></span>`;
 
   document.body.append(fab, panel);
 
@@ -59,59 +77,107 @@
   const form = panel.querySelector('.ai-form');
   const input = panel.querySelector('.ai-input');
   const close = panel.querySelector('.ai-close');
-
+  const maxButton = panel.querySelector('.ai-max');
+  const handle = panel.querySelector('.ai-resize');
   const modelSelect = panel.querySelector('.ai-model');
-  const STORE_KEY = 'iys.ai.model';
-  let modelsLoaded = false;
 
-  const NICE = {
-    'deepseek-v4.1-flash': 'DeepSeek 4.1 Flash',
-    'glm-5.3-flash': 'GLM 5.3 Flash',
-    'qwen-3.8-flash': 'Qwen 3.8 Flash',
-    'relay-rlx/glm-5.3-flash': 'GLM 5.3 Flash (relay)',
-    'glm-5.3': 'GLM 5.3',
-    'GLM-5.4': 'GLM 5.4',
-    'deepseek-v4-pro': 'DeepSeek 4 Pro',
-    'kimi-k3.1-pro': 'Kimi K3.1 Pro',
-    'kimi-k3.1-pro-high': 'Kimi K3.1 Pro High',
-    'mimo-v2.6-pro': 'MiMo 2.6 Pro',
-    'grok-composer-2.5-fast': 'Grok Composer 2.5 Fast',
-    'grok-4.7': 'Grok 4.7',
-    'qwen4_max': 'Qwen4 Max',
-  };
+  const STORE = { model: 'iys.ai.model', box: 'iys.ai.box' };
+  const history = [];
 
-  async function loadModels() {
-    if (modelsLoaded) return;
-    modelsLoaded = true;
-
-    let list = Object.keys(NICE);
-    let fallback = 'deepseek-v4.1-flash';
-
-    try {
-      const response = await fetch(ENDPOINT);
-      const data = await response.json();
-      if (Array.isArray(data?.models) && data.models.length) list = data.models;
-      if (data?.default) fallback = data.default;
-    } catch {
-      /* 离线时用内置列表 */
-    }
-
-    const saved = localStorage.getItem(STORE_KEY);
-    modelSelect.innerHTML = '';
-
-    list.forEach((id) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = NICE[id] || id;
-      modelSelect.append(option);
-    });
-
-    modelSelect.value = list.includes(saved) ? saved : fallback;
+  /* ---------- 位置 / 大小 ---------- */
+  function applyBox(box) {
+    panel.style.left = `${box.x}px`;
+    panel.style.top = `${box.y}px`;
+    panel.style.width = `${box.w}px`;
+    panel.style.height = `${box.h}px`;
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
   }
 
-  // 先用内置列表填满，服务端可用时再替换
+  function currentBox() {
+    const rect = panel.getBoundingClientRect();
+    return { x: rect.left, y: rect.top, w: rect.width, h: rect.height };
+  }
+
+  function saveBox() {
+    try {
+      localStorage.setItem(STORE.box, JSON.stringify(currentBox()));
+    } catch { /* 忽略 */ }
+  }
+
+  (function restoreBox() {
+    try {
+      const box = JSON.parse(localStorage.getItem(STORE.box) || 'null');
+      if (box && box.x >= 0 && box.y >= 0) applyBox(box);
+    } catch { /* 忽略 */ }
+  })();
+
+  // 拖动
+  panel.querySelector('[data-drag]').addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button, select')) return;
+    if (panel.classList.contains('is-full')) return;
+
+    const rect = panel.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    const move = (moveEvent) => {
+      const x = Math.max(0, Math.min(window.innerWidth - rect.width, moveEvent.clientX - offsetX));
+      const y = Math.max(0, Math.min(window.innerHeight - rect.height, moveEvent.clientY - offsetY));
+      panel.style.left = `${x}px`;
+      panel.style.top = `${y}px`;
+    };
+
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      saveBox();
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+
+  // 调整大小（右下角把手）
+  handle.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    if (panel.classList.contains('is-full')) return;
+
+    const rect = panel.getBoundingClientRect();
+
+    const move = (moveEvent) => {
+      const w = Math.max(300, Math.min(window.innerWidth - rect.left, moveEvent.clientX - rect.left));
+      const h = Math.max(320, Math.min(window.innerHeight - rect.top, moveEvent.clientY - rect.top));
+      panel.style.width = `${w}px`;
+      panel.style.height = `${h}px`;
+    };
+
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      saveBox();
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  });
+
+  // 全屏
+  maxButton.addEventListener('click', () => {
+    panel.classList.toggle('is-full');
+    maxButton.title = panel.classList.contains('is-full') ? 'Exit fullscreen' : 'Fullscreen';
+    if (!panel.classList.contains('is-full')) {
+      try {
+        const box = JSON.parse(localStorage.getItem(STORE.box) || 'null');
+        if (box) applyBox(box);
+      } catch { /* 忽略 */ }
+    }
+    input.focus();
+  });
+
+  /* ---------- 模型 ---------- */
   (function seedModels() {
-    const saved = localStorage.getItem(STORE_KEY);
+    const saved = localStorage.getItem(STORE.model);
     Object.entries(NICE).forEach(([id, label]) => {
       const option = document.createElement('option');
       option.value = id;
@@ -120,12 +186,11 @@
     });
     modelSelect.value = Object.keys(NICE).includes(saved) ? saved : 'deepseek-v4.1-flash';
     modelSelect.addEventListener('change', () => {
-      localStorage.setItem(STORE_KEY, modelSelect.value);
+      localStorage.setItem(STORE.model, modelSelect.value);
     });
   })();
 
-  const history = [];
-
+  /* ---------- 对话 ---------- */
   function line(text, mine) {
     const p = document.createElement('p');
     p.className = mine ? 'ai-line ai-line--me' : 'ai-line';
@@ -139,7 +204,6 @@
     panel.hidden = !open;
     fab.classList.toggle('is-hidden', open);
     if (open) {
-      loadModels();
       if (!log.children.length) {
         line('Hi — I can explain anything on this site. Try “what is IYS Critters?”');
       }
@@ -147,8 +211,16 @@
     }
   }
 
-  fab.addEventListener('click', () => toggle(true));
+  fab.addEventListener('click', () => toggle(!0));
   close.addEventListener('click', () => toggle(false));
+
+  // 导航里的 "IYS AI" 入口
+  document.querySelectorAll('[data-ai-open]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggle(true);
+    });
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
