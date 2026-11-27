@@ -115,16 +115,20 @@ Deno.serve(async (request) => {
       return json({ error: "messages is required" }, 400);
     }
 
-    // source = "own" 时用访客自己的 key，否则用项目共享 key
-    const wantsOwn = source === "own";
-    const key = wantsOwn && userKey ? userKey : RELAY_KEY;
-    const base = (wantsOwn && userKey && userBase) ? userBase : RELAY_BASE;
+    const requested = String(model ?? DEFAULT_MODEL);
+
+    // 判断用谁的钱：
+    // 1) 模型在 IYS 白名单里 → 一定用共享 key（不管前端传什么）
+    // 2) 不在白名单、且访客有自己的 key → 用他自己的
+    // 3) 其余 → 共享 key + 默认模型
+    const inSharedList = MODELS.includes(requested);
+    const useOwn = !inSharedList && Boolean(userKey) && (source === "own" || Boolean(userKey));
+
+    const key = useOwn ? userKey! : RELAY_KEY;
+    const base = (useOwn && userBase) ? userBase : RELAY_BASE;
+    const chosen = inSharedList ? requested : (useOwn ? requested : DEFAULT_MODEL);
 
     if (!key) return json({ error: "No API key configured" }, 500);
-
-    const requested = model ?? DEFAULT_MODEL;
-    const usingSharedKey = key === RELAY_KEY;
-    const chosen = usingSharedKey && !MODELS.includes(requested) ? DEFAULT_MODEL : requested;
 
     const upstream = await fetch(`${base}/chat/completions`, {
       method: "POST",
