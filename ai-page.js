@@ -156,7 +156,7 @@
         body: JSON.stringify({
           messages: history,
           system: SYSTEM,
-          maxTokens: 10000,
+          maxTokens: 4000,
           model: (select.value || '').split('|').pop(),
           keyId: (select.value || '').includes('|') ? select.value.split('|')[0] : undefined,
         }),
@@ -182,7 +182,7 @@
           body: JSON.stringify({
             messages: history,
             system: SYSTEM,
-            maxTokens: 10000,
+            maxTokens: 4000,
             model: (select.value || '').split('|').pop(),
             keyId: (select.value || '').includes('|') ? select.value.split('|')[0] : undefined,
           }),
