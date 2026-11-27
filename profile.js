@@ -263,24 +263,40 @@
     avatarSave.textContent = 'Saving…';
     status('photo', 'Uploading…');
 
+    const supabase = client();
+
+    // 先确认会话还在，否则后面每一步都会报 "Auth session missing!"
+    const live = await supabase.auth.getSession();
+    if (!live?.data?.session) {
+      status('photo', 'Your session expired — please sign in again.', false);
+      avatarSave.disabled = false;
+      avatarSave.textContent = 'Save photo';
+      return;
+    }
+
     try {
       const blob = await new Promise((resolve) => avatarCanvas.toBlob(resolve, 'image/jpeg', 0.9));
       if (!blob) throw new Error('Could not process that image.');
 
-      const supabase = client();
       const path = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(path, blob, {
         upsert: true,
         contentType: 'image/jpeg',
         cacheControl: '3600',
       });
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        status('photo', `Upload failed: ${uploadError.message}`, false);
+        return;
+      }
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       const url = `${data.publicUrl}?v=${Date.now()}`;
 
       const { error: metaError } = await supabase.auth.updateUser({ data: { avatar_url: url } });
-      if (metaError) throw metaError;
+      if (metaError) {
+        status('photo', `Could not attach the photo: ${metaError.message}`, false);
+        return;
+      }
 
       await supabase.from('profiles').upsert({ id: user.id, avatar_url: url });
       await supabase.auth.refreshSession();
