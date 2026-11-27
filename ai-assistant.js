@@ -288,10 +288,13 @@
     return window.iysSupabase;
   }
 
+  let modelsRun = 0;
+
   async function loadModels() {
     if (modelsLoaded) return;
     modelsLoaded = true;
 
+    const run = ++modelsRun;
     const saved = localStorage.getItem(STORE.model);
     let list = Object.keys(NICE);
     let groups = [];
@@ -310,6 +313,9 @@
         groups = [{ id: 'saved', label: payload.label || 'My key', models: payload.mine }];
       }
     } catch { /* 离线用内置列表 */ }
+
+    // 有更晚的请求了：丢掉这次结果，避免旧结果（没有 key）覆盖新结果
+    if (run !== modelsRun) return;
 
     console.info('[ai] models: iys=%d groups=%d', list.length, groups.length);
     buildModels(list, groups, saved);
