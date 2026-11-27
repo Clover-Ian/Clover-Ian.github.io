@@ -58,6 +58,8 @@ Deno.serve(async (request) => {
         const { data } = await supabase
           .from("user_ai_settings")
           .select("api_key, base_url, label")
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (data?.api_key) {
@@ -97,6 +99,8 @@ Deno.serve(async (request) => {
       const { data } = await supabase
         .from("user_ai_settings")
         .select("api_key, base_url, model")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (data?.api_key) {
