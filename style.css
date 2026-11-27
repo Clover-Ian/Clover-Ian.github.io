@@ -4642,19 +4642,30 @@ body.theme-dark .ai-line--me {
 .profile-button {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     margin-top: 16px;
-    padding: 10px 20px;
+    padding: 9px 22px;
     border: 0;
-    border-radius: 999px;
-    background: var(--ink);
+    border-radius: 980px;
+    background: var(--blue);
     color: #fff;
     font: inherit;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 590;
+    letter-spacing: -0.01em;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+    transition: background 150ms ease, transform 120ms ease, box-shadow 150ms ease;
 }
 
-.profile-button:hover { filter: brightness(1.1); }
+.profile-button:hover {
+    background: #0a58c4;
+    box-shadow: 0 2px 6px rgb(0 102 204 / 22%);
+}
+
+.profile-button:active {
+    transform: scale(0.965);
+}
 
 .profile-button--danger {
     background: #c0271d;
@@ -4761,14 +4772,21 @@ body.theme-dark .ai-line--me {
 }
 
 .profile-button--ghost {
-    background: #fff;
-    border: 1px solid var(--line);
+    background: rgb(118 118 128 / 12%);
     color: var(--ink);
+    box-shadow: none;
+}
+
+.profile-button--ghost:hover {
+    background: rgb(118 118 128 / 20%);
+    box-shadow: none;
 }
 
 .profile-button:disabled {
-    opacity: 0.45;
+    opacity: 0.4;
     cursor: default;
+    box-shadow: none;
+    transform: none;
 }
 
 /* 头像区与下面小节之间的间距（分隔线略下移） */
