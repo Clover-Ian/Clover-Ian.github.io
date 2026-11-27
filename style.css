@@ -5149,25 +5149,37 @@ body.profile-page .profile-panels {
 }
 
 /* ---------- IYS AI 独立页面 ---------- */
+html:has(body.ai-page),
+body.ai-page {
+    height: 100vh;
+    overflow: hidden;          /* 整页不滚动 */
+}
+
 body.ai-page {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+}
+
+body.ai-page .site-header,
+body.ai-page .site-footer {
+    flex: 0 0 auto;
 }
 
 .ai-main {
     flex: 1 1 auto;
     display: flex;
     justify-content: center;
-    padding: 28px clamp(18px, 3vw, 40px);
+    padding: 20px clamp(18px, 3vw, 40px);
     min-height: 0;
+    overflow: hidden;          /* 只有对话框内部滚动 */
 }
 
 .ai-shell {
     display: grid;
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
     width: 100%;
     max-width: 880px;
+    height: 100%;
     min-height: 0;
     border: 1px solid var(--line);
     border-radius: 20px;
