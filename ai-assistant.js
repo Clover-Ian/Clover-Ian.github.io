@@ -42,14 +42,14 @@
   fab.type = 'button';
   fab.className = 'ai-fab';
   fab.setAttribute('aria-label', 'Ask IYS AI');
-  fab.innerHTML = '<img src="IYS AI.png" alt="" class="ai-fab-mark">';
+  fab.innerHTML = '<img src="IYS AI.png?v=20261127h" alt="" class="ai-fab-mark">';
 
   const panel = document.createElement('div');
   panel.className = 'ai-panel';
   panel.hidden = true;
   panel.innerHTML = `
     <div class="ai-head" data-drag>
-      <img src="IYS AI.png" alt="" class="ai-mark">
+      <img src="IYS AI.png?v=20261127h" alt="" class="ai-mark">
       <div class="ai-head-text">
         <p class="ai-title">IYS AI</p>
         <p class="ai-sub">Ask about the site, the apps or the tools.</p>
