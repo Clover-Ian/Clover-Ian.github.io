@@ -86,6 +86,7 @@
       return;
     }
 
+
     user = data.session.user;
     const meta = user.user_metadata ?? {};
 
@@ -190,8 +191,12 @@
     paintAvatar();
   }
 
+  document.querySelector('[data-photo-choose]')?.addEventListener('click', () => photoInput?.click());
+
   photoInput?.addEventListener('change', () => {
     const file = photoInput.files?.[0];
+    const nameEl = document.querySelector('[data-photo-name]');
+    if (nameEl) nameEl.textContent = file ? file.name : 'No image chosen';
     if (!file) return;
 
     const image = new Image();
