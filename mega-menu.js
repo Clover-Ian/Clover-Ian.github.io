@@ -47,6 +47,7 @@
           ['IYS Image Tool', 'IYS Image Tool.html'],
           ['IYS Codec Tool', 'IYS Codec Tool.html'],
           ['IYS QR Code', 'IYS QR Code.html'],
+          ['IYS Photo URL', 'IYS Photo URL.html'],
         ] },
       ],
     },

@@ -1626,3 +1626,68 @@ alter table public.user_ai_settings
 
 alter table public.user_ai_settings
     add column if not exists created_at timestamptz not null default now();
+
+-- ---------- 35. Photo → URL：公开读的 photos 桶 + 过期清理 ----------
+insert into storage.buckets (id, name, public)
+values ('photos', 'photos', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "photos public read" on storage.objects;
+create policy "photos public read" on storage.objects
+    for select using (bucket_id = 'photos');
+
+-- 任何人都能上传（文件名是随机 uuid，不可枚举）
+drop policy if exists "photos upload" on storage.objects;
+create policy "photos upload" on storage.objects
+    for insert to anon, authenticated
+    with check (bucket_id = 'photos');
+
+create table if not exists public.photo_links (
+    path       text primary key,
+    expires_at timestamptz,
+    created_at timestamptz not null default now()
+);
+
+alter table public.photo_links enable row level security;
+
+drop policy if exists "photo links insert" on public.photo_links;
+create policy "photo links insert" on public.photo_links
+    for insert to anon, authenticated with check (true);
+
+grant insert on public.photo_links to anon, authenticated;
+
+-- 到点就删掉存储条目（链接随即失效）
+create or replace function public.cleanup_expired_photos()
+returns integer
+language plpgsql
+security definer
+set search_path = public, storage
+as $$
+declare
+    removed integer := 0;
+begin
+    with gone as (
+        delete from public.photo_links
+         where expires_at is not null and expires_at < now()
+        returning path
+    ), objects as (
+        delete from storage.objects
+         where bucket_id = 'photos'
+           and name in (select path from gone)
+        returning 1
+    )
+    select count(*) into removed from objects;
+
+    return removed;
+end;
+$$;
+
+grant execute on function public.cleanup_expired_photos() to anon, authenticated;
+
+-- 每小时清理一次（需要 pg_cron 扩展）
+create extension if not exists pg_cron;
+
+select cron.unschedule('iys-cleanup-photos')
+ where exists (select 1 from cron.job where jobname = 'iys-cleanup-photos');
+
+select cron.schedule('iys-cleanup-photos', '17 * * * *', $$select public.cleanup_expired_photos()$$);

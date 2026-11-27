@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Turn a photo into a link that expires when you want.">
+    <title>IYS Photo URL</title>
+    <link rel="icon" type="image/png" href="IYS Developer.png">
+    <link rel="apple-touch-icon" href="IYS Developer.png">
+    <link rel="stylesheet" href="style.css?v=20261129a">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261127q" defer></script>
+    <script src="photo-url.js?v=20261129a" defer></script>
+</head>
+<body class="theme-dark">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="tool-wrap">
+            <p class="eyebrow">Developer · Photo URL</p>
+            <h1>Photo to link.</h1>
+            <p class="hero-copy">Upload a picture and get a link. Pick when it expires — the file is deleted after that.</p>
+
+            <div class="tool-card" style="margin-top:26px">
+                <div class="tool-drop" id="photo-drop">
+                    <strong>Drop a photo here</strong>
+                    <span class="tool-note">or click to choose — PNG, JPEG, WebP, HEIC</span>
+                    <input id="photo-input" type="file" accept="image/*" hidden>
+                </div>
+
+                <div class="tool-row" style="margin-top:18px">
+                    <div class="tool-field">
+                        <label for="photo-expiry">Expires in</label>
+                        <select id="photo-expiry">
+                            <option value="1">1 day</option>
+                            <option value="2">2 days</option>
+                            <option value="3">3 days</option>
+                            <option value="7" selected>7 days</option>
+                            <option value="14">14 days</option>
+                            <option value="31">31 days</option>
+                            <option value="365">365 days</option>
+                            <option value="forever">Never</option>
+                            <option value="custom">Custom…</option>
+                        </select>
+                    </div>
+
+                    <div class="tool-field" id="photo-custom-wrap" hidden>
+                        <label for="photo-custom-days">Custom days</label>
+                        <input id="photo-custom-days" type="number" min="1" max="3650" value="30">
+                    </div>
+
+                    <div class="tool-field">
+                        <label for="photo-max">Max width (px)</label>
+                        <input id="photo-max" type="number" min="120" max="4000" value="1600">
+                    </div>
+                </div>
+
+                <div class="tool-row" style="margin-top:18px">
+                    <button class="tool-button" id="photo-run" disabled>Upload</button>
+                    <span class="tool-note" id="photo-status"></span>
+                </div>
+
+                <div id="photo-result" style="margin-top:18px" hidden>
+                    <img id="photo-preview" alt="" style="max-width:100%;border-radius:12px;border:1px solid rgb(255 255 255 / 12%)">
+                    <div class="tool-row" style="margin-top:14px">
+                        <input id="photo-link" type="text" readonly
+                               style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgb(255 255 255 / 12%);background:#1b1b1f;color:#fff">
+                        <button class="tool-button tool-button--ghost" id="photo-copy">Copy</button>
+                    </div>
+                    <p class="tool-note" id="photo-expires"></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
