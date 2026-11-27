@@ -4937,3 +4937,68 @@ body.theme-dark .ai-line--me {
     font-size: 15px;
     font-weight: 600;
 }
+
+/* 统一美化下拉框 */
+.ai-key-form select,
+.ai-key-form input[data-ai-model-custom] {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+}
+
+.ai-key-form select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 11px 38px 11px 13px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.ai-key-form select:hover {
+    border-color: #c7c7cf;
+}
+
+.ai-key-form select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgb(0 102 204 / 14%);
+}
+
+/* 面板里的模型下拉：小号胶囊 */
+.ai-model {
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 116px;
+    max-width: 168px;
+    padding: 6px 26px 6px 12px;
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 999px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    font: inherit;
+    font-size: 11.5px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.ai-model:hover {
+    background-color: #f6f6f8;
+}
+
+.ai-model:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgb(0 102 204 / 12%);
+}
