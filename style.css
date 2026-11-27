@@ -4190,3 +4190,138 @@ body.theme-dark .tool-drop .tool-note {
     justify-self: end;
     background: rgb(255 255 255 / 16%);
 }
+
+/* ---------- 全站 AI 助手 ---------- */
+.ai-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgb(0 0 0 / 8%);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgb(29 29 31 / 16%);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.ai-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px rgb(29 29 31 / 20%);
+}
+
+.ai-fab.is-hidden {
+    display: none;
+}
+
+.ai-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 82px;
+    z-index: 91;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    width: min(380px, calc(100vw - 32px));
+    height: min(520px, calc(100vh - 140px));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 30px 70px rgb(29 29 31 / 22%);
+    overflow: hidden;
+}
+
+.ai-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.ai-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.ai-sub {
+    margin: 2px 0 0;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.ai-close {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ai-log {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 14px 16px;
+    overflow-y: auto;
+}
+
+.ai-line {
+    margin: 0;
+    padding: 9px 12px;
+    border-radius: 14px;
+    background: var(--surface);
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.ai-line--me {
+    justify-self: end;
+    background: var(--blue);
+    color: #fff;
+}
+
+.ai-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--line);
+}
+
+.ai-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+}
+
+.ai-input:focus {
+    outline: 2px solid rgb(0 102 204 / 35%);
+    outline-offset: 1px;
+}
+
+.ai-send {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}

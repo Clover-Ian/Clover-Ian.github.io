@@ -24,7 +24,7 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const { messages, maxTokens } = await request.json();
+    const { messages, maxTokens, system } = await request.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages is required" }), {
@@ -41,7 +41,9 @@ Deno.serve(async (request) => {
       },
       body: JSON.stringify({
         model: MODEL,
-        messages,
+        messages: system
+          ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
+          : messages,
         max_tokens: Math.min(Number(maxTokens) || 220, 600),
         temperature: 0.85,
       }),
