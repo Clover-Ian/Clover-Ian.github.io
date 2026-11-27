@@ -129,6 +129,9 @@
       if (error) return false;
       if (!Array.isArray(data) || !data.length) return false;
 
+      // 只有云端记录比本地多时才覆盖，避免把本地更长的历史冲掉
+      if (data.length <= history.length) return true;
+
       history.length = 0;
       data.forEach((row) => history.push({ role: row.role, content: row.content }));
       saveHistory();

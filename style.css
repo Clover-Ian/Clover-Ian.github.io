@@ -4272,9 +4272,10 @@ body.theme-dark .ai-line--me {
 
 .ai-panel {
     position: fixed;
+    top: 84px;                 /* 默认贴着导航栏下方 */
+    right: 22px;
     overflow: hidden;
     right: 22px;
-    bottom: 82px;
     z-index: 91;
     display: grid;
     grid-template-rows: auto 1fr auto;
