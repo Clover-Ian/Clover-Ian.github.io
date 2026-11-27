@@ -121,27 +121,7 @@
         response.headers.get('x-iys-model') || '?',
         response.headers.get('x-iys-host') || '?');
 
-      let raw = await response.text();
-
-      // 空回复（有些中转会返回 200 + 空 choices）重试一次
-      if (response.ok && !/"content"\s*:\s*"[^"]/.test(raw)) {
-        await new Promise((r) => setTimeout(r, 600));
-        const retry = await fetch(ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-          },
-          body: JSON.stringify({
-            messages: history,
-            system: SYSTEM,
-            maxTokens: 700,
-            model: (select.value || '').split('|').pop(),
-            keyId: (select.value || '').includes('|') ? select.value.split('|')[0] : undefined,
-          }),
-        });
-        if (retry.ok) raw = await retry.text();
-      }
+      const raw = await response.text();
 
       let data = {};
       try { data = JSON.parse(raw); } catch { data = { raw }; }

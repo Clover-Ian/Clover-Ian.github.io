@@ -492,7 +492,7 @@
 
       let raw = await response.text();
 
-      // 空回复（有些中转会返回 200 + 空 choices）重试一次
+      // 空回复（有些中转返回 200 + 空 choices）重试一次
       if (response.ok && !/"content"\s*:\s*"[^"]/.test(raw)) {
         await new Promise((r) => setTimeout(r, 600));
         const retry = await fetch(ENDPOINT, {
