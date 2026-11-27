@@ -7,12 +7,12 @@
     <title>IYS Account</title>
     <link rel="icon" type="image/png" href="IYS Developer.png">
     <link rel="apple-touch-icon" href="IYS Developer.png">
-    <link rel="stylesheet" href="style.css?v=20261127r">
+    <link rel="stylesheet" href="style.css?v=20261127s">
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127n" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127b" defer></script>
+    <script src="profile.js?v=20261127c" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -51,9 +51,22 @@
 
                     <div class="profile-block">
                         <h3>Photo</h3>
-                        <p class="profile-note">Square images look best. It appears next to your name across IYS.</p>
-                        <input type="file" accept="image/*" data-photo-input>
-                        <button type="button" class="profile-button" data-photo-save>Save photo</button>
+                        <p class="profile-note">Choose an image, drag to position, zoom to taste, then save.</p>
+
+                        <div class="avatar-editor">
+                            <canvas class="avatar-canvas" width="256" height="256" data-avatar-canvas></canvas>
+                            <div class="avatar-controls">
+                                <input type="file" accept="image/*" data-photo-input>
+                                <label class="avatar-zoom">
+                                    <span>Zoom</span>
+                                    <input type="range" min="1" max="3" step="0.05" value="1" data-avatar-zoom disabled>
+                                </label>
+                                <div class="avatar-actions">
+                                    <button type="button" class="profile-button" data-photo-save disabled>Save photo</button>
+                                    <button type="button" class="profile-button profile-button--ghost" data-photo-remove>Remove</button>
+                                </div>
+                            </div>
+                        </div>
                         <p class="profile-status" data-status="photo"></p>
                     </div>
 

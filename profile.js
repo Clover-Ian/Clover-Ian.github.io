@@ -144,39 +144,154 @@
     status('password', error ? error.message : 'Password updated.', !error);
   });
 
-  document.querySelector('[data-photo-save]')?.addEventListener('click', async () => {
-    const file = photoInput?.files?.[0];
-    if (!file) {
-      status('photo', 'Choose an image first.', false);
+  /* ---------- 头像编辑：拖动 + 缩放 ---------- */
+  const avatarCanvas = document.querySelector('[data-avatar-canvas]');
+  const avatarCtx = avatarCanvas?.getContext('2d');
+  const avatarZoom = document.querySelector('[data-avatar-zoom]');
+  const avatarSave = document.querySelector('[data-photo-save]');
+  const SIZE = 256;
+
+  const view = { img: null, scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
+
+  function paintAvatar() {
+    if (!avatarCtx) return;
+    avatarCtx.clearRect(0, 0, SIZE, SIZE);
+
+    avatarCtx.fillStyle = '#f2f2f5';
+    avatarCtx.fillRect(0, 0, SIZE, SIZE);
+
+    if (!view.img) {
+      avatarCtx.fillStyle = 'rgba(29,29,31,0.35)';
+      avatarCtx.font = '13px "American Typewriter", Georgia, serif';
+      avatarCtx.textAlign = 'center';
+      avatarCtx.fillText('Choose a photo', SIZE / 2, SIZE / 2);
       return;
     }
 
+    avatarCtx.drawImage(view.img, view.x, view.y,
+      view.img.width * view.scale, view.img.height * view.scale);
+  }
+
+  function fitAvatar() {
+    if (!view.img) return;
+    const cover = Math.max(SIZE / view.img.width, SIZE / view.img.height);
+    view.scale = cover;
+    avatarZoom.value = '1';
+    view.x = (SIZE - view.img.width * cover) / 2;
+    view.y = (SIZE - view.img.height * cover) / 2;
+    paintAvatar();
+  }
+
+  photoInput?.addEventListener('change', () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+
+    const image = new Image();
+    image.onload = () => {
+      view.img = image;
+      fitAvatar();
+      avatarZoom.disabled = false;
+      avatarSave.disabled = false;
+      status('photo', 'Drag to position, then save.');
+    };
+    image.onerror = () => status('photo', 'Could not read that image.', false);
+    image.src = URL.createObjectURL(file);
+  });
+
+  avatarZoom?.addEventListener('input', () => {
+    if (!view.img) return;
+    const base = Math.max(SIZE / view.img.width, SIZE / view.img.height);
+    const next = base * Number(avatarZoom.value);
+
+    const cx = view.x + (view.img.width * view.scale) / 2;
+    const cy = view.y + (view.img.height * view.scale) / 2;
+    view.scale = next;
+    view.x = cx - (view.img.width * next) / 2;
+    view.y = cy - (view.img.height * next) / 2;
+    paintAvatar();
+  });
+
+  avatarCanvas?.addEventListener('pointerdown', (event) => {
+    if (!view.img) return;
+    view.dragging = true;
+    view.lastX = event.clientX;
+    view.lastY = event.clientY;
+    avatarCanvas.setPointerCapture(event.pointerId);
+  });
+
+  avatarCanvas?.addEventListener('pointermove', (event) => {
+    if (!view.dragging) return;
+    view.x += event.clientX - view.lastX;
+    view.y += event.clientY - view.lastY;
+    view.lastX = event.clientX;
+    view.lastY = event.clientY;
+    paintAvatar();
+  });
+
+  ['pointerup', 'pointercancel'].forEach((type) => {
+    avatarCanvas?.addEventListener(type, () => { view.dragging = false; });
+  });
+
+  avatarSave?.addEventListener('click', async () => {
+    if (!view.img || !user) return;
+
+    avatarSave.disabled = true;
+    avatarSave.textContent = 'Saving…';
     status('photo', 'Uploading…');
+
+    try {
+      const blob = await new Promise((resolve) => avatarCanvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) throw new Error('Could not process that image.');
+
+      const supabase = client();
+      const path = `${user.id}/avatar.jpg`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, blob, {
+        upsert: true,
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+      });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      const url = `${data.publicUrl}?v=${Date.now()}`;
+
+      const { error: metaError } = await supabase.auth.updateUser({ data: { avatar_url: url } });
+      if (metaError) throw metaError;
+
+      await supabase.from('profiles').upsert({ id: user.id, avatar_url: url });
+      await supabase.auth.refreshSession();
+      await loadUser();
+      status('photo', 'Photo updated.');
+    } catch (error) {
+      status('photo', error.message || 'Could not save the photo.', false);
+    } finally {
+      avatarSave.disabled = false;
+      avatarSave.textContent = 'Save photo';
+    }
+  });
+
+  document.querySelector('[data-photo-remove]')?.addEventListener('click', async () => {
+    if (!user) return;
     const supabase = client();
-    const path = `${user.id}/avatar-${Date.now()}.jpg`;
+    status('photo', 'Removing…');
 
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, {
-      upsert: true,
-      contentType: file.type || 'image/jpeg',
-    });
-    if (uploadError) {
-      status('photo', uploadError.message, false);
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: null });
+    const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
+    if (error) {
+      status('photo', error.message, false);
       return;
     }
 
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-    const url = data?.publicUrl;
-    if (!url) {
-      status('photo', 'Upload finished but no URL came back.', false);
-      return;
-    }
-
-    await supabase.auth.updateUser({ data: { avatar_url: url } });
-    await supabase.from('profiles').upsert({ id: user.id, avatar_url: url });
+    view.img = null;
+    paintAvatar();
+    avatarSave.disabled = true;
+    avatarZoom.disabled = true;
     await supabase.auth.refreshSession();
     await loadUser();
-    status('photo', 'Photo updated.');
+    status('photo', 'Photo removed.');
   });
+
+  paintAvatar();
 
   document.querySelector('[data-signout-all]')?.addEventListener('click', async () => {
     status('danger', 'Signing out…');
