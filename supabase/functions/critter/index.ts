@@ -1,11 +1,15 @@
-// 代理：浏览器 → 这个函数 → 中转平台（key 只存在服务端环境变量里）
-// 部署：supabase secrets set RELAY_KEY=sk-... ; supabase functions deploy critter
+// IYS AI 代理
+// - 没带自己的 key：用项目共享 key（有模型白名单）
+// - 设置里存了自己的 key：优先用它（模型由用户自己决定）
+//
+// 部署：Dashboard → Edge Functions → IYS → 粘贴 → Deploy（Verify JWT 保持开启）
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RELAY_BASE = Deno.env.get("RELAY_BASE") ?? "https://relaydock.omnis.com.cn/v1";
 const RELAY_KEY = Deno.env.get("RELAY_KEY") ?? "";
 const DEFAULT_MODEL = Deno.env.get("RELAY_MODEL") ?? "deepseek-v4.1-flash";
 
-// 允许访客选择的模型（白名单，防止有人传任意模型名）
 const MODELS = [
   "deepseek-v4.1-flash",
   "glm-5.3-flash",
@@ -25,43 +29,64 @@ const MODELS = [
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
+  if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (request.method === "GET") return json({ models: MODELS, default: DEFAULT_MODEL });
+
+  const auth = request.headers.get("Authorization") ?? "";
+
+  // 读用户自己的 key（RLS 保证只能读到自己那一行）
+  let key = RELAY_KEY;
+  let base = RELAY_BASE;
+  let userModel: string | null = null;
+
+  if (auth.startsWith("Bearer ")) {
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: auth } } },
+      );
+
+      const { data } = await supabase
+        .from("user_ai_settings")
+        .select("api_key, base_url, model")
+        .maybeSingle();
+
+      if (data?.api_key) {
+        key = data.api_key;
+        if (data.base_url) base = data.base_url;
+        if (data.model) userModel = data.model;
+      }
+    } catch { /* 忽略：退回共享 key */ }
   }
 
-  // 列出可选模型
-  if (request.method === "GET") {
-    return new Response(JSON.stringify({ models: MODELS, default: DEFAULT_MODEL }), {
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
-  }
-
-  if (!RELAY_KEY) {
-    return new Response(JSON.stringify({ error: "RELAY_KEY is not set" }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
-  }
+  if (!key) return json({ error: "No API key configured" }, 500);
 
   try {
     const { messages, maxTokens, system, model } = await request.json();
-    const chosen = MODELS.includes(model) ? model : DEFAULT_MODEL;
-
     if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response(JSON.stringify({ error: "messages is required" }), {
-        status: 400,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+      return json({ error: "messages is required" }, 400);
     }
 
-    const upstream = await fetch(`${RELAY_BASE}/chat/completions`, {
+    const requested = model ?? userModel ?? DEFAULT_MODEL;
+    const usingSharedKey = key === RELAY_KEY;
+    const chosen = usingSharedKey && !MODELS.includes(requested) ? DEFAULT_MODEL : requested;
+
+    const upstream = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${RELAY_KEY}`,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -75,15 +100,11 @@ Deno.serve(async (request) => {
     });
 
     const text = await upstream.text();
-
     return new Response(text, {
       status: upstream.status,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return json({ error: String(error) }, 500);
   }
 });

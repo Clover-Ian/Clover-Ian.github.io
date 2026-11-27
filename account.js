@@ -261,10 +261,15 @@
   }
 
   function messageForError(error) {
-    if (error instanceof TypeError) {
-      return 'Could not reach the account service. Check your connection and try again.';
+    const text = String(error?.message ?? '');
+
+    // 网络层失败（浏览器给的是 "Load failed" / "Failed to fetch"）
+    if (error instanceof TypeError
+        || /load failed|failed to fetch|network connection was lost|timed out/i.test(text)) {
+      return 'Could not reach IYS. Your connection dropped — please try signing in again.';
     }
-    return ERROR_MESSAGES[error?.code] || error?.message || 'Something went wrong. Please try again.';
+
+    return ERROR_MESSAGES[error?.code] || text || 'Something went wrong. Please try again.';
   }
 
   form.addEventListener('submit', async (event) => {
@@ -393,6 +398,7 @@
     } catch (error) {
       showMessage(messageForError(error));
       setBusy(false);
+      signInButton?.focus();
     }
   });
 
