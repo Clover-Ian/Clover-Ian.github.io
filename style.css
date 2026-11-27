@@ -4480,3 +4480,17 @@ body.theme-dark .ai-line--me {
 .ai-gate {
     grid-row: 2 / -1;
 }
+
+.ai-new {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.ai-new:hover {
+    color: var(--ink);
+}
