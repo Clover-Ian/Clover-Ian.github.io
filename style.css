@@ -5290,3 +5290,8 @@ body.ai-page .site-footer {
 body.ai-page .site-footer {
     flex-shrink: 0;
 }
+
+/* 自定义模型名默认隐藏（display:block 会盖掉 [hidden]） */
+.ai-key-form input[data-ai-model-custom][hidden] {
+    display: none !important;
+}
