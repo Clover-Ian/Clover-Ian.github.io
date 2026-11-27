@@ -4165,3 +4165,28 @@ body.theme-dark .tool-drop span,
 body.theme-dark .tool-drop .tool-note {
     color: rgb(255 255 255 / 62%);
 }
+
+/* AI 测试页 */
+.ai-log {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.ai-line {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 8%);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.ai-line--me {
+    justify-self: end;
+    background: rgb(255 255 255 / 16%);
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IYS AI — a small assistant that runs through the IYS Critters proxy.">
+    <title>IYS AI</title>
+    <link rel="icon" type="image/png" href="IYS Developer.png">
+    <link rel="apple-touch-icon" href="IYS Developer.png">
+    <link rel="stylesheet" href="style.css?v=20261127f">
+    <script src="supabase.js?v=20261116d" defer></script>
+    <script src="supabase-config.js?v=20261116d" defer></script>
+    <script src="account-nav.js?v=20261127e" defer></script>
+</head>
+<body class="theme-dark">
+    <header class="site-header">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
+            <div class="nav-links">
+                <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
+                <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="tool-wrap">
+            <p class="eyebrow">Developer · AI</p>
+            <h1>Ask IYS AI.</h1>
+            <p class="hero-copy">A small assistant wired through your own proxy. The key never reaches the browser.</p>
+
+            <div class="tool-card" style="margin-top:26px">
+                <div class="tool-field">
+                    <label for="ai-input">Message</label>
+                    <textarea id="ai-input" style="min-height:88px;font-family:inherit;font-size:14px" placeholder="Ask anything…"></textarea>
+                </div>
+
+                <div class="tool-row" style="margin-top:14px">
+                    <button class="tool-button" id="ai-send">Send</button>
+                    <button class="tool-button tool-button--ghost" id="ai-clear">Clear</button>
+                    <span class="tool-note" id="ai-status"></span>
+                </div>
+
+                <div id="ai-log" class="ai-log"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>Have an idea or feedback? <a href="mailto:iys-ian@outlook.com">Get in touch</a>.</p>
+            <nav class="footer-policy-links" aria-label="Policies">
+                <a href="terms.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="refund.html">Refund Policy</a>
+            </nav>
+            <p class="copyright">© IYS. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    (() => {
+      // 部署后改成你的函数地址
+      const ENDPOINT = 'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/critter';
+
+      const input = document.getElementById('ai-input');
+      const send = document.getElementById('ai-send');
+      const clear = document.getElementById('ai-clear');
+      const log = document.getElementById('ai-log');
+      const status = document.getElementById('ai-status');
+
+      const history = [];
+
+      function bubble(text, mine) {
+        const p = document.createElement('p');
+        p.className = mine ? 'ai-line ai-line--me' : 'ai-line';
+        p.textContent = text;
+        log.append(p);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      async function ask() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        bubble(text, true);
+        history.push({ role: 'user', content: text });
+        input.value = '';
+        send.disabled = true;
+        status.textContent = 'Thinking…';
+
+        try {
+          const response = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: history, maxTokens: 400 }),
+          });
+
+          const data = await response.json();
+          const reply = data?.choices?.[0]?.message?.content;
+
+          if (!reply) {
+            bubble('（没有拿到回复：' + JSON.stringify(data).slice(0, 120) + '）', false);
+          } else {
+            bubble(reply, false);
+            history.push({ role: 'assistant', content: reply });
+          }
+          status.textContent = '';
+        } catch (error) {
+          status.textContent = 'Request failed: ' + error.message;
+        } finally {
+          send.disabled = false;
+        }
+      }
+
+      send.addEventListener('click', ask);
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) ask();
+      });
+
+      clear.addEventListener('click', () => {
+        log.innerHTML = '';
+        history.length = 0;
+        status.textContent = '';
+      });
+    })();
+    </script>
+</body>
+</html>
