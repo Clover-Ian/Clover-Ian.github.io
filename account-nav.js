@@ -845,6 +845,8 @@
     });
   }
 
+  watchAuthForNav();
+
   init().catch((error) => {
     console.error('Unable to update IYS account navigation.', error);
   });
