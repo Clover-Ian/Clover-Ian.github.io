@@ -191,7 +191,17 @@
     paintAvatar();
   }
 
-  document.querySelector('[data-photo-choose]')?.addEventListener('click', () => photoInput?.click());
+  const photoName = document.querySelector('[data-photo-name]');
+
+  function resetPicker() {
+    if (photoInput) photoInput.value = '';
+    if (photoName) photoName.textContent = 'No image chosen';
+  }
+
+  document.querySelector('[data-photo-choose]')?.addEventListener('click', () => {
+    resetPicker();
+    photoInput?.click();
+  });
 
   photoInput?.addEventListener('change', () => {
     const file = photoInput.files?.[0];
@@ -286,6 +296,15 @@
 
   document.querySelector('[data-photo-remove]')?.addEventListener('click', async () => {
     if (!user) return;
+
+    // 先复位本地界面，网络失败也不影响再次选图
+    view.img = null;
+    paintAvatar();
+    avatarSave.disabled = true;
+    avatarZoom.disabled = true;
+    avatarZoom.value = '1';
+    resetPicker();
+
     const supabase = client();
 
     const check = await supabase.auth.getSession();
