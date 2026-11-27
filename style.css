@@ -5465,3 +5465,31 @@ body.theme-dark .tool-field input:focus {
     border-color: rgb(255 255 255 / 32%);
     box-shadow: 0 0 0 3px rgb(255 255 255 / 6%);
 }
+
+/* 深色工具页：下拉框做成胶囊，箭头用白色 */
+.tool-field select {
+    border-radius: 999px;
+    padding: 10px 38px 10px 16px;
+}
+
+body.theme-dark .tool-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #1b1b1f;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23ffffff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px 8px;
+    border-color: rgb(255 255 255 / 16%);
+    color: #fff;
+    cursor: pointer;
+}
+
+/* 数字输入框也做成胶囊，保持一致 */
+body.theme-dark .tool-field input[type="number"] {
+    border-radius: 999px;
+}
+
+.tool-field input[type="number"] {
+    border-radius: 999px;
+}
