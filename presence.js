@@ -38,7 +38,7 @@
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       fetch(url.toString(), {
-        method: 'PATCH',
+        method: 'POST',        /* PostgREST 的 rpc 只接受 POST，PATCH 会 405 */
         headers,
         body: JSON.stringify({ p_online: false }),
         keepalive: true,
