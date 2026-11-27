@@ -1521,3 +1521,36 @@ create policy "ai own delete" on public.ai_messages
 
 -- 修：表建好了但没给登录用户授权（否则报 42501 permission denied）
 grant select, insert, delete on public.ai_messages to authenticated;
+
+-- ---------- 30. 头像存储：公开读，用户只写自己那一层目录 ----------
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "avatars public read" on storage.objects;
+create policy "avatars public read" on storage.objects
+    for select using (bucket_id = 'avatars');
+
+drop policy if exists "avatars own insert" on storage.objects;
+create policy "avatars own insert" on storage.objects
+    for insert to authenticated
+    with check (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    );
+
+drop policy if exists "avatars own update" on storage.objects;
+create policy "avatars own update" on storage.objects
+    for update to authenticated
+    using (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    );
+
+drop policy if exists "avatars own delete" on storage.objects;
+create policy "avatars own delete" on storage.objects
+    for delete to authenticated
+    using (
+        bucket_id = 'avatars'
+        and (storage.foldername(name))[1] = auth.uid()::text
+    );

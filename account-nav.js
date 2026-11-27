@@ -132,6 +132,30 @@
     return second?.data?.session ?? null;
   }
 
+  /** 登录状态变化时，如果导航没跟上就刷新一次（防止时序问题） */
+  function watchAuthForNav() {
+    try {
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+          sessionStorage.removeItem('iys.nav.synced');
+          return;
+        }
+
+        if (event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') return;
+        if (!session?.user) return;
+
+        const stillSignedOut = document.querySelector('.account-nav-link[href^="IYS Account Sign In"]');
+        if (!stillSignedOut) return;
+        if (sessionStorage.getItem('iys.nav.synced')) return;
+
+        sessionStorage.setItem('iys.nav.synced', '1');
+        window.location.reload();
+      });
+    } catch (error) {
+      console.warn('[account] 监听登录状态失败：', error);
+    }
+  }
+
   async function init() {
     const session = await currentSession();
     if (!session?.user) return;
