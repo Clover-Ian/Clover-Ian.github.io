@@ -349,7 +349,19 @@
         }
         saveProfile(data.user);
       } else {
-        const { data: signIn, error } = await client.auth.signInWithPassword({ email, password });
+        // 这个网络（尤其 Safari）偶尔会直接掐断请求，失败时自动再试两次
+        let signIn = null;
+        let error = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          const result = await client.auth.signInWithPassword({ email, password });
+          signIn = result.data;
+          error = result.error;
+
+          const networkFailure = !error
+            || /load failed|failed to fetch|network|timed out/i.test(String(error.message ?? ''));
+          if (!networkFailure) break;
+          if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+        }
 
         // 邮箱没确认：不报错，直接跳到输码这一步，并补发一封验证邮件
         if (error && isUnconfirmedEmail(error)) {
