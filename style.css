@@ -5371,3 +5371,65 @@ body.ai-page .site-footer {
 [hidden] {
     display: none !important;
 }
+
+/* 深色页里的 AI 面板：强制用浅色主题配色，别继承外面的白字 */
+body.theme-dark .ai-panel {
+    background: #fff;
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+body.theme-dark .ai-panel .ai-title,
+body.theme-dark .ai-panel .ai-head,
+body.theme-dark .ai-panel .ai-log,
+body.theme-dark .ai-panel .ai-form {
+    color: var(--ink);
+}
+
+body.theme-dark .ai-panel .ai-sub {
+    color: var(--muted);
+}
+
+body.theme-dark .ai-panel .ai-line {
+    background: #f1f1f4;
+    color: var(--ink);
+}
+
+body.theme-dark .ai-panel .ai-line--me {
+    background: var(--blue);
+    color: #fff;
+}
+
+body.theme-dark .ai-panel .ai-model {
+    background: #fff;
+    color: var(--ink);
+    border-color: rgb(0 0 0 / 10%);
+}
+
+body.theme-dark .ai-panel .ai-input {
+    background: #fff;
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+body.theme-dark .ai-panel .ai-input::placeholder {
+    color: var(--muted);
+}
+
+body.theme-dark .ai-panel .ai-head {
+    border-bottom-color: var(--line);
+}
+
+body.theme-dark .ai-panel .ai-form {
+    border-top-color: var(--line);
+}
+
+body.theme-dark .ai-panel .ai-close,
+body.theme-dark .ai-panel .ai-new {
+    color: var(--muted);
+}
+
+body.theme-dark .ai-panel .ai-gate {
+    background: #fff;
+    color: var(--ink);
+}
