@@ -4718,10 +4718,9 @@ body.theme-dark .ai-line--me {
     margin: 0 0 12px;
 }
 
+/* 原生文件控件被隐藏，改用自定义按钮触发 */
 .profile-block input[type="file"] {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 12.5px;
+    display: none !important;
 }
 
 /* 头像编辑器 */
