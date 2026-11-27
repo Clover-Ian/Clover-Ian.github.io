@@ -41,7 +41,43 @@ function json(payload: unknown, status = 200) {
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (request.method === "GET") return json({ models: MODELS, default: DEFAULT_MODEL });
+  if (request.method === "GET") {
+    // 带登录令牌时，顺手把「用户自己那家」的模型列表也带上
+    const authHeader = request.headers.get("Authorization") ?? "";
+    let mine: string[] = [];
+    let label: string | null = null;
+
+    if (authHeader.startsWith("Bearer ")) {
+      try {
+        const supabase = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_ANON_KEY")!,
+          { global: { headers: { Authorization: authHeader } } },
+        );
+
+        const { data } = await supabase
+          .from("user_ai_settings")
+          .select("api_key, base_url, label")
+          .maybeSingle();
+
+        if (data?.api_key) {
+          label = data.label ?? null;
+          const base = data.base_url || RELAY_BASE;
+          const listing = await fetch(`${base}/models`, {
+            headers: { Authorization: `Bearer ${data.api_key}` },
+          });
+          if (listing.ok) {
+            const body = await listing.json();
+            mine = (body?.data ?? [])
+              .map((item: { id?: string }) => item?.id)
+              .filter((id: unknown): id is string => typeof id === "string");
+          }
+        }
+      } catch { /* 忽略，返回空的 mine */ }
+    }
+
+    return json({ models: MODELS, default: DEFAULT_MODEL, mine, label });
+  }
 
   const auth = request.headers.get("Authorization") ?? "";
 

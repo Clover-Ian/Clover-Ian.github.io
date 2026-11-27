@@ -1605,3 +1605,7 @@ create policy "ai settings own delete" on public.user_ai_settings
     for delete using (auth.uid() = user_id);
 
 grant select, insert, update, delete on public.user_ai_settings to authenticated;
+
+-- ---------- 33. 给用户自己的 AI 配置加一个显示名 ----------
+alter table public.user_ai_settings
+    add column if not exists label text;

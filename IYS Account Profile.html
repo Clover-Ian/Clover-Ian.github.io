@@ -12,7 +12,7 @@
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127m" defer></script>
+    <script src="profile.js?v=20261127n" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -122,13 +122,17 @@
                                placeholder="sk-...">
                         <p class="profile-note" data-ai-key-state style="margin-top:8px">No key saved.</p>
 
+                        <label class="profile-label" for="ai-name-input" style="margin-top:14px">Name <span class="required">required</span></label>
+                        <input id="ai-name-input" type="text" data-ai-name maxlength="24"
+                               placeholder="My key" autocomplete="off">
+                        <p class="profile-note" style="margin-top:6px">Shown in the model list. It cannot contain “IYS”.</p>
+
                         <label class="profile-label" for="ai-base-input" style="margin-top:14px">Base URL <span class="required">required</span></label>
                         <input id="ai-base-input" type="text" data-ai-base
                                placeholder="https://relaydock.omnis.com.cn/v1">
 
                         <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model <span class="required">required</span></label>
-                        <input id="ai-model-input" type="text" data-ai-model
-                               placeholder="deepseek-v4.1-flash">
+                        <select id="ai-model-input" data-ai-model></select>
 
                         <div class="avatar-actions" style="margin-top:16px">
                             <button type="button" class="profile-button" data-ai-save>Save key</button>

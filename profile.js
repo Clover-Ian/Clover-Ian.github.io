@@ -363,10 +363,58 @@
   });
 
   /* ---------- AI key ---------- */
+  async function tokenHeader() {
+    try {
+      const { data } = await client().auth.getSession();
+      const token = data?.session?.access_token;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+      return {};
+    }
+  }
+
   const aiKeyInput = document.querySelector('[data-ai-key]');
   const aiBaseInput = document.querySelector('[data-ai-base]');
   const aiModelInput = document.querySelector('[data-ai-model]');
   const aiKeyState = document.querySelector('[data-ai-key-state]');
+  const aiNameInput = document.querySelector('[data-ai-name]');
+
+  const IYS_MODELS = [
+    'deepseek-v4.1-flash', 'glm-5.3-flash', 'qwen-3.8-flash',
+    'relay-rlx/glm-5.3-flash', 'glm-5.3', 'GLM-5.4', 'deepseek-v4-pro',
+    'kimi-k3.1-pro', 'kimi-k3.1-pro-high', 'mimo-v2.6-pro',
+    'grok-composer-2.5-fast', 'grok-4.7', 'qwen4_max',
+  ];
+
+  let userModels = [];
+
+  function renderModelOptions(selected) {
+    aiModelInput.innerHTML = '';
+
+    const iys = document.createElement('optgroup');
+    iys.label = 'IYS';
+    IYS_MODELS.forEach((id) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = id;
+      iys.append(option);
+    });
+    aiModelInput.append(iys);
+
+    if (userModels.length) {
+      const own = document.createElement('optgroup');
+      own.label = aiNameInput?.value.trim() || 'Your key';
+      userModels.forEach((id) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = id;
+        own.append(option);
+      });
+      aiModelInput.append(own);
+    }
+
+    if (selected) aiModelInput.value = selected;
+  }
   let aiHasSavedKey = false;
 
   async function loadAiSettings() {
@@ -374,7 +422,7 @@
     const supabase = client();
     const { data } = await supabase
       .from('user_ai_settings')
-      .select('api_key, base_url, model')
+      .select('api_key, base_url, model, label')
       .maybeSingle();
 
     aiHasSavedKey = Boolean(data?.api_key);
@@ -387,7 +435,10 @@
     }
 
     aiBaseInput.value = data?.base_url ?? '';
-    aiModelInput.value = data?.model ?? '';
+    if (aiNameInput) aiNameInput.value = data?.label ?? '';
+
+    if (data?.api_key) await loadUserModels();
+    renderModelOptions(data?.model ?? IYS_MODELS[0]);
   }
 
   /** 逐个字段校验，返回第一条错误（没有错误返回 null） */
@@ -395,12 +446,23 @@
     const key = aiKeyInput.value.trim();
     const base = aiBaseInput.value.trim();
     const model = aiModelInput.value.trim();
+    const name = aiNameInput?.value.trim() ?? '';
 
-    [aiKeyInput, aiBaseInput, aiModelInput].forEach((el) => el.classList.remove('is-invalid'));
+    [aiKeyInput, aiBaseInput, aiModelInput, aiNameInput].forEach((el) => el?.classList.remove('is-invalid'));
 
     if (!key && !aiHasSavedKey) {
       aiKeyInput.classList.add('is-invalid');
       return 'An API key is required the first time.';
+    }
+
+    if (!aiHasSavedKey && !name) {
+      aiNameInput?.classList.add('is-invalid');
+      return 'Give this key a name — it is shown in the model list.';
+    }
+
+    if (name && /iys/i.test(name)) {
+      aiNameInput?.classList.add('is-invalid');
+      return 'The name cannot contain “IYS”.';
     }
 
     if (!base || !model) {
@@ -432,13 +494,26 @@
     return null;
   }
 
-  [aiKeyInput, aiBaseInput, aiModelInput].forEach((el) => {
+  [aiKeyInput, aiBaseInput, aiModelInput, aiNameInput].forEach((el) => {
     el?.addEventListener('input', () => {
       el.classList.remove('is-invalid');
       if (!document.querySelector('[data-status="ai"]')?.textContent) return;
       status('ai', '');
     });
   });
+
+  async function loadUserModels() {
+    try {
+      const response = await fetch(
+        'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/IYS',
+        { headers: await tokenHeader() },
+      );
+      const data = await response.json();
+      userModels = Array.isArray(data?.mine) ? data.mine : [];
+    } catch {
+      userModels = [];
+    }
+  }
 
   document.querySelector('[data-ai-save]')?.addEventListener('click', async () => {
     const problem = validateAiFields();
@@ -454,6 +529,7 @@
 
     const payload = {
       user_id: user.id,
+      label: aiNameInput?.value.trim() || null,
       base_url: aiBaseInput.value.trim(),
       model: aiModelInput.value.trim(),
       updated_at: new Date().toISOString(),
@@ -495,7 +571,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            ...(await tokenHeader()),
           },
           body: JSON.stringify({ messages: [{ role: 'user', content: 'Reply with OK only.' }], maxTokens: 10 }),
         },
