@@ -62,7 +62,6 @@
       <div class="ai-head-right">
         <select class="ai-model" aria-label="Model"></select>
         <button type="button" class="ai-new" aria-label="New chat" title="New chat">⟲</button>
-        <button type="button" class="ai-max" aria-label="Fullscreen" title="Fullscreen">⤢</button>
         <button type="button" class="ai-close" aria-label="Close">×</button>
       </div>
     </div>
@@ -84,7 +83,7 @@
   const form = panel.querySelector('.ai-form');
   const input = panel.querySelector('.ai-input');
   const close = panel.querySelector('.ai-close');
-  const maxButton = panel.querySelector('.ai-max');
+
   const newButton = panel.querySelector('.ai-new');
   const handle = panel.querySelector('.ai-resize');
   const modelSelect = panel.querySelector('.ai-model');
@@ -455,20 +454,7 @@
   close.addEventListener('click', () => toggle(false));
 
   // 导航里的 "IYS AI" 入口
-  function openFull() {
-    toggle(true);
-    panel.classList.remove('is-full');   // 先清掉再添加，保证从窗口态进入全屏
-    panel.classList.add('is-full');
-    maxButton.title = 'Exit fullscreen';
-    input.focus();
-  }
 
-  document.querySelectorAll('[data-ai-open]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      openFull();
-    });
-  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -556,10 +542,7 @@
     if (!log.children.length) line(greeting());
     panel.hidden = false;
     fab.classList.add('is-hidden');
-    if (wanted === 'full') {
-      panel.classList.add('is-full');
-      maxButton.title = 'Exit fullscreen';
-    }
+
     input.focus();
   })();
 })();

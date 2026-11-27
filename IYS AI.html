@@ -3,46 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="IYS AI — a small assistant that runs through the IYS Critters proxy.">
+    <meta name="description" content="IYS AI — ask about the site, the apps and the tools.">
     <title>IYS AI</title>
-    <link rel="icon" type="image/png" href="IYS Developer.png">
-    <link rel="apple-touch-icon" href="IYS Developer.png">
-    <link rel="stylesheet" href="style.css?v=20261128i">
+    <link rel="icon" type="image/png" href="IYS AI.png">
+    <link rel="apple-touch-icon" href="IYS AI.png">
+    <link rel="stylesheet" href="style.css?v=20261128j">
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
-    <script src="account-nav.js?v=20261127r" defer></script>
+    <script src="account-nav.js?v=20261127q" defer></script>
+    <script src="announcements.js?v=20261126b" defer></script>
+    <script src="messages.js?v=20261116e" defer></script>
+    <script src="ai-page.js?v=20261128a" defer></script>
 </head>
-<body class="theme-dark">
+<body class="corner-background ai-page">
     <header class="site-header">
         <nav class="navigation" aria-label="Main navigation">
             <a class="brand" href="index.html" aria-label="IYS home">IYS</a>
             <div class="nav-links">
+                <a class="current" href="IYS AI.html" aria-current="page">IYS AI</a>
+                <a href="IYM.html">IYM</a>
+                <a href="IYS Software.html">Software</a>
+                <a href="IYS Studio.html">Studio</a>
+                <a href="IYS Website.html">Website</a>
+                <a href="IYS Developer.html">Developer</a>
+                <a href="mailto:iys-ian@outlook.com">Contact</a>
                 <a class="account-nav-link" href="IYS Account Sign In.html">Sign in</a>
                 <a class="account-nav-link account-signup-link" href="IYS Account Sign Up.html">Sign up</a>
             </div>
         </nav>
     </header>
 
-    <main>
-        <section class="tool-wrap">
-            <p class="eyebrow">Developer · AI</p>
-            <h1>Ask IYS AI.</h1>
-            <p class="hero-copy">A small assistant wired through your own proxy. The key never reaches the browser.</p>
-
-            <div class="tool-card" style="margin-top:26px">
-                <div class="tool-field">
-                    <label for="ai-input">Message</label>
-                    <textarea id="ai-input" style="min-height:88px;font-family:inherit;font-size:14px" placeholder="Ask anything…"></textarea>
+    <main class="ai-main">
+        <section class="ai-shell">
+            <div class="ai-page-head">
+                <img src="IYS AI.png?v=20261128" alt="" class="ai-page-mark">
+                <div>
+                    <h1>IYS AI</h1>
+                    <p>Ask about the site, the apps or the tools.</p>
                 </div>
-
-                <div class="tool-row" style="margin-top:14px">
-                    <button class="tool-button" id="ai-send">Send</button>
-                    <button class="tool-button tool-button--ghost" id="ai-clear">Clear</button>
-                    <span class="tool-note" id="ai-status"></span>
-                </div>
-
-                <div id="ai-log" class="ai-log"></div>
+                <select class="ai-page-model" aria-label="Model"></select>
             </div>
+
+            <div class="ai-page-log" role="log" aria-live="polite" data-ai-log></div>
+
+            <div class="ai-page-gate" data-ai-gate hidden>
+                <p class="ai-gate-title">Sign in to use IYS AI</p>
+                <p class="ai-gate-text">The assistant is available to IYS accounts only.</p>
+                <a class="ai-gate-button" href="IYS Account Sign In.html">Sign in</a>
+            </div>
+
+            <form class="ai-page-form" data-ai-form>
+                <input type="text" class="ai-page-input" placeholder="Ask something…" autocomplete="off" data-ai-input>
+                <button type="submit" class="ai-page-send" aria-label="Send">↑</button>
+            </form>
         </section>
     </main>
 
@@ -57,73 +70,5 @@
             <p class="copyright">© IYS. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-    (() => {
-      // 部署后改成你的函数地址
-      const ENDPOINT = 'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/IYS';
-
-      const input = document.getElementById('ai-input');
-      const send = document.getElementById('ai-send');
-      const clear = document.getElementById('ai-clear');
-      const log = document.getElementById('ai-log');
-      const status = document.getElementById('ai-status');
-
-      const history = [];
-
-      function bubble(text, mine) {
-        const p = document.createElement('p');
-        p.className = mine ? 'ai-line ai-line--me' : 'ai-line';
-        p.textContent = text;
-        log.append(p);
-        log.scrollTop = log.scrollHeight;
-      }
-
-      async function ask() {
-        const text = input.value.trim();
-        if (!text) return;
-
-        bubble(text, true);
-        history.push({ role: 'user', content: text });
-        input.value = '';
-        send.disabled = true;
-        status.textContent = 'Thinking…';
-
-        try {
-          const response = await fetch(ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: history, maxTokens: 400 }),
-          });
-
-          const data = await response.json();
-          const reply = data?.choices?.[0]?.message?.content;
-
-          if (!reply) {
-            bubble('（没有拿到回复：' + JSON.stringify(data).slice(0, 120) + '）', false);
-          } else {
-            bubble(reply, false);
-            history.push({ role: 'assistant', content: reply });
-          }
-          status.textContent = '';
-        } catch (error) {
-          status.textContent = 'Request failed: ' + error.message;
-        } finally {
-          send.disabled = false;
-        }
-      }
-
-      send.addEventListener('click', ask);
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) ask();
-      });
-
-      clear.addEventListener('click', () => {
-        log.innerHTML = '';
-        history.length = 0;
-        status.textContent = '';
-      });
-    })();
-    </script>
 </body>
 </html>

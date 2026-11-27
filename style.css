@@ -5146,3 +5146,131 @@ body.profile-page .profile-panels {
 .profile-panel input.is-default-value:focus {
     color: var(--ink);
 }
+
+/* ---------- IYS AI 独立页面 ---------- */
+body.ai-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.ai-main {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    padding: 28px clamp(18px, 3vw, 40px);
+    min-height: 0;
+}
+
+.ai-shell {
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    width: 100%;
+    max-width: 880px;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.ai-page-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.ai-page-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.ai-page-head h1 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+}
+
+.ai-page-head p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.ai-page-model {
+    margin-left: auto;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 150px;
+    padding: 8px 30px 8px 13px;
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 999px;
+    background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ai-page-log {
+    display: grid;
+    align-content: end;
+    gap: 10px;
+    padding: 20px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.ai-page-form {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px 18px;
+    border-top: 1px solid var(--line);
+}
+
+.ai-page-input {
+    flex: 1;
+    padding: 11px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 14px;
+}
+
+.ai-page-input:focus {
+    outline: 2px solid rgb(0 102 204 / 30%);
+    outline-offset: 1px;
+}
+
+.ai-page-send {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+.ai-page-gate {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.ai-page-gate[hidden],
+.ai-page-log[hidden],
+.ai-page-form[hidden] {
+    display: none !important;
+}
+
+body.ai-page .site-footer {
+    flex-shrink: 0;
+}
