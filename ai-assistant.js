@@ -240,7 +240,7 @@
   const modelSource = new Map();   // value -> 'iys' | 'own'
   let modelsLoaded = false;
 
-  function buildModels(iysList, ownList, ownLabel, selected) {
+  function buildModels(iysList, groups, selected) {
     modelSelect.innerHTML = '';
     modelSource.clear();
 
@@ -255,18 +255,19 @@
     });
     modelSelect.append(iys);
 
-    if (ownList.length) {
+    groups.forEach((group) => {
+      if (!group.models?.length) return;
       const own = document.createElement('optgroup');
-      own.label = ownLabel || 'My key';
-      ownList.forEach((id) => {
+      own.label = group.label || 'My key';
+      group.models.forEach((id) => {
         const option = document.createElement('option');
-        option.value = id;
+        option.value = `${group.id}|${id}`;
         option.textContent = id;
-        modelSource.set(id, 'own');
+        modelSource.set(option.value, 'own');
         own.append(option);
       });
       modelSelect.append(own);
-    }
+    });
 
     if (selected && modelSource.has(selected)) modelSelect.value = selected;
     else modelSelect.value = iysList[0] || '';
@@ -282,8 +283,7 @@
 
     const saved = localStorage.getItem(STORE.model);
     let list = Object.keys(NICE);
-    let mine = [];
-    let label = null;
+    let groups = [];
 
     try {
       const session = client() ? await client().auth.getSession() : null;
@@ -293,18 +293,17 @@
       });
       const payload = await response.json();
       if (Array.isArray(payload?.models) && payload.models.length) list = payload.models;
-      if (Array.isArray(payload?.mine)) mine = payload.mine;
-      if (payload?.label) label = payload.label;
+      if (Array.isArray(payload?.keys)) groups = payload.keys;
     } catch { /* 离线用内置列表 */ }
 
-    buildModels(list, mine, label, saved);
+    buildModels(list, groups, saved);
     modelSelect.addEventListener('change', () => {
       localStorage.setItem(STORE.model, modelSelect.value);
     });
   }
 
   // 先用内置列表占位，打开面板时再换成真实的
-  buildModels(Object.keys(NICE), [], null, localStorage.getItem(STORE.model));
+  buildModels(Object.keys(NICE), [], localStorage.getItem(STORE.model));
 
   /* ---------- 登录状态 ---------- */
   const gate = panel.querySelector('.ai-gate');
@@ -480,8 +479,8 @@
           messages: history,
           system: SYSTEM,
           maxTokens: 320,
-          model: modelSelect.value || undefined,
-          source: modelSource.get(modelSelect.value) || 'iys',
+          model: (modelSelect.value || '').split('|').pop(),
+          keyId: (modelSelect.value || '').includes('|') ? modelSelect.value.split('|')[0] : undefined,
         }),
       });
 

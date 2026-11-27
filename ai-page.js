@@ -72,7 +72,7 @@
     return signedIn;
   }
 
-  function buildModels(iysList, ownList, label, selected) {
+  function buildModels(iysList, groups, selected) {
     select.innerHTML = '';
     source.clear();
 
@@ -87,18 +87,19 @@
     });
     select.append(iys);
 
-    if (ownList.length) {
+    groups.forEach((group) => {
+      if (!group.models?.length) return;
       const own = document.createElement('optgroup');
-      own.label = label || 'My key';
-      ownList.forEach((id) => {
+      own.label = group.label || 'My key';
+      group.models.forEach((id) => {
         const option = document.createElement('option');
-        option.value = id;
+        option.value = `${group.id}|${id}`;
         option.textContent = id;
-        source.set(id, 'own');
+        source.set(option.value, 'own');
         own.append(option);
       });
       select.append(own);
-    }
+    });
 
     select.value = selected && source.has(selected) ? selected : (iysList[0] || '');
   }
@@ -108,8 +109,7 @@
     loaded = true;
 
     let iysList = Object.keys(NICE);
-    let ownList = [];
-    let label = null;
+    let groups = [];
 
     try {
       const response = await fetch(ENDPOINT, {
@@ -117,11 +117,10 @@
       });
       const data = await response.json();
       if (Array.isArray(data?.models) && data.models.length) iysList = data.models;
-      if (Array.isArray(data?.mine)) ownList = data.mine;
-      if (data?.label) label = data.label;
+      if (Array.isArray(data?.keys)) groups = data.keys;
     } catch { /* 用内置列表 */ }
 
-    buildModels(iysList, ownList, label, localStorage.getItem(STORE.model));
+    buildModels(iysList, groups, localStorage.getItem(STORE.model));
   }
 
   select?.addEventListener('change', () => localStorage.setItem(STORE.model, select.value));
@@ -149,8 +148,8 @@
           messages: history,
           system: SYSTEM,
           maxTokens: 400,
-          model: select.value || undefined,
-          source: source.get(select.value) || 'iys',
+          model: (select.value || '').split('|').pop(),
+          keyId: (select.value || '').includes('|') ? select.value.split('|')[0] : undefined,
         }),
       });
 

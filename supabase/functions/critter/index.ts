@@ -42,10 +42,8 @@ function json(payload: unknown, status = 200) {
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (request.method === "GET") {
-    // 带登录令牌时，顺手把「用户自己那家」的模型列表也带上
     const authHeader = request.headers.get("Authorization") ?? "";
-    let mine: string[] = [];
-    let label: string | null = null;
+    const keys: Array<{ id: string; label: string; models: string[] }> = [];
 
     if (authHeader.startsWith("Bearer ")) {
       try {
@@ -57,28 +55,30 @@ Deno.serve(async (request) => {
 
         const { data } = await supabase
           .from("user_ai_settings")
-          .select("api_key, base_url, label")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .select("id, label, api_key, base_url")
+          .order("created_at", { ascending: false });
 
-        if (data?.api_key) {
-          label = data.label ?? null;
-          const base = data.base_url || RELAY_BASE;
-          const listing = await fetch(`${base}/models`, {
-            headers: { Authorization: `Bearer ${data.api_key}` },
-          });
-          if (listing.ok) {
-            const body = await listing.json();
-            mine = (body?.data ?? [])
-              .map((item: { id?: string }) => item?.id)
-              .filter((id: unknown): id is string => typeof id === "string");
-          }
+        for (const row of data ?? []) {
+          if (!row?.api_key) continue;
+          let models: string[] = [];
+          try {
+            const listing = await fetch(`${row.base_url || RELAY_BASE}/models`, {
+              headers: { Authorization: `Bearer ${row.api_key}` },
+            });
+            if (listing.ok) {
+              const body = await listing.json();
+              models = (body?.data ?? [])
+                .map((item: { id?: string }) => item?.id)
+                .filter((id: unknown): id is string => typeof id === "string");
+            }
+          } catch { /* 该家没有 /models 就留空 */ }
+
+          keys.push({ id: row.id, label: row.label || "My key", models });
         }
-      } catch { /* 忽略，返回空的 mine */ }
+      } catch { /* 忽略 */ }
     }
 
-    return json({ models: MODELS, default: DEFAULT_MODEL, mine, label });
+    return json({ models: MODELS, default: DEFAULT_MODEL, keys });
   }
 
   const auth = request.headers.get("Authorization") ?? "";
@@ -110,23 +110,43 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const { messages, maxTokens, system, model, source } = await request.json();
+    const { messages, maxTokens, system, model, keyId } = await request.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return json({ error: "messages is required" }, 400);
     }
 
     const requested = String(model ?? DEFAULT_MODEL);
-
-    // 判断用谁的钱：
-    // 1) 模型在 IYS 白名单里 → 一定用共享 key（不管前端传什么）
-    // 2) 不在白名单、且访客有自己的 key → 用他自己的
-    // 3) 其余 → 共享 key + 默认模型
     const inSharedList = MODELS.includes(requested);
-    const useOwn = !inSharedList && Boolean(userKey) && (source === "own" || Boolean(userKey));
 
-    const key = useOwn ? userKey! : RELAY_KEY;
-    const base = (useOwn && userBase) ? userBase : RELAY_BASE;
-    const chosen = inSharedList ? requested : (useOwn ? requested : DEFAULT_MODEL);
+    // 指定的那条 key（前端从下拉里的 value 带过来）
+    let pickedKey: string | null = null;
+    let pickedBase: string | null = null;
+
+    if (keyId && auth.startsWith("Bearer ")) {
+      try {
+        const supabase = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_ANON_KEY")!,
+          { global: { headers: { Authorization: auth } } },
+        );
+        const { data } = await supabase
+          .from("user_ai_settings")
+          .select("api_key, base_url")
+          .eq("id", keyId)
+          .maybeSingle();
+
+        if (data?.api_key) {
+          pickedKey = data.api_key;
+          pickedBase = data.base_url ?? null;
+        }
+      } catch { /* 忽略 */ }
+    }
+
+    // 指定了 key 就用它；否则看模型是否在白名单
+    const useOwn = Boolean(pickedKey) || (!inSharedList && Boolean(userKey));
+    const key = pickedKey ?? (useOwn ? userKey : RELAY_KEY);
+    const base = pickedBase ?? (useOwn && userBase ? userBase : RELAY_BASE);
+    const chosen = inSharedList ? requested : requested;
 
     if (!key) return json({ error: "No API key configured" }, 500);
 
