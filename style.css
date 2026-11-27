@@ -4855,6 +4855,6 @@ body.theme-dark .ai-line--me {
 
 .ai-panel.is-full .ai-log,
 .ai-panel.is-full .ai-form {
-    padding-left: max(24px, calc((100vw - 760px) / 2));
-    padding-right: max(24px, calc((100vw - 760px) / 2));
+    padding-left: max(24px, calc((100vw - 1000px) / 2));
+    padding-right: max(24px, calc((100vw - 1000px) / 2));
 }
