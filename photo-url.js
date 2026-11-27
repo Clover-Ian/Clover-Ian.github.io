@@ -9,6 +9,7 @@
   const customWrap = document.getElementById('photo-custom-wrap');
   const customDays = document.getElementById('photo-custom-days');
   const maxWidth = document.getElementById('photo-max');
+  const quality = document.getElementById('photo-quality');
   const run = document.getElementById('photo-run');
   const status = document.getElementById('photo-status');
   const result = document.getElementById('photo-result');
@@ -66,17 +67,31 @@
     return Number(expiry.value);
   }
 
-  async function shrink(image) {
-    const ratio = Math.min(1, Number(maxWidth.value || 1600) / image.width);
+  async function prepare(image, sourceType) {
+    const limit = Number(maxWidth.value || 0);
+    const ratio = limit > 0 ? Math.min(1, limit / image.width) : 1;
     const w = Math.max(1, Math.round(image.width * ratio));
     const h = Math.max(1, Math.round(image.height * ratio));
 
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
-    canvas.getContext('2d').drawImage(image, 0, 0, w, h);
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(image, 0, 0, w, h);
 
-    return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+    const q = Number(quality.value || 95) / 100;
+
+    // 截图类（PNG）先用无损，太大再降级为高质量 JPEG
+    if ((sourceType || '').includes('png')) {
+      const png = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (png && png.size < 4 * 1024 * 1024) {
+        return { blob: png, ext: 'png', type: 'image/png' };
+      }
+    }
+
+    const jpeg = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', q));
+    return { blob: jpeg, ext: 'jpg', type: 'image/jpeg' };
   }
 
   run.addEventListener('click', async () => {
@@ -99,15 +114,16 @@
         img.src = URL.createObjectURL(file);
       });
 
-      const blob = await shrink(image);
+      const prepared = await prepare(image, file.type);
+      const blob = prepared.blob;
       if (!blob) throw new Error('Could not process that image.');
 
-      const name = `${crypto.randomUUID()}.jpg`;
+      const name = `${crypto.randomUUID()}.${prepared.ext}`;
       const path = `public/${name}`;
 
       say('Uploading…');
       const { error: uploadError } = await client.storage.from('photos').upload(path, blob, {
-        contentType: 'image/jpeg',
+        contentType: prepared.type,
         cacheControl: '3600',
       });
       if (uploadError) throw uploadError;

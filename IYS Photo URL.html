@@ -11,7 +11,7 @@
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127q" defer></script>
-    <script src="photo-url.js?v=20261129b" defer></script>
+    <script src="photo-url.js?v=20261129c" defer></script>
     <script src="ai-assistant.js?v=20261129g" defer></script>
 </head>
 <body class="theme-dark">
@@ -60,8 +60,13 @@
                     </div>
 
                     <div class="tool-field">
-                        <label for="photo-max">Max width (px)</label>
-                        <input id="photo-max" type="number" min="120" max="4000" value="1600">
+                        <label for="photo-max">Max width (0 = original)</label>
+                        <input id="photo-max" type="number" min="0" max="6000" value="0">
+                    </div>
+
+                    <div class="tool-field">
+                        <label for="photo-quality">Quality</label>
+                        <input id="photo-quality" type="range" min="70" max="100" value="95">
                     </div>
                 </div>
 
