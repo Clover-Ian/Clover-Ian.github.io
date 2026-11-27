@@ -98,7 +98,7 @@ Deno.serve(async (request) => {
       } catch { /* 忽略 */ }
     }
 
-    return json({ models: MODELS, default: DEFAULT_MODEL, keys });
+    return json({ v: 4, models: MODELS, default: DEFAULT_MODEL, keys });
   }
 
   const auth = request.headers.get("Authorization") ?? "";
@@ -241,6 +241,7 @@ Deno.serve(async (request) => {
       headers: {
         ...CORS,
         "Content-Type": "application/json",
+        "x-iys-v": "4",
         "x-iys-key": useOwn ? "own" : "shared",
         "x-iys-model": chosen,
         "x-iys-host": host,

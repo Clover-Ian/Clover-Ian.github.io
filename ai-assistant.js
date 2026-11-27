@@ -289,6 +289,7 @@
   }
 
   let modelsRun = 0;
+  let payloadVersion = null;
 
   async function loadModels() {
     if (modelsLoaded) return;
@@ -306,6 +307,7 @@
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const payload = await response.json();
+      payloadVersion = payload?.v ?? null;
       if (Array.isArray(payload?.models) && payload.models.length) list = payload.models;
       if (Array.isArray(payload?.keys)) {
         groups = payload.keys;
@@ -317,7 +319,8 @@
     // 有更晚的请求了：丢掉这次结果，避免旧结果（没有 key）覆盖新结果
     if (run !== modelsRun) return;
 
-    console.info('[ai] models: iys=%d groups=%d', list.length, groups.length);
+    console.info('[ai] models: iys=%d groups=%d version=%s',
+      list.length, groups.length, payloadVersion || '?');
     buildModels(list, groups, saved);
     modelSelect.addEventListener('change', () => {
       localStorage.setItem(STORE.model, modelSelect.value);
