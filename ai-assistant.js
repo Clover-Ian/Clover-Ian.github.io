@@ -61,6 +61,11 @@
       </div>
     </div>
     <div class="ai-log" role="log" aria-live="polite"></div>
+    <div class="ai-gate" hidden>
+      <p class="ai-gate-title">Sign in to use IYS AI</p>
+      <p class="ai-gate-text">The assistant is available to IYS accounts only.</p>
+      <a class="ai-gate-button" href="IYS Account Sign In.html">Sign in</a>
+    </div>
     <form class="ai-form">
       <input type="text" class="ai-input" placeholder="Ask something…" autocomplete="off">
       <button type="submit" class="ai-send" aria-label="Send">↑</button>
@@ -186,6 +191,52 @@
     });
   })();
 
+  /* ---------- 登录状态 ---------- */
+  const gate = panel.querySelector('.ai-gate');
+  const gateLink = panel.querySelector('.ai-gate-button');
+
+  function waitForClient(timeout = 6000) {
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const timer = setInterval(() => {
+        if (window.iysSupabase) {
+          clearInterval(timer);
+          resolve(window.iysSupabase);
+        } else if (Date.now() - startedAt > timeout) {
+          clearInterval(timer);
+          resolve(null);
+        }
+      }, 100);
+    });
+  }
+
+  let session = null;
+
+  async function refreshAuth() {
+    const client = window.iysSupabase ?? await waitForClient();
+    if (!client) {
+      session = null;
+    } else {
+      try {
+        const { data } = await client.auth.getSession();
+        session = data?.session ?? null;
+      } catch {
+        session = null;
+      }
+    }
+
+    const signedIn = Boolean(session?.user);
+    gate.hidden = signedIn;
+    form.hidden = !signedIn;
+
+    if (!signedIn) {
+      const here = location.pathname.split('/').pop() + location.search;
+      gateLink.href = `IYS Account Sign In.html?next=${encodeURIComponent(here)}`;
+    }
+
+    return signedIn;
+  }
+
   /* ---------- 对话 ---------- */
   function line(text, mine) {
     const p = document.createElement('p');
@@ -199,12 +250,14 @@
   function toggle(open) {
     panel.hidden = !open;
     fab.classList.toggle('is-hidden', open);
-    if (open) {
-      if (!log.children.length) {
-        line('I am IYS AI. Can I help you?');
+    if (!open) return;
+
+    refreshAuth().then((signedIn) => {
+      if (signedIn) {
+        if (!log.children.length) line('I am IYS AI. Can I help you?');
+        input.focus();
       }
-      input.focus();
-    }
+    });
   }
 
   fab.addEventListener('click', () => toggle(!0));
@@ -236,6 +289,12 @@
       return;
     }
 
+    const signedIn = await refreshAuth();
+    if (!signedIn) {
+      line('Please sign in to use IYS AI.');
+      return;
+    }
+
     used += 1;
     input.value = '';
     line(text, true);
@@ -246,7 +305,10 @@
     try {
       const response = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           messages: history,
           system: SYSTEM,
