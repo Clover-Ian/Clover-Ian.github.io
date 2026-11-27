@@ -4196,7 +4196,7 @@ body.theme-dark .ai-line--me {
     width: 48px;
     height: 48px;
     border: 1px solid rgb(0 0 0 / 8%);
-    border-radius: 15px;          /* 圆角方形 */
+    border-radius: 999px;
     background: #fff;
     color: var(--ink);
     cursor: pointer;
@@ -4410,7 +4410,7 @@ body.theme-dark .ai-line--me {
 .ai-fab-mark {
     width: 32px;
     height: 32px;
-    border-radius: 9px;          /* 圆角方形 */
+    border-radius: 50%;
     object-fit: cover;
     display: block;
 }
