@@ -126,6 +126,30 @@
     const menu = document.createElement('div');
     menu.className = 'account-menu';
     menu.hidden = true;
+    menu.setAttribute('aria-label', 'Account options');
+
+    // 顶部：头像 + 名字 + 邮箱
+    const menuUser = document.createElement('div');
+    menuUser.className = 'account-menu-user';
+    const avatarSlot = document.createElement('span');
+    const identity = document.createElement('span');
+    identity.className = 'account-menu-user-name';
+    const strong = document.createElement('strong');
+    strong.textContent = displayNameOf(user);
+    const mail = document.createElement('span');
+    mail.textContent = user.email || '';
+    identity.append(strong, mail);
+    menuUser.append(avatarSlot, identity);
+
+    try {
+      avatarSlot.append(buildAvatar(user, 40));
+    } catch { /* 忽略 */ }
+
+    // 收件箱
+    const inbox = document.createElement('a');
+    inbox.href = 'IYS Inbox.html';
+    inbox.className = 'account-menu-inbox';
+    inbox.textContent = 'Inbox';
 
     const settings = document.createElement('a');
     settings.href = 'IYS Account Profile.html';
@@ -136,7 +160,7 @@
     signOut.type = 'button';
     signOut.textContent = 'Sign out';
 
-    menu.append(settings, signOut);
+    menu.append(inbox, menuUser, settings, signOut);
 
     const wrap = document.createElement('div');
     wrap.className = 'account-menu-container';
@@ -160,6 +184,7 @@
       if (event.key === 'Escape') setOpen(false);
     });
 
+    inbox.addEventListener('click', () => setOpen(false));
     settings.addEventListener('click', () => setOpen(false));
 
     signOut.addEventListener('click', async () => {

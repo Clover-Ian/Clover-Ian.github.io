@@ -4779,3 +4779,21 @@ body.theme-dark .ai-line--me {
 .profile-block:first-of-type {
     padding-top: 30px;
 }
+
+/* 账号菜单里的链接行（和旧按钮一致） */
+.account-menu-inbox,
+.account-menu-profile {
+    display: block;
+    padding: 9px 10px;
+    border-radius: 7px;
+    color: var(--ink);
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.account-menu-inbox:hover,
+.account-menu-profile:hover {
+    background: #f4f4f7;
+    text-decoration: none;
+}
