@@ -156,7 +156,7 @@ Deno.serve(async (request) => {
       messages: system
         ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
         : messages,
-      max_tokens: Math.min(Number(maxTokens) || 220, 600),
+      max_tokens: Math.min(Number(maxTokens) || 300, 1200),
       temperature: 0.85,
     });
 
