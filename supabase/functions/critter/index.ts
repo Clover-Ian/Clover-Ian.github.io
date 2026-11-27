@@ -54,10 +54,29 @@ Deno.serve(async (request) => {
           { global: { headers: { Authorization: authHeader } } },
         );
 
-        const { data } = await supabase
+        // 新版：id/label/created_at；旧表结构下回退
+        let rows: any[] | null = null;
+        const first = await supabase
           .from("user_ai_settings")
           .select("id, label, api_key, base_url")
           .order("created_at", { ascending: false });
+
+        if (!first.error) {
+          rows = first.data as any[];
+        } else {
+          const fallback = await supabase
+            .from("user_ai_settings")
+            .select("api_key, base_url, model")
+            .limit(5);
+          rows = (fallback.data ?? []).map((row: any, index: number) => ({
+            id: `legacy-${index}`,
+            label: row.model || "My key",
+            api_key: row.api_key,
+            base_url: row.base_url,
+          }));
+        }
+
+        const data = rows;
 
         for (const row of data ?? []) {
           if (!row?.api_key) continue;

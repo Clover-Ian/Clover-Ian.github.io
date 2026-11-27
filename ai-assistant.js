@@ -311,6 +311,7 @@
       }
     } catch { /* 离线用内置列表 */ }
 
+    console.info('[ai] models: iys=%d groups=%d', list.length, groups.length);
     buildModels(list, groups, saved);
     modelSelect.addEventListener('change', () => {
       localStorage.setItem(STORE.model, modelSelect.value);
