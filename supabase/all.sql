@@ -1492,3 +1492,29 @@ as $$
 $$;
 
 grant execute on function public.am_i_banned() to authenticated;
+
+-- ---------- 29. IYS AI 聊天记录（每账号一份） ----------
+create table if not exists public.ai_messages (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+    role text not null check (role in ('user', 'assistant')),
+    content text not null,
+    created_at timestamptz not null default now()
+);
+
+create index if not exists ai_messages_user_time_idx
+    on public.ai_messages (user_id, created_at);
+
+alter table public.ai_messages enable row level security;
+
+drop policy if exists "ai own read" on public.ai_messages;
+create policy "ai own read" on public.ai_messages
+    for select using (auth.uid() = user_id);
+
+drop policy if exists "ai own insert" on public.ai_messages;
+create policy "ai own insert" on public.ai_messages
+    for insert with check (auth.uid() = user_id);
+
+drop policy if exists "ai own delete" on public.ai_messages;
+create policy "ai own delete" on public.ai_messages
+    for delete using (auth.uid() = user_id);

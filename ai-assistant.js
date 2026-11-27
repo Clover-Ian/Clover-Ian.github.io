@@ -110,6 +110,53 @@
     } catch { /* 忽略 */ }
   }
 
+  /* ---------- 云端记录（每账号一份） ---------- */
+  function table() {
+    const client = window.iysSupabase;
+    if (!client || !session?.user) return null;
+    return client.from('ai_messages');
+  }
+
+  async function loadRemoteHistory() {
+    const db = table();
+    if (!db) return false;
+
+    try {
+      const { data, error } = await db
+        .select('role, content, created_at')
+        .order('created_at', { ascending: true })
+        .limit(40);
+      if (error) return false;
+      if (!Array.isArray(data) || !data.length) return false;
+
+      history.length = 0;
+      data.forEach((row) => history.push({ role: row.role, content: row.content }));
+      saveHistory();
+
+      log.innerHTML = '';
+      history.forEach((item) => line(item.content, item.role === 'user'));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function pushRemote(role, content) {
+    const db = table();
+    if (!db) return;
+    try {
+      await db.insert({ role, content: String(content).slice(0, 4000) });
+    } catch { /* 忽略，本地仍有副本 */ }
+  }
+
+  async function clearRemote() {
+    const db = table();
+    if (!db) return;
+    try {
+      await db.delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    } catch { /* 忽略 */ }
+  }
+
   /* ---------- 位置 / 大小 ---------- */
   function applyBox(box) {
     panel.style.left = `${box.x}px`;
@@ -316,6 +363,7 @@
         restoreHistory();
         if (!log.children.length) line('I am IYS AI. Can I help you?');
         input.focus();
+        loadRemoteHistory();
       }
     });
   }
@@ -323,6 +371,7 @@
   newButton.addEventListener('click', () => {
     history.length = 0;
     saveHistory();
+    clearRemote();
     log.innerHTML = '';
     line('I am IYS AI. Can I help you?');
     input.focus();
@@ -368,6 +417,7 @@
     line(text, true);
     history.push({ role: 'user', content: text });
     saveHistory();
+    pushRemote('user', text);
 
     const pending = line('…');
 
@@ -399,6 +449,7 @@
       line(reply);
       history.push({ role: 'assistant', content: reply });
       saveHistory();
+      pushRemote('assistant', reply);
     } catch (error) {
       pending.remove();
       line('Could not reach the assistant. Check your connection and try again.');
