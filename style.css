@@ -5119,7 +5119,8 @@ body.profile-page .profile-shell {
 
 body.profile-page .profile-tabs {
     align-content: start;
-    height: 100%;
+    align-self: start;      /* 高度跟着选项卡走，不拉满 */
+    height: auto;
 }
 
 body.profile-page .profile-panels {
