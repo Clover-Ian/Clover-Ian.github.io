@@ -367,6 +367,7 @@
   const aiBaseInput = document.querySelector('[data-ai-base]');
   const aiModelInput = document.querySelector('[data-ai-model]');
   const aiKeyState = document.querySelector('[data-ai-key-state]');
+  let aiHasSavedKey = false;
 
   async function loadAiSettings() {
     if (!user) return;
@@ -376,11 +377,13 @@
       .select('api_key, base_url, model')
       .maybeSingle();
 
-    if (data?.api_key) {
+    aiHasSavedKey = Boolean(data?.api_key);
+    if (aiHasSavedKey) {
       aiKeyState.textContent = `Saved key: ${data.api_key.slice(0, 4)}••••${data.api_key.slice(-4)}`;
-      aiKeyInput.placeholder = 'Enter a new key to replace it';
+      aiKeyInput.placeholder = 'Leave empty to keep the saved key';
     } else {
-      aiKeyState.textContent = 'No key saved — using the shared key.';
+      aiKeyState.textContent = 'No key saved yet — fill all three fields.';
+      aiKeyInput.placeholder = 'sk-...';
     }
 
     aiBaseInput.value = data?.base_url ?? '';
@@ -395,14 +398,18 @@
 
     [aiKeyInput, aiBaseInput, aiModelInput].forEach((el) => el.classList.remove('is-invalid'));
 
-    if (!key || !base || !model) {
-      if (!key) aiKeyInput.classList.add('is-invalid');
-      if (!base) aiBaseInput.classList.add('is-invalid');
-      if (!model) aiModelInput.classList.add('is-invalid');
-      return 'All three fields are required.';
+    if (!key && !aiHasSavedKey) {
+      aiKeyInput.classList.add('is-invalid');
+      return 'An API key is required the first time.';
     }
 
-    if (!/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
+    if (!base || !model) {
+      if (!base) aiBaseInput.classList.add('is-invalid');
+      if (!model) aiModelInput.classList.add('is-invalid');
+      return 'Base URL and model are both required.';
+    }
+
+    if (key && !/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
       aiKeyInput.classList.add('is-invalid');
       return 'The key should look like sk- followed by at least 16 characters.';
     }
@@ -445,13 +452,16 @@
     const supabase = client();
     status('ai', 'Saving…');
 
-    const { error } = await supabase.from('user_ai_settings').upsert({
+    const payload = {
       user_id: user.id,
-      api_key: key || null,
-      base_url: aiBaseInput.value.trim() || null,
-      model: aiModelInput.value.trim() || null,
+      base_url: aiBaseInput.value.trim(),
+      model: aiModelInput.value.trim(),
       updated_at: new Date().toISOString(),
-    });
+    };
+    // 没填新 key 就保留原来那一条
+    if (key) payload.api_key = key;
+
+    const { error } = await supabase.from('user_ai_settings').upsert(payload);
 
     if (error) {
       status('ai', error.message, false);
@@ -460,7 +470,7 @@
 
     aiKeyInput.value = '';
     await loadAiSettings();
-    status('ai', key ? 'Key saved.' : 'Key cleared.');
+    status('ai', 'Saved.');
   });
 
   document.querySelector('[data-ai-remove]')?.addEventListener('click', async () => {
