@@ -7,12 +7,12 @@
     <title>IYS Account</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261127x">
+    <link rel="stylesheet" href="style.css?v=20261127y">
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127k" defer></script>
+    <script src="profile.js?v=20261127l" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -117,16 +117,16 @@
 
                     <div class="profile-block">
                         <h3>API key</h3>
-                        <label class="profile-label" for="ai-key-input">Key</label>
+                        <label class="profile-label" for="ai-key-input">Key <span class="required">required</span></label>
                         <input id="ai-key-input" type="password" data-ai-key autocomplete="off"
                                placeholder="sk-...">
                         <p class="profile-note" data-ai-key-state style="margin-top:8px">No key saved.</p>
 
-                        <label class="profile-label" for="ai-base-input" style="margin-top:14px">Base URL</label>
+                        <label class="profile-label" for="ai-base-input" style="margin-top:14px">Base URL <span class="required">required</span></label>
                         <input id="ai-base-input" type="text" data-ai-base
                                placeholder="https://relaydock.omnis.com.cn/v1">
 
-                        <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model</label>
+                        <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model <span class="required">required</span></label>
                         <input id="ai-model-input" type="text" data-ai-model
                                placeholder="deepseek-v4.1-flash">
 

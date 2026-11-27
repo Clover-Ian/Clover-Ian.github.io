@@ -4834,3 +4834,20 @@ body.theme-dark .ai-line--me {
 .avatar-file .profile-button {
     margin-top: 0;
 }
+
+/* AI 设置：必填与格式错误 */
+.required {
+    margin-left: 6px;
+    color: #c0271d;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+}
+
+.profile-panel input.is-invalid {
+    border-color: #c0271d !important;
+    background: rgba(192, 39, 29, 0.04);
+}
+
+.profile-panel input.is-invalid:focus {
+    outline: 2px solid rgba(192, 39, 29, 0.35);
+}

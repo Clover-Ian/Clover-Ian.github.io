@@ -387,12 +387,60 @@
     aiModelInput.value = data?.model ?? '';
   }
 
-  document.querySelector('[data-ai-save]')?.addEventListener('click', async () => {
+  /** 逐个字段校验，返回第一条错误（没有错误返回 null） */
+  function validateAiFields() {
     const key = aiKeyInput.value.trim();
-    if (key && !key.startsWith('sk-')) {
-      status('ai', 'That does not look like an API key (sk-…).', false);
+    const base = aiBaseInput.value.trim();
+    const model = aiModelInput.value.trim();
+
+    [aiKeyInput, aiBaseInput, aiModelInput].forEach((el) => el.classList.remove('is-invalid'));
+
+    if (!key || !base || !model) {
+      if (!key) aiKeyInput.classList.add('is-invalid');
+      if (!base) aiBaseInput.classList.add('is-invalid');
+      if (!model) aiModelInput.classList.add('is-invalid');
+      return 'All three fields are required.';
+    }
+
+    if (!/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
+      aiKeyInput.classList.add('is-invalid');
+      return 'The key should look like sk- followed by at least 16 characters.';
+    }
+
+    let parsed = null;
+    try {
+      parsed = new URL(base);
+    } catch { /* 下面统一报错 */ }
+
+    if (!parsed || !/^https?:$/.test(parsed.protocol)) {
+      aiBaseInput.classList.add('is-invalid');
+      return 'The base URL must start with https:// and be a valid address.';
+    }
+
+    if (!/^[A-Za-z0-9._/-]+$/.test(model)) {
+      aiModelInput.classList.add('is-invalid');
+      return 'Model names can only contain letters, numbers, dots, dashes, underscores and slashes.';
+    }
+
+    return null;
+  }
+
+  [aiKeyInput, aiBaseInput, aiModelInput].forEach((el) => {
+    el?.addEventListener('input', () => {
+      el.classList.remove('is-invalid');
+      if (!document.querySelector('[data-status="ai"]')?.textContent) return;
+      status('ai', '');
+    });
+  });
+
+  document.querySelector('[data-ai-save]')?.addEventListener('click', async () => {
+    const problem = validateAiFields();
+    if (problem) {
+      status('ai', problem, false);
       return;
     }
+
+    const key = aiKeyInput.value.trim();
 
     const supabase = client();
     status('ai', 'Saving…');
