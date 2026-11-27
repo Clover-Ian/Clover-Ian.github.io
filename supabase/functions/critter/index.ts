@@ -150,21 +150,42 @@ Deno.serve(async (request) => {
 
     if (!key) return json({ error: "No API key configured" }, 500);
 
-    const upstream = await fetch(`${base}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: chosen,
-        messages: system
-          ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
-          : messages,
-        max_tokens: Math.min(Number(maxTokens) || 220, 600),
-        temperature: 0.85,
-      }),
+    const payload = JSON.stringify({
+      model: chosen,
+      messages: system
+        ? [{ role: "system", content: String(system).slice(0, 1200) }, ...messages]
+        : messages,
+      max_tokens: Math.min(Number(maxTokens) || 220, 600),
+      temperature: 0.85,
     });
+
+    // 上游偶尔连不上（尤其国内中转对海外机房），重试一次再说
+    let upstream: Response | null = null;
+    let lastError = "";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        upstream = await fetch(`${base}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+          body: payload,
+          signal: AbortSignal.timeout(15000),
+        });
+        if (upstream.ok || upstream.status < 500) break;
+      } catch (error) {
+        lastError = String(error);
+        upstream = null;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
+    if (!upstream) {
+      return json({
+        error: `Could not reach ${(() => { try { return new URL(base).hostname; } catch { return "the model provider"; } })()} — ${lastError || "connection timed out"}`,
+      }, 502);
+    }
 
     const text = await upstream.text();
 
