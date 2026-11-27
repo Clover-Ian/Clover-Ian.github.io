@@ -12,7 +12,7 @@
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127i" defer></script>
+    <script src="profile.js?v=20261127j" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -131,6 +131,29 @@
             </div>
         </section>
     </main>
+
+
+    <dialog class="account-settings-dialog" id="delete-dialog" aria-labelledby="account-delete-title">
+        <form class="account-settings-form" method="dialog" id="delete-form">
+            <h2 id="account-delete-title">Delete your account?</h2>
+            <p class="account-delete-warning">
+                This permanently deletes your account and signs you out on all devices. This cannot be undone.
+            </p>
+            <label>
+                Current password
+                <input name="currentPassword" type="password" autocomplete="current-password" maxlength="128" required>
+            </label>
+            <label class="account-delete-confirm">
+                <input name="confirmation" type="checkbox" required>
+                I understand and want to permanently delete my account.
+            </label>
+            <p class="account-feedback" role="status" hidden></p>
+            <div class="account-email-actions">
+                <button class="account-email-cancel" type="button" data-delete-cancel>Cancel</button>
+                <button class="account-delete-submit" type="submit" data-delete-submit>Delete account</button>
+            </div>
+        </form>
+    </dialog>
 
     <footer class="site-footer">
         <div class="footer-inner">

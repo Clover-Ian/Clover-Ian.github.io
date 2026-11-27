@@ -360,19 +360,78 @@
     window.location.assign('index.html');
   });
 
-  document.querySelector('[data-delete-account]')?.addEventListener('click', async () => {
-    const sure = window.confirm('Delete your IYS account? This cannot be undone.');
-    if (!sure) return;
+  /* ---------- 删除账号：密码 + 勾选确认 ---------- */
+  const deleteDialog = document.getElementById('delete-dialog');
+  const deleteForm = document.getElementById('delete-form');
+  const deletePassword = deleteForm?.elements.currentPassword;
+  const deleteCheckbox = deleteForm?.elements.confirmation;
+  const deleteFeedback = deleteForm?.querySelector('.account-feedback');
+  const deleteSubmit = document.querySelector('[data-delete-submit]');
 
-    status('danger', 'Deleting…');
-    const { error } = await client().rpc('delete_my_account');
-    if (error) {
-      status('danger', error.message, false);
+  function deleteMessage(text, error = true) {
+    if (!deleteFeedback) return;
+    deleteFeedback.textContent = text;
+    deleteFeedback.hidden = false;
+    deleteFeedback.classList.toggle('is-success', !error);
+  }
+
+  document.querySelector('[data-delete-account]')?.addEventListener('click', () => {
+    deleteForm?.reset();
+    if (deleteFeedback) {
+      deleteFeedback.hidden = true;
+      deleteFeedback.textContent = '';
+    }
+    deleteDialog?.showModal();
+    deletePassword?.focus();
+  });
+
+  document.querySelector('[data-delete-cancel]')?.addEventListener('click', () => {
+    deleteDialog?.close();
+  });
+
+  deleteForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!deleteCheckbox?.checked) {
+      deleteMessage('Please confirm that you want to delete your account.');
       return;
     }
 
-    await client().auth.signOut({ scope: 'local' }).catch(() => {});
-    window.location.assign('index.html');
+    const password = deletePassword?.value ?? '';
+    if (password.length < 6) {
+      deleteMessage('Enter your current password.');
+      return;
+    }
+
+    const supabase = client();
+    deleteSubmit.disabled = true;
+    deleteSubmit.textContent = 'Deleting…';
+    deleteMessage('Checking your password…', false);
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password,
+      });
+      if (authError) {
+        deleteMessage('That password is not correct.');
+        return;
+      }
+
+      const { error } = await supabase.rpc('delete_my_account');
+      if (error) {
+        deleteMessage(error.message || 'Could not delete the account.');
+        return;
+      }
+
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      window.location.assign('index.html');
+    } catch (error) {
+      deleteMessage(error.message || 'Could not delete the account.');
+    } finally {
+      deleteSubmit.disabled = false;
+      deleteSubmit.textContent = 'Delete account';
+    }
   });
 
   loadUser();
