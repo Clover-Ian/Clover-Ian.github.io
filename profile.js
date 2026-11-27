@@ -542,10 +542,15 @@
     }
   }
 
+  const DEFAULT_BASE = 'https://relaydock.omnis.com.cn/v1';
+
   document.querySelectorAll('[data-ai-add]').forEach((button) => {
     button.addEventListener('click', () => {
       aiForm?.reset();
       aiHasSavedKey = false;
+      if (aiBaseInput && !aiBaseInput.value.trim()) {
+        aiBaseInput.value = DEFAULT_BASE;
+      }
       renderModelOptions(IYS_MODELS[0]);
       showForm(true);
     });
