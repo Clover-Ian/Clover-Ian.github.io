@@ -388,16 +388,7 @@
   ];
 
   let userModels = [];
-
-  function customVisible() {
-    return aiModelInput.value === '__custom__';
-  }
-
-  function currentModelValue() {
-    return customVisible()
-      ? (aiModelCustom?.value.trim() ?? '')
-      : aiModelInput.value;
-  }
+  let savedKeys = [];
 
   function renderModelOptions(selected) {
     aiModelInput.innerHTML = '';
@@ -425,7 +416,6 @@
     }
 
     const known = IYS_MODELS.includes(selected) || userModels.includes(selected);
-
     if (selected && !known) {
       const saved = document.createElement('optgroup');
       saved.label = 'Saved';
@@ -445,100 +435,99 @@
     if (aiModelCustom) aiModelCustom.hidden = !customVisible();
   }
 
+  function customVisible() { return aiModelInput.value === '__custom__'; }
+  function currentModelValue() {
+    return customVisible() ? (aiModelCustom?.value.trim() ?? '') : aiModelInput.value;
+  }
+
   aiModelInput?.addEventListener('change', () => {
     if (!aiModelCustom) return;
     aiModelCustom.hidden = !customVisible();
-    if (customVisible()) {
-      aiModelCustom.value = '';
-      aiModelCustom.focus();
-    }
   });
-  let aiHasSavedKey = false;
+
+  const aiEmpty = document.querySelector('[data-ai-empty]');
+  const aiList = document.querySelector('[data-ai-list]');
+  const aiRows = document.querySelector('[data-ai-rows]');
+  const aiForm = document.querySelector('[data-ai-form]');
+
+  function showForm(show) {
+    if (!aiForm) return;
+    aiForm.hidden = !show;
+    if (show) {
+      aiForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      aiKeyInput?.focus();
+    }
+  }
 
   async function loadAiSettings() {
     if (!user) return;
     const supabase = client();
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from('user_ai_settings')
-      .select('api_key, base_url, model, label')
-      .maybeSingle();
+      .select('id, label, api_key, base_url, model, created_at')
+      .order('created_at', { ascending: true });
 
-    aiHasSavedKey = Boolean(data?.api_key);
-    if (aiHasSavedKey) {
-      aiKeyState.textContent = `Saved key: ${data.api_key.slice(0, 4)}••••${data.api_key.slice(-4)}`;
-      aiKeyInput.placeholder = 'Leave empty to keep the saved key';
-    } else {
-      aiKeyState.textContent = 'No key saved yet — fill all three fields.';
-      aiKeyInput.placeholder = 'sk-...';
+    if (error) {
+      status('ai', error.message, false);
+      return;
     }
 
-    aiBaseInput.value = data?.base_url ?? '';
-    if (aiNameInput) aiNameInput.value = data?.label ?? '';
+    savedKeys = Array.isArray(data) ? data : [];
 
-    if (data?.api_key) await loadUserModels();
-    renderModelOptions(data?.model ?? IYS_MODELS[0]);
-  }
-
-  /** 逐个字段校验，返回第一条错误（没有错误返回 null） */
-  function validateAiFields() {
-    const key = aiKeyInput.value.trim();
-    const base = aiBaseInput.value.trim();
-    const model = currentModelValue();
-    const name = aiNameInput?.value.trim() ?? '';
-
-    [aiKeyInput, aiBaseInput, aiModelInput, aiNameInput].forEach((el) => el?.classList.remove('is-invalid'));
-
-    if (!key && !aiHasSavedKey) {
-      aiKeyInput.classList.add('is-invalid');
-      return 'An API key is required the first time.';
+    if (!savedKeys.length) {
+      aiEmpty.hidden = false;
+      aiList.hidden = true;
+      return;
     }
 
-    if (!aiHasSavedKey && !name) {
-      aiNameInput?.classList.add('is-invalid');
-      return 'Give this key a name — it is shown in the model list.';
-    }
+    aiEmpty.hidden = true;
+    aiList.hidden = false;
+    aiRows.innerHTML = '';
 
-    if (name && /iys/i.test(name)) {
-      aiNameInput?.classList.add('is-invalid');
-      return 'The name cannot contain “IYS”.';
-    }
+    savedKeys.forEach((row) => {
+      const tr = document.createElement('tr');
 
-    if (!base || !model) {
-      if (!base) aiBaseInput.classList.add('is-invalid');
-      if (!model) (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
-      return 'Base URL and model are both required.';
-    }
+      const name = document.createElement('td');
+      name.textContent = row.label || '—';
 
-    if (key && !/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
-      aiKeyInput.classList.add('is-invalid');
-      return 'The key should look like sk- followed by at least 16 characters.';
-    }
+      const model = document.createElement('td');
+      model.textContent = row.model || '—';
 
-    let parsed = null;
-    try {
-      parsed = new URL(base);
-    } catch { /* 下面统一报错 */ }
+      const base = document.createElement('td');
+      base.className = 'ai-key-base';
+      base.textContent = row.base_url || '—';
 
-    if (!parsed || !/^https?:$/.test(parsed.protocol)) {
-      aiBaseInput.classList.add('is-invalid');
-      return 'The base URL must start with https:// and be a valid address.';
-    }
+      const action = document.createElement('td');
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ai-key-remove';
+      remove.textContent = 'Delete';
+      remove.addEventListener('click', async () => {
+        const ok = window.confirm(`Delete the key “${row.label || 'unnamed'}”?`);
+        if (!ok) return;
+        const { error: deleteError } = await supabase
+          .from('user_ai_settings')
+          .delete()
+          .eq('id', row.id);
+        if (deleteError) {
+          status('ai', deleteError.message, false);
+          return;
+        }
+        await loadAiSettings();
+        status('ai', 'Key deleted.');
+      });
+      action.append(remove);
 
-    if (!/^[A-Za-z0-9._/-]+$/.test(model)) {
-      (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
-      return 'Model names can only contain letters, numbers, dots, dashes, underscores and slashes.';
-    }
-
-    return null;
-  }
-
-  [aiKeyInput, aiBaseInput, aiModelInput, aiNameInput].forEach((el) => {
-    el?.addEventListener('input', () => {
-      el.classList.remove('is-invalid');
-      if (!document.querySelector('[data-status="ai"]')?.textContent) return;
-      status('ai', '');
+      tr.append(name, model, base, action);
+      aiRows.append(tr);
     });
-  });
+
+    // 用自己的 key 拉模型列表
+    userModels = [];
+    await loadUserModels();
+    renderModelOptions(savedKeys[savedKeys.length - 1]?.model || IYS_MODELS[0]);
+  }
 
   async function loadUserModels() {
     try {
@@ -553,6 +542,63 @@
     }
   }
 
+  document.querySelectorAll('[data-ai-add]').forEach((button) => {
+    button.addEventListener('click', () => {
+      aiForm?.reset();
+      aiHasSavedKey = false;
+      renderModelOptions(IYS_MODELS[0]);
+      showForm(true);
+    });
+  });
+
+  document.querySelector('[data-ai-cancel]')?.addEventListener('click', () => showForm(false));
+
+  function validateAiFields() {
+    const key = aiKeyInput.value.trim();
+    const base = aiBaseInput.value.trim();
+    const model = currentModelValue();
+    const name = aiNameInput?.value.trim() ?? '';
+
+    [aiKeyInput, aiBaseInput, aiModelInput, aiModelCustom, aiNameInput]
+      .forEach((el) => el?.classList.remove('is-invalid'));
+
+    if (!key || !base || !model || !name) {
+      if (!key) aiKeyInput.classList.add('is-invalid');
+      if (!base) aiBaseInput.classList.add('is-invalid');
+      if (!model) (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
+      if (!name) aiNameInput?.classList.add('is-invalid');
+      return 'All fields are required.';
+    }
+
+    if (!/^sk-[A-Za-z0-9_-]{16,}$/.test(key)) {
+      aiKeyInput.classList.add('is-invalid');
+      return 'The key should look like sk- followed by at least 16 characters.';
+    }
+
+    if (/iys/i.test(name)) {
+      aiNameInput.classList.add('is-invalid');
+      return 'The name cannot contain “IYS”.';
+    }
+
+    let parsed = null;
+    try { parsed = new URL(base); } catch { /* 下面报错 */ }
+    if (!parsed || !/^https?:$/.test(parsed.protocol)) {
+      aiBaseInput.classList.add('is-invalid');
+      return 'The base URL must be a valid https:// address.';
+    }
+
+    if (!/^[A-Za-z0-9._/-]+$/.test(model)) {
+      (customVisible() ? aiModelCustom : aiModelInput)?.classList.add('is-invalid');
+      return 'Model names can only contain letters, numbers, dots, dashes, underscores and slashes.';
+    }
+
+    return null;
+  }
+
+  [aiKeyInput, aiBaseInput, aiModelInput, aiModelCustom, aiNameInput].forEach((el) => {
+    el?.addEventListener('input', () => el.classList.remove('is-invalid'));
+  });
+
   document.querySelector('[data-ai-save]')?.addEventListener('click', async () => {
     const problem = validateAiFields();
     if (problem) {
@@ -560,66 +606,25 @@
       return;
     }
 
-    const key = aiKeyInput.value.trim();
-
-    const supabase = client();
     status('ai', 'Saving…');
+    const supabase = client();
 
-    const payload = {
+    const { error } = await supabase.from('user_ai_settings').insert({
       user_id: user.id,
-      label: aiNameInput?.value.trim() || null,
+      label: aiNameInput.value.trim(),
+      api_key: aiKeyInput.value.trim(),
       base_url: aiBaseInput.value.trim(),
       model: currentModelValue(),
-      updated_at: new Date().toISOString(),
-    };
-    // 没填新 key 就保留原来那一条
-    if (key) payload.api_key = key;
-
-    const { error } = await supabase.from('user_ai_settings').upsert(payload);
+    });
 
     if (error) {
       status('ai', error.message, false);
       return;
     }
 
-    aiKeyInput.value = '';
+    showForm(false);
     await loadAiSettings();
-    status('ai', 'Saved.');
-  });
-
-  document.querySelector('[data-ai-remove]')?.addEventListener('click', async () => {
-    const supabase = client();
-    status('ai', 'Removing…');
-    const { error } = await supabase.from('user_ai_settings').delete();
-    if (error) {
-      status('ai', error.message, false);
-      return;
-    }
-    aiKeyInput.value = '';
-    await loadAiSettings();
-    status('ai', 'Key removed — back to the shared key.');
-  });
-
-  document.querySelector('[data-ai-test]')?.addEventListener('click', async () => {
-    status('ai', 'Testing…');
-    try {
-      const response = await fetch(
-        'https://qbkfdhmjogdwtjovqzaw.supabase.co/functions/v1/IYS',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(await tokenHeader()),
-          },
-          body: JSON.stringify({ messages: [{ role: 'user', content: 'Reply with OK only.' }], maxTokens: 10 }),
-        },
-      );
-      const data = await response.json();
-      const reply = data?.choices?.[0]?.message?.content;
-      status('ai', reply ? `OK — model replied: ${String(reply).slice(0, 40)}` : 'No reply came back.', !!reply);
-    } catch (error) {
-      status('ai', error.message || 'Test failed.', false);
-    }
+    status('ai', 'Key saved.');
   });
 
   /* ---------- 删除账号：密码 + 勾选确认 ---------- */

@@ -7,12 +7,12 @@
     <title>IYS Account</title>
     <link rel="icon" type="image/png" href="IYS.png">
     <link rel="apple-touch-icon" href="IYS.png">
-    <link rel="stylesheet" href="style.css?v=20261128b">
+    <link rel="stylesheet" href="style.css?v=20261128c">
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
     <script src="account-nav.js?v=20261127r" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261128a" defer></script>
+    <script src="profile.js?v=20261128b" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -111,25 +111,36 @@
                 <section class="profile-panel" data-panel="ai">
                     <h2>AI</h2>
                     <p class="profile-note">
-                        Use your own API key for IYS AI. It is stored on the server and never shown again
-                        after saving. Leave it empty to use the shared key.
+                        Use your own API keys for IYS AI. Keys are stored on the server and never shown again.
                     </p>
 
-                    <div class="profile-block">
-                        <h3>API key</h3>
+                    <div data-ai-empty hidden>
+                        <p class="ai-empty-title">No AI API key yet</p>
+                        <button type="button" class="profile-button" data-ai-add>Add API key</button>
+                    </div>
+
+                    <div data-ai-list hidden>
+                        <table class="ai-key-table">
+                            <thead>
+                                <tr><th>Name</th><th>Model</th><th>Base URL</th><th></th></tr>
+                            </thead>
+                            <tbody data-ai-rows></tbody>
+                        </table>
+                        <button type="button" class="profile-button" data-ai-add style="margin-top:16px">Add another key</button>
+                    </div>
+
+                    <form class="ai-key-form" data-ai-form hidden>
+                        <h3 data-ai-form-title>Add API key</h3>
+
                         <label class="profile-label" for="ai-key-input">Key <span class="required">required</span></label>
-                        <input id="ai-key-input" type="password" data-ai-key autocomplete="off"
-                               placeholder="sk-...">
-                        <p class="profile-note" data-ai-key-state style="margin-top:8px">No key saved.</p>
+                        <input id="ai-key-input" type="password" data-ai-key autocomplete="off" placeholder="sk-...">
 
                         <label class="profile-label" for="ai-name-input" style="margin-top:14px">Name <span class="required">required</span></label>
-                        <input id="ai-name-input" type="text" data-ai-name maxlength="24"
-                               placeholder="My key" autocomplete="off">
+                        <input id="ai-name-input" type="text" data-ai-name maxlength="24" placeholder="My key" autocomplete="off">
                         <p class="profile-note" style="margin-top:6px">Shown in the model list. It cannot contain “IYS”.</p>
 
                         <label class="profile-label" for="ai-base-input" style="margin-top:14px">Base URL <span class="required">required</span></label>
-                        <input id="ai-base-input" type="text" data-ai-base
-                               placeholder="https://relaydock.omnis.com.cn/v1">
+                        <input id="ai-base-input" type="text" data-ai-base placeholder="https://api.deepseek.com">
 
                         <label class="profile-label" for="ai-model-input" style="margin-top:14px">Default model <span class="required">required</span></label>
                         <select id="ai-model-input" data-ai-model></select>
@@ -138,11 +149,11 @@
 
                         <div class="avatar-actions" style="margin-top:16px">
                             <button type="button" class="profile-button" data-ai-save>Save key</button>
-                            <button type="button" class="profile-button profile-button--ghost" data-ai-test>Test</button>
-                            <button type="button" class="profile-button profile-button--ghost" data-ai-remove>Remove</button>
+                            <button type="button" class="profile-button profile-button--ghost" data-ai-cancel>Cancel</button>
                         </div>
-                        <p class="profile-status" data-status="ai"></p>
-                    </div>
+                    </form>
+
+                    <p class="profile-status" data-status="ai"></p>
                 </section>
 
                 <section class="profile-panel" data-panel="danger">

@@ -1609,3 +1609,20 @@ grant select, insert, update, delete on public.user_ai_settings to authenticated
 -- ---------- 33. 给用户自己的 AI 配置加一个显示名 ----------
 alter table public.user_ai_settings
     add column if not exists label text;
+
+-- ---------- 34. 允许多条 AI key ----------
+alter table public.user_ai_settings
+    add column if not exists id uuid default gen_random_uuid();
+
+update public.user_ai_settings
+   set id = gen_random_uuid()
+ where id is null;
+
+alter table public.user_ai_settings
+    drop constraint if exists user_ai_settings_pkey;
+
+alter table public.user_ai_settings
+    add primary key (id);
+
+alter table public.user_ai_settings
+    add column if not exists created_at timestamptz not null default now();

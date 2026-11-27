@@ -4867,3 +4867,73 @@ body.theme-dark .ai-line--me {
 .ai-panel.is-full .ai-line--me {
     justify-self: end;
 }
+
+/* AI key 列表 */
+.ai-empty-title {
+    margin: 6px 0 14px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.ai-key-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ai-key-table th {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    font-weight: 500;
+}
+
+.ai-key-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.ai-key-base {
+    color: var(--muted);
+    font-size: 12px;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-key-remove {
+    padding: 5px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(118 118 128 / 12%);
+    color: #c0271d;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ai-key-remove:hover {
+    background: rgba(192, 39, 29, 0.12);
+}
+
+.ai-key-form {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+}
+
+.ai-key-form[hidden] {
+    display: none !important;
+}
+
+.ai-key-form h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+}
