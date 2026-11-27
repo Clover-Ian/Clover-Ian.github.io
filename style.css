@@ -4425,13 +4425,19 @@ body.theme-dark .ai-line--me {
 
 /* IYS AI：未登录时的提示 */
 .ai-gate {
+    position: absolute;      /* 覆盖整个面板，不占网格行 */
+    inset: auto 0 0 0;
+    top: 57px;               /* 标题栏下方 */
+    bottom: 0;
     display: grid;
     align-content: center;
     justify-items: center;
     gap: 10px;
-    padding: 32px 24px;
+    padding: 24px;
     text-align: center;
     background: #fbfbfd;
+    z-index: 5;
+    border: 0;
 }
 
 .ai-gate-title {
@@ -4476,6 +4482,10 @@ body.theme-dark .ai-line--me {
 
 .ai-gate[hidden] {
     display: none !important;
+}
+
+.ai-panel {
+    grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .ai-gate {
