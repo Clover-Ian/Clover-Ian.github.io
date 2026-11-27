@@ -434,10 +434,14 @@
         if (error) throw error;
         saveProfile(verified?.user);
 
-        showVerifyMessage('Email confirmed. Taking you to the homepage…', 'success');
+        const target = destination();
+        showVerifyMessage('Email confirmed. Taking you back…', 'success');
+
+        // 立刻跳转，并留一个兜底（有些浏览器会把 assign 和 UI 更新挤在一起）
+        window.setTimeout(() => window.location.assign(target), 300);
         window.setTimeout(() => {
-          window.location.assign(destination());
-        }, 700);
+          if (window.location.pathname === herePath) window.location.assign(target);
+        }, 2500);
       } catch (error) {
         showVerifyMessage(messageForError(error));
         if (verifyButton) {
