@@ -4314,7 +4314,7 @@ body.theme-dark .ai-line--me {
 
 .ai-log {
     display: grid;
-    align-content: end;          /* 消息贴着底部，像聊天软件 */
+    align-content: start;        /* 从顶部排列：Chrome 下 end 会让溢出的消息滚不上去 */
     gap: 8px;
     padding: 14px 16px 18px;
     overflow-y: auto;
