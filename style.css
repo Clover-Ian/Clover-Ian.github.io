@@ -4278,7 +4278,7 @@ body.theme-dark .ai-line--me {
     z-index: 91;
     display: grid;
     grid-template-rows: auto 1fr auto;
-    width: min(380px, calc(100vw - 32px));
+    width: min(420px, calc(100vw - 32px));
     height: min(520px, calc(100vh - 140px));
     border: 1px solid var(--line);
     border-radius: 20px;
