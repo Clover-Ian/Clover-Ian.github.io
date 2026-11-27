@@ -237,7 +237,7 @@
     const profileLink = document.createElement('a');
     profileLink.href = 'IYS Account Profile.html';
     profileLink.className = 'account-menu-profile';
-    profileLink.textContent = 'Profile';
+    profileLink.textContent = 'Settings';
     profileLink.addEventListener('click', () => setMenuOpen(false));
 
     const signOutButton = document.createElement('button');

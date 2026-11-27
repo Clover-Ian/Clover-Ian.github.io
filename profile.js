@@ -45,7 +45,7 @@
     });
   }
 
-  let current = 'profile';
+  let current = 'account';
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -144,9 +144,12 @@
     status('password', error ? error.message : 'Password updated.', !error);
   });
 
-  photoInput?.addEventListener('change', async () => {
-    const file = photoInput.files?.[0];
-    if (!file) return;
+  document.querySelector('[data-photo-save]')?.addEventListener('click', async () => {
+    const file = photoInput?.files?.[0];
+    if (!file) {
+      status('photo', 'Choose an image first.', false);
+      return;
+    }
 
     status('photo', 'Uploading…');
     const supabase = client();

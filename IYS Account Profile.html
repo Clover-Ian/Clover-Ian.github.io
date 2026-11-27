@@ -7,13 +7,12 @@
     <title>IYS Account</title>
     <link rel="icon" type="image/png" href="IYS Developer.png">
     <link rel="apple-touch-icon" href="IYS Developer.png">
-    <link rel="stylesheet" href="style.css?v=20261127q">
+    <link rel="stylesheet" href="style.css?v=20261127r">
     <script src="supabase.js?v=20261116d" defer></script>
     <script src="supabase-config.js?v=20261116d" defer></script>
-    <script src="account-nav.js?v=20261127m" defer></script>
-    <script src="announcements.js?v=20261126b" defer></script>
+    <script src="account-nav.js?v=20261127n" defer></script>
     <script src="messages.js?v=20261116e" defer></script>
-    <script src="profile.js?v=20261127a" defer></script>
+    <script src="profile.js?v=20261127b" defer></script>
 </head>
 <body class="corner-background">
     <header class="site-header">
@@ -36,16 +35,12 @@
     <main class="profile-wrap">
         <section class="profile-shell">
             <aside class="profile-tabs" aria-label="Account sections">
-                <button type="button" class="profile-tab is-active" data-tab="profile">Profile</button>
-                <button type="button" class="profile-tab" data-tab="photo">Change photo</button>
-                <button type="button" class="profile-tab" data-tab="username">Change username</button>
-                <button type="button" class="profile-tab" data-tab="email">Change email</button>
-                <button type="button" class="profile-tab" data-tab="password">Change password</button>
+                <button type="button" class="profile-tab is-active" data-tab="account">Account</button>
                 <button type="button" class="profile-tab profile-tab--danger" data-tab="danger">Danger zone</button>
             </aside>
 
             <div class="profile-panels">
-                <section class="profile-panel is-active" data-panel="profile">
+                <section class="profile-panel is-active" data-panel="account">
                     <div class="profile-hero">
                         <div class="profile-avatar" data-profile-avatar></div>
                         <div>
@@ -53,41 +48,41 @@
                             <p class="profile-email" data-profile-email>—</p>
                         </div>
                     </div>
-                    <p class="profile-note">This is what other IYS users see on the leaderboard and in your inbox.</p>
-                </section>
 
-                <section class="profile-panel" data-panel="photo">
-                    <h2>Change photo</h2>
-                    <p class="profile-note">Square images look best. It is shown next to your name across IYS.</p>
-                    <input type="file" accept="image/*" data-photo-input>
-                    <p class="profile-status" data-status="photo"></p>
-                </section>
+                    <div class="profile-block">
+                        <h3>Photo</h3>
+                        <p class="profile-note">Square images look best. It appears next to your name across IYS.</p>
+                        <input type="file" accept="image/*" data-photo-input>
+                        <button type="button" class="profile-button" data-photo-save>Save photo</button>
+                        <p class="profile-status" data-status="photo"></p>
+                    </div>
 
-                <section class="profile-panel" data-panel="username">
-                    <h2>Change username</h2>
-                    <p class="profile-note">3–20 characters. Letters, numbers, spaces, dashes and underscores.</p>
-                    <label class="profile-label" for="username-input">Username</label>
-                    <input id="username-input" type="text" maxlength="20" data-username-input autocomplete="off">
-                    <button type="button" class="profile-button" data-username-save>Save username</button>
-                    <p class="profile-status" data-status="username"></p>
-                </section>
+                    <div class="profile-block">
+                        <h3>Username</h3>
+                        <p class="profile-note">3–20 characters. Letters, numbers, spaces, dashes and underscores.</p>
+                        <label class="profile-label" for="username-input">Username</label>
+                        <input id="username-input" type="text" maxlength="20" data-username-input autocomplete="off">
+                        <button type="button" class="profile-button" data-username-save>Save username</button>
+                        <p class="profile-status" data-status="username"></p>
+                    </div>
 
-                <section class="profile-panel" data-panel="email">
-                    <h2>Change email</h2>
-                    <p class="profile-note">We will send a confirmation link to the new address.</p>
-                    <label class="profile-label" for="email-input">New email</label>
-                    <input id="email-input" type="email" data-email-input autocomplete="off">
-                    <button type="button" class="profile-button" data-email-save>Send confirmation</button>
-                    <p class="profile-status" data-status="email"></p>
-                </section>
+                    <div class="profile-block">
+                        <h3>Email</h3>
+                        <p class="profile-note">We will send a confirmation link to the new address.</p>
+                        <label class="profile-label" for="email-input">New email</label>
+                        <input id="email-input" type="email" data-email-input autocomplete="off">
+                        <button type="button" class="profile-button" data-email-save>Save email</button>
+                        <p class="profile-status" data-status="email"></p>
+                    </div>
 
-                <section class="profile-panel" data-panel="password">
-                    <h2>Change password</h2>
-                    <p class="profile-note">At least 8 characters.</p>
-                    <label class="profile-label" for="password-input">New password</label>
-                    <input id="password-input" type="password" data-password-input autocomplete="new-password">
-                    <button type="button" class="profile-button" data-password-save>Update password</button>
-                    <p class="profile-status" data-status="password"></p>
+                    <div class="profile-block">
+                        <h3>Password</h3>
+                        <p class="profile-note">At least 8 characters.</p>
+                        <label class="profile-label" for="password-input">New password</label>
+                        <input id="password-input" type="password" data-password-input autocomplete="new-password">
+                        <button type="button" class="profile-button" data-password-save>Save password</button>
+                        <p class="profile-status" data-status="password"></p>
+                    </div>
                 </section>
 
                 <section class="profile-panel" data-panel="danger">
