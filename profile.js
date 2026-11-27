@@ -445,6 +445,41 @@
     aiModelCustom.hidden = !customVisible();
   });
 
+  /* 站内确认框（替代浏览器 confirm） */
+  const confirmDialog = document.querySelector('[data-confirm-dialog]');
+  const confirmTitle = document.querySelector('[data-confirm-title]');
+  const confirmText = document.querySelector('[data-confirm-text]');
+  const confirmOk = document.querySelector('[data-confirm-ok]');
+  const confirmCancel = document.querySelector('[data-confirm-cancel]');
+
+  function askConfirm(title, text, okLabel = 'Delete') {
+    return new Promise((resolve) => {
+      if (!confirmDialog) { resolve(window.confirm(text)); return; }
+
+      confirmTitle.textContent = title;
+      confirmText.textContent = text;
+      confirmOk.textContent = okLabel;
+
+      const finish = (value) => {
+        confirmOk.removeEventListener('click', onOk);
+        confirmCancel.removeEventListener('click', onCancel);
+        confirmDialog.removeEventListener('cancel', onEsc);
+        if (confirmDialog.open) confirmDialog.close();
+        resolve(value);
+      };
+
+      const onOk = () => finish(true);
+      const onCancel = () => finish(false);
+      const onEsc = (event) => { event.preventDefault(); finish(false); };
+
+      confirmOk.addEventListener('click', onOk);
+      confirmCancel.addEventListener('click', onCancel);
+      confirmDialog.addEventListener('cancel', onEsc);
+
+      confirmDialog.showModal();
+    });
+  }
+
   const aiEmpty = document.querySelector('[data-ai-empty]');
   const aiList = document.querySelector('[data-ai-list]');
   const aiRows = document.querySelector('[data-ai-rows]');
@@ -533,7 +568,10 @@
       remove.className = 'ai-key-remove';
       remove.textContent = 'Delete';
       remove.addEventListener('click', async () => {
-        const ok = window.confirm(`Delete the key “${row.label || 'unnamed'}”?`);
+        const ok = await askConfirm(
+          `Delete “${row.label || 'this key'}”?`,
+          'IYS AI will stop using this key. This cannot be undone.',
+        );
         if (!ok) return;
         const { error: deleteError } = await supabase
           .from('user_ai_settings')

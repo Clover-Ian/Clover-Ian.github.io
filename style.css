@@ -5295,3 +5295,74 @@ body.ai-page .site-footer {
 .ai-key-form input[data-ai-model-custom][hidden] {
     display: none !important;
 }
+
+/* 站内确认框：和删除账号弹窗同一套风格 */
+.site-confirm {
+    width: min(420px, calc(100vw - 40px));
+    padding: 26px 26px 20px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 30px 80px rgb(0 0 0 / 25%);
+}
+
+.site-confirm::backdrop {
+    background: rgb(20 20 24 / 42%);
+    backdrop-filter: blur(3px);
+}
+
+.site-confirm .account-settings-form {
+    display: grid;
+    gap: 12px;
+}
+
+.site-confirm h2 {
+    margin: 0;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+}
+
+.site-confirm .account-delete-warning {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.site-confirm .account-email-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.site-confirm .account-email-cancel {
+    padding: 9px 20px;
+    border: 0;
+    border-radius: 980px;
+    background: rgb(118 118 128 / 12%);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.site-confirm .account-email-cancel:hover {
+    background: rgb(118 118 128 / 20%);
+}
+
+.site-confirm .account-delete-submit {
+    padding: 9px 20px;
+    border: 0;
+    border-radius: 980px;
+    background: #c0271d;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 590;
+    cursor: pointer;
+}
+
+.site-confirm .account-delete-submit:hover {
+    background: #a8201a;
+}
