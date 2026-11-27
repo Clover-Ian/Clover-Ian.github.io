@@ -107,11 +107,22 @@
     });
 
     modelSelect.value = list.includes(saved) ? saved : fallback;
+  }
 
+  // 先用内置列表填满，服务端可用时再替换
+  (function seedModels() {
+    const saved = localStorage.getItem(STORE_KEY);
+    Object.entries(NICE).forEach(([id, label]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = label;
+      modelSelect.append(option);
+    });
+    modelSelect.value = Object.keys(NICE).includes(saved) ? saved : 'deepseek-v4.1-flash';
     modelSelect.addEventListener('change', () => {
       localStorage.setItem(STORE_KEY, modelSelect.value);
     });
-  }
+  })();
 
   const history = [];
 

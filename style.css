@@ -4175,20 +4175,14 @@ body.theme-dark .tool-drop .tool-note {
     overflow-y: auto;
 }
 
-.ai-line {
-    margin: 0;
-    padding: 10px 14px;
-    border-radius: 14px;
+body.theme-dark .ai-line {
     background: rgb(255 255 255 / 8%);
     color: #fff;
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
 }
 
-.ai-line--me {
-    justify-self: end;
+body.theme-dark .ai-line--me {
     background: rgb(255 255 255 / 16%);
+    color: #fff;
 }
 
 /* ---------- 全站 AI 助手 ---------- */
@@ -4240,6 +4234,7 @@ body.theme-dark .tool-drop .tool-note {
 }
 
 .ai-head {
+    background: #fff;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -4276,13 +4271,15 @@ body.theme-dark .tool-drop .tool-note {
     gap: 8px;
     padding: 14px 16px;
     overflow-y: auto;
+    background: #fbfbfd;
 }
 
 .ai-line {
     margin: 0;
     padding: 9px 12px;
     border-radius: 14px;
-    background: var(--surface);
+    background: #f1f1f4;
+    color: var(--ink);
     font-size: 13px;
     line-height: 1.55;
     white-space: pre-wrap;
@@ -4338,7 +4335,8 @@ body.theme-dark .tool-drop .tool-note {
 }
 
 .ai-model {
-    max-width: 130px;
+    min-width: 104px;
+    max-width: 140px;
     padding: 5px 8px;
     border: 1px solid var(--line);
     border-radius: 999px;
