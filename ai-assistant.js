@@ -296,7 +296,11 @@
       });
       const payload = await response.json();
       if (Array.isArray(payload?.models) && payload.models.length) list = payload.models;
-      if (Array.isArray(payload?.keys)) groups = payload.keys;
+      if (Array.isArray(payload?.keys)) {
+        groups = payload.keys;
+      } else if (Array.isArray(payload?.mine) && payload.mine.length) {
+        groups = [{ id: 'saved', label: payload.label || 'My key', models: payload.mine }];
+      }
     } catch { /* 离线用内置列表 */ }
 
     buildModels(list, groups, saved);
