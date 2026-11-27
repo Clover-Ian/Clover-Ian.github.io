@@ -5095,3 +5095,45 @@ body.profile-page .site-footer {
     flex-shrink: 0;
     margin-top: auto;
 }
+
+/* 设置页：铺满窗口，只留边距 */
+body.profile-page main.profile-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 24px clamp(20px, 3vw, 40px) 24px;
+    min-height: 0;
+}
+
+body.profile-page .profile-shell {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 20px;
+    align-items: stretch;
+    min-height: 0;
+    width: 100%;
+}
+
+body.profile-page .profile-tabs {
+    align-content: start;
+    height: 100%;
+}
+
+body.profile-page .profile-panels {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+@media (max-width: 780px) {
+    body.profile-page .profile-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.profile-page .profile-tabs {
+        height: auto;
+    }
+}
