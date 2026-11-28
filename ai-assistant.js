@@ -603,6 +603,14 @@
     if (event.key === 'Escape' && !panel.hidden) toggle(false);
   });
 
+  // 页面空闲时就把模型列表准备好，别等用户点开面板才去拉
+  window.setTimeout(() => {
+    refreshAuth().then((signedIn) => {
+      if (!signedIn) return;
+      loadModels();
+    }).catch(() => {});
+  }, 800);
+
   // 登录跳转回来后，把面板重新打开
   (async () => {
     let wanted = null;
