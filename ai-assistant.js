@@ -288,6 +288,27 @@
     return window.iysSupabase;
   }
 
+
+  /** 函数没返回分组时，直接从数据库读自己的 key（RLS 保证只有自己那几条） */
+  async function fallbackKeys() {
+    try {
+      const c = window.iysSupabase;
+      if (!c) return [];
+      const { data } = await c
+        .from('user_ai_settings')
+        .select('id, label, model')
+        .order('created_at', { ascending: false });
+      if (!Array.isArray(data)) return [];
+      return data.map((row) => ({
+        id: row.id,
+        label: row.label || 'My key',
+        models: row.model ? [row.model] : [],
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   let modelsRun = 0;
   let payloadVersion = null;
 
@@ -315,6 +336,9 @@
         groups = [{ id: 'saved', label: payload.label || 'My key', models: payload.mine }];
       }
     } catch { /* 离线用内置列表 */ }
+
+    // 函数没给分组时，退回到直接读数据库
+    if (!groups.length) groups = await fallbackKeys();
 
     // 有更晚的请求了：丢掉这次结果，避免旧结果（没有 key）覆盖新结果
     if (run !== modelsRun) return;

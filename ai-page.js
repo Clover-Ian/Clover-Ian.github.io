@@ -105,6 +105,27 @@
     select.value = selected && source.has(selected) ? selected : (iysList[0] || '');
   }
 
+
+  /** 函数没返回分组时，直接从数据库读自己的 key（RLS 保证只有自己那几条） */
+  async function fallbackKeys() {
+    try {
+      const c = window.iysSupabase;
+      if (!c) return [];
+      const { data } = await c
+        .from('user_ai_settings')
+        .select('id, label, model')
+        .order('created_at', { ascending: false });
+      if (!Array.isArray(data)) return [];
+      return data.map((row) => ({
+        id: row.id,
+        label: row.label || 'My key',
+        models: row.model ? [row.model] : [],
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   async function loadModels() {
     if (loaded) return;
     loaded = true;
@@ -130,6 +151,7 @@
       if (Array.isArray(data?.keys)) groups = data.keys;
     } catch { /* 用内置列表 */ }
 
+    if (!groups.length) groups = await fallbackKeys();
     buildModels(iysList, groups, localStorage.getItem(STORE.model));
   }
 
