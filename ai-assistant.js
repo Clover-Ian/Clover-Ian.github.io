@@ -90,9 +90,9 @@
 
   // 滚轮在面板上一律滚动对话区，不要漏到下面去滚网页
   panel.addEventListener('wheel', (event) => {
-    const log = panel.querySelector('.ai-log');
-    if (!log || log.scrollHeight <= log.clientHeight) return;
-    log.scrollTop += event.deltaY;
+    const area = panel.querySelector('.ai-log');
+    if (!area || area.scrollHeight <= area.clientHeight) return;
+    area.scrollTop += event.deltaY;
     event.preventDefault();
   }, { passive: false });
 
