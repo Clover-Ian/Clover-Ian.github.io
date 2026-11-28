@@ -60,14 +60,7 @@
         <p class="ai-sub">Ask about the site, the apps or the tools.</p>
       </div>
       <div class="ai-head-right">
-        <button type="button" class="ai-model-btn" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ai-model-label">Model</span>
-          <svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true">
-            <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
-        </button>
-        <div class="ai-model-menu" role="listbox" hidden></div>
+        <select class="ai-model" aria-label="Model"></select>
         <button type="button" class="ai-new" aria-label="New chat" title="New chat">⟲</button>
         <button type="button" class="ai-close" aria-label="Close">×</button>
       </div>
@@ -93,10 +86,7 @@
 
   const newButton = panel.querySelector('.ai-new');
   const handle = panel.querySelector('.ai-resize');
-  const modelSelect = panel.querySelector('.ai-model-btn');
-  const modelMenu = panel.querySelector('.ai-model-menu');
-  const modelLabel = panel.querySelector('.ai-model-label');
-  let currentValue = localStorage.getItem(STORE.model) || '';
+  const modelSelect = panel.querySelector('.ai-model');
 
   // 滚轮在面板上一律滚动对话区，不要漏到下面去滚网页
   panel.addEventListener('wheel', (event) => {
@@ -260,89 +250,46 @@
   /* ---------- 模型 ---------- */
   const modelSource = new Map();   // value -> 'iys' | 'own'
 
-  modelSelect.addEventListener('click', () => {
-    const open = modelMenu.hidden;
-    modelMenu.hidden = !open;
-    modelSelect.setAttribute('aria-expanded', String(open));
-
-    if (open) {
-      document.addEventListener('click', onOutside, true);
-      // 每次打开都检查：只有 IYS 组说明没读到自己的 key，重试一次
-      if (modelSource.size <= Object.keys(NICE).length) {
-        modelsLoaded = false;
-        loadModels();
-      }
-    } else {
-      closeMenu();
+  // 每次点开下拉都检查一遍：如果只有 IYS 组，说明没读到自己的 key，重试一次
+  modelSelect.addEventListener('pointerdown', () => {
+    if (modelsRun === 0 || modelSource.size <= Object.keys(NICE).length) {
+      modelsLoaded = false;
+      loadModels();
     }
   });
   let modelsLoaded = false;
 
-  function labelFor(value) {
-    if (!value) return 'Model';
-    const model = value.includes('|') ? value.split('|').pop() : value;
-    return NICE[model] || model;
-  }
-
-  function setCurrent(value) {
-    currentValue = value;
-    modelSource.delete;
-    modelLabel.textContent = labelFor(value);
-    localStorage.setItem(STORE.model, value);
-    modelMenu.querySelectorAll('.ai-model-item').forEach((item) => {
-      item.classList.toggle('is-active', item.dataset.value === value);
-    });
-  }
-
-  function closeMenu() {
-    modelMenu.hidden = true;
-    modelSelect.setAttribute('aria-expanded', 'false');
-    document.removeEventListener('click', onOutside, true);
-  }
-
-  function onOutside(event) {
-    if (!modelMenu.contains(event.target) && !modelSelect.contains(event.target)) closeMenu();
-  }
-
   function buildModels(iysList, groups, selected) {
+    modelSelect.innerHTML = '';
     modelSource.clear();
-    modelMenu.innerHTML = '';
 
-    const addGroup = (title, items, prefix) => {
-      if (!items.length) return;
-      const head = document.createElement('p');
-      head.className = 'ai-model-group';
-      head.textContent = title;
-      modelMenu.append(head);
-
-      items.forEach(({ value, text }) => {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'ai-model-item';
-        item.dataset.value = value;
-        item.textContent = text;
-        modelSource.set(value, prefix);
-        item.addEventListener('click', () => {
-          setCurrent(value);
-          closeMenu();
-        });
-        modelMenu.append(item);
-      });
-    };
-
-    addGroup('IYS', iysList.map((id) => ({ value: id, text: NICE[id] || id })), 'iys');
+    const iys = document.createElement('optgroup');
+    iys.label = 'IYS';
+    iysList.forEach((id) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = NICE[id] || id;
+      modelSource.set(id, 'iys');
+      iys.append(option);
+    });
+    modelSelect.append(iys);
 
     groups.forEach((group) => {
       if (!group.models?.length) return;
-      addGroup(
-        group.label || 'My key',
-        group.models.map((id) => ({ value: `${group.id}|${id}`, text: id })),
-        'own',
-      );
+      const own = document.createElement('optgroup');
+      own.label = group.label || 'My key';
+      group.models.forEach((id) => {
+        const option = document.createElement('option');
+        option.value = `${group.id}|${id}`;
+        option.textContent = id;
+        modelSource.set(option.value, 'own');
+        own.append(option);
+      });
+      modelSelect.append(own);
     });
 
-    const next = selected && modelSource.has(selected) ? selected : (iysList[0] || '');
-    setCurrent(next);
+    if (selected && modelSource.has(selected)) modelSelect.value = selected;
+    else modelSelect.value = iysList[0] || '';
   }
 
   function client() {
@@ -407,7 +354,9 @@
     console.info('[ai] models: iys=%d groups=%d version=%s',
       list.length, groups.length, payloadVersion || '?');
     buildModels(list, groups, saved);
-
+    modelSelect.addEventListener('change', () => {
+      localStorage.setItem(STORE.model, modelSelect.value);
+    });
   }
 
   // 先用内置列表占位，打开面板时再换成真实的
@@ -587,8 +536,8 @@
           messages: history,
           system: SYSTEM,
           maxTokens: 4000,
-          model: (currentValue || '').split('|').pop(),
-          keyId: (currentValue || '').includes('|') ? currentValue.split('|')[0] : undefined,
+          model: (modelSelect.value || '').split('|').pop(),
+          keyId: (modelSelect.value || '').includes('|') ? modelSelect.value.split('|')[0] : undefined,
         }),
       });
 
@@ -613,8 +562,8 @@
             messages: history,
             system: SYSTEM,
             maxTokens: 4000,
-            model: (currentValue || '').split('|').pop(),
-            keyId: (currentValue || '').includes('|') ? currentValue.split('|')[0] : undefined,
+            model: (modelSelect.value || '').split('|').pop(),
+            keyId: (modelSelect.value || '').includes('|') ? modelSelect.value.split('|')[0] : undefined,
           }),
         });
         if (retry.ok) raw = await retry.text();
