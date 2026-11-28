@@ -302,11 +302,16 @@
     try {
       const c = window.iysSupabase;
       if (!c) return [];
-      const { data } = await c
+      const { data, error } = await c
         .from('user_ai_settings')
-        .select('id, label, model')
-        .order('created_at', { ascending: false });
+        .select('id, label, model');
+
+      if (error) {
+        console.warn('[ai] could not read your keys:', error.message);
+        return [];
+      }
       if (!Array.isArray(data)) return [];
+      console.info('[ai] own keys:', data.length);
       return data.map((row) => ({
         id: row.id,
         label: row.label || 'My key',
