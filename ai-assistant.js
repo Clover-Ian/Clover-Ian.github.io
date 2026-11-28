@@ -249,6 +249,14 @@
   // 全屏
   /* ---------- 模型 ---------- */
   const modelSource = new Map();   // value -> 'iys' | 'own'
+
+  // 每次点开下拉都检查一遍：如果只有 IYS 组，说明没读到自己的 key，重试一次
+  modelSelect.addEventListener('pointerdown', () => {
+    if (modelsRun === 0 || modelSource.size <= Object.keys(NICE).length) {
+      modelsLoaded = false;
+      loadModels();
+    }
+  });
   let modelsLoaded = false;
 
   function buildModels(iysList, groups, selected) {
